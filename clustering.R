@@ -107,22 +107,56 @@ for (i in 1:length(cell_types)){
   cell_types[[i]] <- b
 }
 
+names(cell_types)[22] <- "Ng2 MSCs"
 
+####AddmoduleScore Seurat
 
+integrated_seurat <- readRDS("./objects/sp/integrated/integrated.seurat_type.rds")
+integrated_harmony <- readRDS("./objects/sp/integrated/integrated.harmony_type.rds")
+
+for (i in 1:length(cell_types)){
+  a <- cell_types[[i]]
+  c <- paste0(names(cell_types[i]), "1")
+  c <- gsub("-", ".", c)
+  c <- gsub(" ", ".", c)
+  c <- gsub("/", ".", c)
+  integrated_seurat <- AddModuleScore(integrated_seurat, features = cell_types[i], name = names(cell_types[i]))
+  #spatial 
+  pdf(file.path("./results/singleR/module_score/",filename = paste0("spatial_seurat_",c,".pdf")))
+  print(SpatialFeaturePlot(integrated_seurat,features=c,combine = FALSE))
+  dev.off()
+}
+
+####AddmoduleScore Harmony
+
+for (i in 1:length(cell_types)){
+  a <- cell_types[[i]]
+  c <- paste0(names(cell_types[i]), "1")
+  c <- gsub("-", ".", c)
+  c <- gsub(" ", ".", c)
+  c <- gsub("/", ".", c)
+  integrated_harmony <- AddModuleScore(integrated_harmony, features = cell_types[i], name = names(cell_types[i]))
+  #spatial 
+  pdf(file.path("./results/singleR/module_score/",filename = paste0("spatial_harmony_",c,".pdf")))
+  print(SpatialFeaturePlot(integrated_harmony,features=c,combine = FALSE))
+  dev.off()
+}
+
+####Are the different cell types different expressed between conditions?
 
 
 ####AddmoduleScore
-integrated_harmony <- AddModuleScore(integrated_harmony, features = list(Schwann_cells), name = "Schwann_cells")
-integrated_seurat <- AddModuleScore(integrated_seurat, features = list(Schwann_cells), name = "Schwann_cells")
+integrated_harmony <- AddModuleScore(integrated_harmony, features = list(cell_types[2]), name = names(cell_types[1]))
+integrated_seurat <- AddModuleScore(integrated_seurat, features = list(cell_types[2]), name = names(cell_types[1]))
 
 ####Plots
 
-pdf(file.path("./results/singleR/module_score/",filename = "Schwann_cells_singlecell_harmony.pdf"))
-print(SpatialFeaturePlot(integrated_harmony,features=c("Schwann_cells1"),combine = FALSE))
+pdf(file.path("./results/singleR/module_score/",filename = "Adipo-CAR_singlecell_harmony.pdf"))
+print(SpatialFeaturePlot(integrated_harmony,features=c("Adipo.CAR1"),combine = FALSE))
 dev.off()
 
-pdf(file.path("./results/singleR/module_score/",filename = "Schwann_cells_singlecell_seurat.pdf"))
-print(SpatialFeaturePlot(integrated_seurat,features=c("Schwann_cells1"), combine = FALSE))
+pdf(file.path("./results/singleR/module_score/",filename = "Adipo-CAR_singlecell_seurat.pdf"))
+print(SpatialFeaturePlot(integrated_seurat,features=c("Adipo.CAR1"), combine = FALSE))
 dev.off()
 
 
