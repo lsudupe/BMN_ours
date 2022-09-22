@@ -5,6 +5,11 @@
 #Libraries---------------------------------
 library(Seurat)
 library(SingleR)
+library(dplyr)
+library(ggplot2) 
+library('magrittr')
+library(tidyverse)
+library(base)
 
 #Data--------------------------------------
 load(file='./data/single-cell/RNAMagnetDataBundle/NicheMarkers10x.rda')
@@ -58,6 +63,7 @@ pdf(file.path("./results/singleR/",filename = "cell_types_singlecell_seurat.pdf"
 print(SpatialDimPlot(b, combine = FALSE,label=TRUE,repel=TRUE ,label.size = 0.9))
 dev.off()
 
+
 ###harmony predictions
 predictions_harmony <- SingleR(test=harmony.sce, assay.type.test=1, 
                               ref=single.sce, labels=single.sce$cell)
@@ -72,5 +78,52 @@ saveRDS(b, "./objects/sp/integrated/integrated.harmony_predictions.rds")
 pdf(file.path("./results/singleR/",filename = "cell_types_singlecell_harmony.pdf"))
 print(SpatialDimPlot(b, combine = FALSE,label=TRUE,repel=TRUE ,label.size = 0.9))
 dev.off()
+
+
+#####Lets check the markers
+#Filter
+markers_x <- subset(NicheMarkers10x , 0.5 < avg_logFC)
+
+#Top5
+top10_x <- markers_x %>%
+  group_by(cluster) %>%
+  top_n(n = 10,
+        wt = avg_logFC)
+
+####Markers per cluster
+
+top5_x$cluster <- as.character(top5_x$cluster)
+Schwann_cells <- top5_x[top5_x$cluster %in% c("Schwann cells"), ]
+Schwann_cells <- as.vector(Schwann_cells$gene)
+
+cell_types <- as.list(as.vector(unique(NicheMarkers10x$cluster)))
+names(cell_types) <- as.vector(unique(NicheMarkers10x$cluster))
+
+for (i in 1:length(cell_types)){
+  a <- cell_types[[i]]
+  top10_x$cluster <- as.character(top10_x$cluster)
+  b <- top10_x[top10_x$cluster %in% c(a), ]
+  b <- as.vector(b$gene)
+  cell_types[[i]] <- b
+}
+
+
+
+
+
+####AddmoduleScore
+integrated_harmony <- AddModuleScore(integrated_harmony, features = list(Schwann_cells), name = "Schwann_cells")
+integrated_seurat <- AddModuleScore(integrated_seurat, features = list(Schwann_cells), name = "Schwann_cells")
+
+####Plots
+
+pdf(file.path("./results/singleR/module_score/",filename = "Schwann_cells_singlecell_harmony.pdf"))
+print(SpatialFeaturePlot(integrated_harmony,features=c("Schwann_cells1"),combine = FALSE))
+dev.off()
+
+pdf(file.path("./results/singleR/module_score/",filename = "Schwann_cells_singlecell_seurat.pdf"))
+print(SpatialFeaturePlot(integrated_seurat,features=c("Schwann_cells1"), combine = FALSE))
+dev.off()
+
 
 
