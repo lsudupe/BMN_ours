@@ -30,7 +30,23 @@ M3_tib_1A <- Load10X_Spatial(data.dir = "./data/spatial_no_optimal_results/M3_ti
                              slice = "M3_tib_1A",
                              filter.matrix = TRUE)
 
+#####add area info
+######add area data
+area_M1_tib_1A <- read.csv( "./data/mahtab_cloupe/M1_tibia_1A.csv")
+area_M1_tib_1A <- as.vector(area_M1_tib_1A$Area)
+M1_tib_1A@meta.data["area"] <- as.factor(area_M1_tib_1A)
 
+area_M1_fem_2B <- read.csv( "./data/mahtab_cloupe/M1_femur_2B.csv")
+area_M1_fem_2B <- as.vector(area_M1_fem_2B$Area)
+M1_fem_2B@meta.data["area"] <- as.factor(area_M1_fem_2B)
+
+area_M3_tib_1A <- read.csv( "./data/mahtab_cloupe/M3_tibia_1A.csv")
+area_M3_tib_1A <- as.vector(area_M3_tib_1A$Area)
+M3_tib_1A@meta.data["area"] <- as.factor(area_M3_tib_1A)
+
+area_M3_fem_1C <- read.csv( "./data/mahtab_cloupe/M3_femur_1C.csv")
+area_M3_fem_1C <- as.vector(area_M3_fem_1C$Area)
+M3_fem_1C@meta.data["area"] <- as.factor(area_M3_fem_1C)
 
 ###########################################################
 
