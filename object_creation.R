@@ -47,6 +47,7 @@ M3_tib_1A@meta.data["area"] <- as.factor(area_M3_tib_1A)
 area_M3_fem_1C <- read.csv( "./data/mahtab_cloupe/M3_femur_1C.csv")
 area_M3_fem_1C <- as.vector(area_M3_fem_1C$femur_1C)
 M3_fem_1C@meta.data["area"] <- as.factor(area_M3_fem_1C)
+M3_fem_1C@images[["M3_fem_1C"]]@spot.radius <- 0.01248195
 
 ###########################################################
 
