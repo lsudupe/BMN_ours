@@ -4,6 +4,7 @@
 
 #Libraries---------------------------------
 library(Seurat)
+library(scCustomize)
 library(SingleR)
 library(dplyr)
 library(ggplot2) 
@@ -21,8 +22,9 @@ single_cell_bonemarrow = UpdateSeuratObject(object = NicheData10x)
 single_cell_bonemarrow@meta.data[["cell"]] <- single_cell_bonemarrow@active.ident
 #####SUBSET IN BONE, BONE MARROW
 
-pdf(file.path("./results/clusters/single_cell//",filename = "cell_types_singlecell.pdf"))
-print(DimPlot(single_cell_bonemarrow, reduction = "tsne", label = TRUE))
+pdf(file.path("./results/clusters/single_cell/",filename = "cell_types_singlecell.pdf"))
+#print(DimPlot(single_cell_bonemarrow, reduction = "tsne", label = TRUE))
+print(DimPlot_scCustom(single_cell_bonemarrow, reduction = "tsne", label = TRUE, repel=TRUE))
 dev.off()
 
 integrated_seurat <- readRDS("./objects/sp/integrated/integrated.seurat_type.rds")
@@ -52,12 +54,14 @@ harmony.sce <- as.SingleCellExperiment(integrated_harmony)
 predictions_seurat <- SingleR(test=seurat.sce, assay.type.test=1, 
                           ref=single.sce, labels=single.sce$cell)
 
+
 table(predictions_seurat$labels)
 a <- as.factor(predictions_seurat@listData[["labels"]])
 integrated_seurat@meta.data[["pred"]] <- a
 b <- integrated_seurat
 b@active.ident <- b@meta.data[["pred"]]
 saveRDS(b, "./objects/sp/integrated/integrated.seurat_predictions.rds")
+saveRDS(predictions_seurat, "./objects/sp/integrated/seurat_predictions.rds")
 
 pdf(file.path("./results/singleR/",filename = "cell_types_singlecell_seurat.pdf"))
 print(SpatialDimPlot(b, combine = FALSE,label=TRUE,repel=TRUE ,label.size = 0.9))
@@ -74,6 +78,7 @@ integrated_harmony@meta.data[["pred"]] <- a
 b <- integrated_harmony
 b@active.ident <- b@meta.data[["pred"]]
 saveRDS(b, "./objects/sp/integrated/integrated.harmony_predictions.rds")
+saveRDS(predictions_harmony, "./objects/sp/integrated/harmony_predictions.rds")
 
 pdf(file.path("./results/singleR/",filename = "cell_types_singlecell_harmony.pdf"))
 print(SpatialDimPlot(b, combine = FALSE,label=TRUE,repel=TRUE ,label.size = 0.9))
@@ -111,53 +116,107 @@ names(cell_types)[22] <- "Ng2 MSCs"
 
 ####AddmoduleScore Seurat
 
-integrated_seurat <- readRDS("./objects/sp/integrated/integrated.seurat_type.rds")
-integrated_harmony <- readRDS("./objects/sp/integrated/integrated.harmony_type.rds")
+seurat <- readRDS("./objects/sp/integrated/integrated.seurat_type.rds")
+harmony <- readRDS("./objects/sp/integrated/integrated.harmony_type.rds")
 
-for (i in 1:length(cell_types)){
-  a <- cell_types[[i]]
-  c <- paste0(names(cell_types[i]), "1")
+seurat_cell_types <- cell_types
+seurat_cell_types[["T cells"]] <- NULL
+
+for (i in 1:length(seurat_cell_types)){
+  a <- seurat_cell_types[[i]]
+  c <- paste0(names(seurat_cell_types[i]), "1")
   c <- gsub("-", ".", c)
   c <- gsub(" ", ".", c)
   c <- gsub("/", ".", c)
-  integrated_seurat <- AddModuleScore(integrated_seurat, features = cell_types[i], name = names(cell_types[i]))
+  seurat <- AddModuleScore(seurat, features = seurat_cell_types[i], name = names(seurat_cell_types[i]))
   #spatial 
   pdf(file.path("./results/singleR/module_score/",filename = paste0("spatial_seurat_",c,".pdf")))
-  print(SpatialFeaturePlot(integrated_seurat,features=c,combine = FALSE))
+  print(SpatialFeaturePlot(seurat,features=c,combine = FALSE))
   dev.off()
 }
 
 ####AddmoduleScore Harmony
+harmony_cell_types <- cell_types
 
-for (i in 1:length(cell_types)){
-  a <- cell_types[[i]]
-  c <- paste0(names(cell_types[i]), "1")
+for (i in 1:length(harmony_cell_types)){
+  a <- harmony_cell_types[[i]]
+  c <- paste0(names(harmony_cell_types[i]), "1")
   c <- gsub("-", ".", c)
   c <- gsub(" ", ".", c)
   c <- gsub("/", ".", c)
-  integrated_harmony <- AddModuleScore(integrated_harmony, features = cell_types[i], name = names(cell_types[i]))
+  harmony <- AddModuleScore(harmony, features = harmony_cell_types[i], name = names(harmony_cell_types[i]))
   #spatial 
   pdf(file.path("./results/singleR/module_score/",filename = paste0("spatial_harmony_",c,".pdf")))
-  print(SpatialFeaturePlot(integrated_harmony,features=c,combine = FALSE))
+  print(SpatialFeaturePlot(harmony,features=c,combine = FALSE))
   dev.off()
 }
 
 ####Are the different cell types different expressed between conditions?
 
-
-####AddmoduleScore
-integrated_harmony <- AddModuleScore(integrated_harmony, features = list(cell_types[2]), name = names(cell_types[1]))
-integrated_seurat <- AddModuleScore(integrated_seurat, features = list(cell_types[2]), name = names(cell_types[1]))
-
-####Plots
-
-pdf(file.path("./results/singleR/module_score/",filename = "Adipo-CAR_singlecell_harmony.pdf"))
-print(SpatialFeaturePlot(integrated_harmony,features=c("Adipo.CAR1"),combine = FALSE))
+pdf(file.path("./results/singleR/",filename = "harmony_heatmap.pdf"))
+plotScoreHeatmap(predictions_harmony)
 dev.off()
 
-pdf(file.path("./results/singleR/module_score/",filename = "Adipo-CAR_singlecell_seurat.pdf"))
-print(SpatialFeaturePlot(integrated_seurat,features=c("Adipo.CAR1"), combine = FALSE))
+pdf(file.path("./results/singleR/",filename = "harmony_violin.pdf"))
+plotDeltaDistribution(predictions_harmony, ncol = 3)
+dev.off()
+
+pdf(file.path("./results/singleR/",filename = "seurat_heatmap.pdf"))
+plotScoreHeatmap(predictions_seurat)
+dev.off()
+
+pdf(file.path("./results/singleR/",filename = "seurat_violin.pdf"))
+plotDeltaDistribution(predictions_seurat, ncol = 3)
+dev.off()
+
+###markers
+library(scater)
+all.markers_seurat <- metadata(predictions_seurat)$de.genes
+seurat.sce$labels <- predictions_seurat$labels
+
+pdf(file.path("./results/singleR/",filename = "seurat_heatmap.pdf"))
+plotHeatmap(seurat.sce, order_columns_by="labels",
+            features=unique(unlist(all.markers_seurat$Chondrocytes)),
+            colour_columns_by=c("MM", "control")) 
 dev.off()
 
 
+all.markers_harmony <- metadata(predictions_harmony)$de.genes
+harmony.sce$labels <- predictions_harmony$labels
+
+pdf(file.path("./results/singleR/",filename = "harmony_heatmap.pdf"))
+plotHeatmap(harmony.sce, order_columns_by="labels",
+            features=unique(unlist(all.markers_harmony$Chondrocytes)))
+dev.off()
+
+####SCORES
+scores_seurat <- as.data.frame(predictions_seurat@listData[["scores"]])
+
+first_max <- c()
+second_max <- c()
+rest_seurat <- c()
+for (i in 1:nrow(scores_seurat)) {
+  first_max = c(first_max, max(scores_seurat[i,]))
+  second_max = c(second_max, max(scores_seurat[i,][scores_seurat[i,] != max(scores_seurat[i,])]))
+  rest_seurat <- (first_max - second_max)
+}
+
+library(hrbrthemes)
+integrated_seurat@meta.data[["SingleR_score"]] <- first_max
+
+a <-integrated_seurat@meta.data %>% 
+  ggplot(aes(x= SingleR_score, y=nFeature_Spatial,color=pred,  label=pred)) + 
+  geom_point(size=0.6) 
+b <-integrated_seurat@meta.data %>% 
+  ggplot(aes(x= SingleR_score, y=nCount_Spatial,color=pred, label=pred)) + 
+  geom_point(size=0.6) 
+
+
+pdf(file.path("./results/singleR/",filename = "seurat_score_feature.pdf"))
+plot(a)
+dev.off()
+
+pdf(file.path("./results/singleR/",filename = "seurat_score_umi.pdf"))
+plot(b)
+dev.off()
 
