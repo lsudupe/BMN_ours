@@ -8,6 +8,9 @@ library(ggplot2)
 library("AUCell")
 library("dplyr")
 library("GSEABase")
+library("dittoSeq")
+library("dichromat")
+library("escape")
 
 
 #Data---------------------------------
@@ -61,6 +64,49 @@ for (i in 1:length(genesets)){
   genesets[[i]] <- b
 }
 
+geneSets <- GeneSetCollection(genesets)
 
-###### Create genesets
-nine.sig <- GeneSet(nine.no.b, setName="geneSet9")
+#####AUCell
+x<- integrated_seurat
+x@assays[["SCT"]]@counts <- x@assays[["SCT"]]@data
+matrix <- x@assays[["SCT"]]@counts
+matrix <- as.matrix(matrix)
+###### AUC score 
+cells_rankings <- AUCell_buildRankings(matrix, nCores=1)#, plotStats=TRUE)
+cells_AUC <- AUCell_calcAUC(geneSets, cells_rankings)
+#extract AUC values
+auc_per_cell_all <- as.data.frame(t(getAUC(cells_AUC)))
+##save meta
+x <- AddMetaData(x, auc_per_cell_all)
+
+
+#plots
+
+set <- c("geneSetHSC_PSC", "geneSetIC", "geneSetMSC", "geneSetNC", "geneSetEC")
+
+for (i in set){
+  pdf(file.path("./results/Aucell/",filename = paste(i,"ridge.pdf",sep="")))
+  print(dittoRidgePlot(x, i, group.by = "type"))
+  dev.off()
+}
+
+for (i in set){
+  pdf(file.path("./results/Aucell/",filename = paste(i,"ridge_2.pdf",sep="")))
+  print(ridgeEnrichment(x@meta.data, gene.set = i, group = "orig.ident", facet = "area", add.rug = TRUE))
+  dev.off()
+}
+
+
+library("GiNA")
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+b <- c(0, 0.5)
+for (i in set){
+  p1 <- SpatialFeaturePlot(x, features = i, combine = FALSE)
+  #fix.p1 <- scale_fill_gradientn(colours=c(bl,"white", re), na.value = "grey98",limits = b,breaks=b, labels = c("min", "max"))
+  fix.p1 <- scale_fill_gradientn(colours=myPalette(100),breaks=b, labels = c("min", "max"),limits = b)
+  p2 <- lapply(p1, function (x) x + fix.p1)
+  
+  pdf(file.path("./results/Aucell/",filename = paste(i,"spatial.pdf",sep="")))
+  print(CombinePlots(p2))
+  dev.off()
+}
