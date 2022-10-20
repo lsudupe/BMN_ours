@@ -42,3 +42,127 @@ for (i in 1:length(prueba)) {
 
 
 #####################QC#############################
+
+DIR_sp <- file.path(DIR_ROOT, "./objects/sp/second/")
+
+#Data--------------------------------------
+objects <- dir(path = DIR_sp)
+
+lista <- c(objects)
+names(lista) <- objects
+prueba <-c()
+
+for (i in lista){
+  b <- i
+  a <- readRDS(paste0(DIR_sp, i))
+  prueba[[length(prueba) + 1]] <- a
+  names(prueba) <- i
+}
+names(prueba) <- samples
+
+###
+names(prueba)
+
+M1_tib_1A <- prueba[[2]]
+M1_tib_1A@meta.data[["type"]] <- "MM"
+M1_tib_1A@meta.data[["orig.ident"]] <- "M1_tib_1A" 
+
+M1_fem_1C <- prueba[[1]]
+M1_fem_1C@meta.data[["type"]] <- "MM"
+M1_fem_1C@meta.data[["orig.ident"]] <- "M1_fem_1C" 
+
+M3_tib_2A <- prueba[[4]]
+M3_tib_2A@meta.data[["type"]] <- "control"
+M3_tib_2A@meta.data[["orig.ident"]] <- "M3_tib_2A" 
+
+M3_fem_1C <- prueba[[3]]
+M3_fem_1C@meta.data[["type"]] <- "control"
+M3_fem_1C@meta.data[["orig.ident"]] <- "M3_fem_1C" 
+
+##Merge them
+combined <- merge(M1_tib_1A, y = c(M1_fem_1C, M3_tib_2A, M3_fem_1C ), 
+                  add.cell.ids = c("M1_tib_1A", "M1_fem_1C", "M3_tib_2A", "M3_fem_1C"), project = "BM")
+
+
+###PLOTS###
+# Visualize the distribution of genes detected per spot via histogram
+pdf(file.path("./results/QC/combined.second/",filename = "genes detected per spot histogram.pdf"))
+combined@meta.data %>% 
+  ggplot(aes(color=orig.ident, x=nFeature_Spatial, fill=orig.ident)) + 
+  geom_density(alpha = 0.2) + 
+  theme_classic() +
+  scale_x_log10() + 
+  geom_vline(xintercept = 100)
+dev.off()
+
+# Visualize the distribution of UMI detected per spot via histogram
+pdf(file.path("./results/QC/combined.second/",filename = "UMIs detected per spot histogram.pdf"))
+combined@meta.data %>% 
+  ggplot(aes(color=orig.ident, x=nCount_Spatial, fill=orig.ident)) + 
+  geom_density(alpha = 0.2) + 
+  theme_classic() +
+  scale_x_log10() +
+  geom_vline(xintercept = 200)
+dev.off()
+
+pdf(file.path("./results/QC/combined.second",filename = "features.pdf"))
+FeatureScatter(combined, feature1 = "nCount_Spatial", feature2 = "nFeature_Spatial", group.by = "orig.ident")
+dev.off()
+
+pdf(paste("./results/QC/combined.second/nFeature_Spatial.pdf",sep=""))
+SpatialFeaturePlot(combined, features = "nFeature_Spatial",combine = FALSE)
+dev.off()
+
+pdf(paste("./results/QC/combined.second/nCount_Spatial.pdf",sep=""))
+SpatialFeaturePlot(combined, features = "nCount_Spatial",combine = FALSE)
+dev.off()
+
+##########SPATIAL plots
+library(BuenColors)
+nuria <- jdb_palette("brewer_spectra")
+color <- nuria
+image.trans <- 0.5
+spot.trans <- 1
+
+##specific plots
+
+a <- as.vector(combined@meta.data[["nFeature_Spatial"]])
+a <- log(a)
+hist(a)
+combined@meta.data[["log_nFeature_Spatial"]] <- a
+
+
+b <- c(5,9)
+label <- c("min", "max")
+p1 <- SpatialFeaturePlot(combined, features = "log_nFeature_Spatial",combine = FALSE)
+fix.p1 <- scale_fill_gradientn(colours=color,breaks=b, labels = label,limits =b)
+p2 <- lapply(p1, function (x) x + fix.p1)
+
+pdf(paste("./results/QC/combined.second/log_nFeature_Spatial.pdf",sep=""))
+CombinePlots(p2)
+dev.off()
+
+a <- as.vector(combined@meta.data[["nCount_Spatial"]])
+a <- log(a)
+combined@meta.data[["log_nCount_Spatial"]] <- a
+
+b <- c(4,11)
+label <- c("min", "max")
+p1 <- SpatialFeaturePlot(combined, features = "log_nCount_Spatial",combine = FALSE, alpha=0.9)
+fix.p1 <- scale_fill_gradientn(colours=color,breaks=b, labels = label,limits =b)
+p2 <- lapply(p1, function (x) x + fix.p1)
+
+pdf(paste("./results/QC/combined.second/log_nCount_Spatial.pdf",sep=""))
+CombinePlots(p2)
+dev.off()
+
+
+# Filter out low quality cells using selected thresholds - these will change with experiment
+combined <- subset(x = combined, 
+                   subset= (nCount_Spatial >= 200 & nCount_Spatial <= 40000) & 
+                     (nFeature_Spatial >= 100 & nFeature_Spatial <= 6000))
+
+saveRDS(combined, "./objects/sp/second/combined_filtered.rds")
+
+
+
