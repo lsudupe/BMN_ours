@@ -14,12 +14,12 @@ library("escape")
 
 
 #Data---------------------------------
-integrated_seurat <- readRDS("./objects/sp/integrated/integrated.seurat_type.rds")
+integrated_seurat <- readRDS("./objects/sp/integrated/second/integrated.seurat_type.rds")
 single_cell_bonemarrow <- readRDS("./objects/sc/single_cell_bonemarrow.rds")
 
 
 #Analysis---------------------------------
-Idents(single_cell_bonemarrow) <- single_cell_bonemarrow@meta.data[["groups"]]
+Idents(single_cell_bonemarrow) <- single_cell_bonemarrow@meta.data[["cell"]]
 
 
 ##DE
@@ -81,18 +81,20 @@ x <- AddMetaData(x, auc_per_cell_all)
 
 
 #plots
+set <- names(geneSets)
+meta <- x@meta.data
 
-set <- c("geneSetHSC_PSC", "geneSetIC", "geneSetMSC", "geneSetNC", "geneSetEC")
+set <- c(colnames(meta[, 11:42]))
 
 for (i in set){
-  pdf(file.path("./results/Aucell/",filename = paste(i,"ridge.pdf",sep="")))
+  pdf(file.path("./results/Aucell/second/subgroups/",filename = paste(i,"ridge.pdf",sep="")))
   print(dittoRidgePlot(x, i, group.by = "type"))
   dev.off()
 }
 
 for (i in set){
-  pdf(file.path("./results/Aucell/",filename = paste(i,"ridge_2.pdf",sep="")))
-  print(ridgeEnrichment(x@meta.data, gene.set = i, group = "orig.ident", facet = "area", add.rug = TRUE))
+  pdf(file.path("./results/Aucell/second/subgroups/",filename = paste(i,"ridge_2.pdf",sep="")))
+  print(ridgeEnrichment(x@meta.data, gene.set = i, group = "orig.ident", facet = "seurat_clusters", add.rug = TRUE))
   dev.off()
 }
 
@@ -106,7 +108,7 @@ for (i in set){
   fix.p1 <- scale_fill_gradientn(colours=myPalette(100),breaks=b, labels = c("min", "max"),limits = b)
   p2 <- lapply(p1, function (x) x + fix.p1)
   
-  pdf(file.path("./results/Aucell/",filename = paste(i,"spatial.pdf",sep="")))
+  pdf(file.path("./results/Aucell/second/subgroups/",filename = paste(i,"spatial.pdf",sep="")))
   print(CombinePlots(p2))
   dev.off()
 }
