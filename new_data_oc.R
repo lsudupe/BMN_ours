@@ -4,6 +4,7 @@
 
 #Libraries---------------------------------
 library(Seurat)
+library(ggplot2)
 
 #Variables---------------------------------
 DIR_ROOT <- file.path(getwd())
@@ -47,6 +48,7 @@ DIR_sp <- file.path(DIR_ROOT, "./objects/sp/second/")
 
 #Data--------------------------------------
 objects <- dir(path = DIR_sp)
+objects <- objects[! objects %in% c("combined_filtered.rds")]
 
 lista <- c(objects)
 names(lista) <- objects
