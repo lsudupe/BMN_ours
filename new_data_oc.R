@@ -24,6 +24,14 @@ for (i in lista){
                           assay = "Spatial",
                           slice = i,
                           filter.matrix = TRUE)
+  ######add area data
+  area_a <- read.csv(paste0(DIR_DATA, i, "/new_area.csv"))
+  area_a <- as.vector(area_a$new_area)
+  a@meta.data["area"] <- as.factor(area_a)
+  ######subset data
+  Seurat::Idents(object = a) <- a@meta.data[["area"]]
+  a@meta.data[["area"]] <- a@active.ident
+  ######add object to list
   prueba[[length(prueba) + 1]] <- a
 }
 names(prueba) <- samples
@@ -84,6 +92,7 @@ M3_fem_1C@meta.data[["orig.ident"]] <- "M3_fem_1C"
 ##Merge them
 combined <- merge(M1_tib_1A, y = c(M1_fem_1C, M3_tib_2A, M3_fem_1C ), 
                   add.cell.ids = c("M1_tib_1A", "M1_fem_1C", "M3_tib_2A", "M3_fem_1C"), project = "BM")
+combined <- subset(x =combined, idents = c("Muscle", "Bone", "BM", "GP", "AC"))
 
 
 ###PLOTS###
