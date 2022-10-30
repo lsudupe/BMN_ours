@@ -28,15 +28,19 @@ list <- lapply(X = list, FUN = SCTransform, assay="Spatial")
 features <- SelectIntegrationFeatures(object.list = list, nfeatures = 3000)
 list <- PrepSCTIntegration(object.list = list, anchor.features = features)
 anchors <- FindIntegrationAnchors(object.list = list, normalization.method = "SCT",
-                                  anchor.features = features)
-seurat_resolution <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
+                                  anchor.features = features, dims = 1:20)
+seurat_resolution <- IntegrateData(anchorset = anchors, normalization.method = "SCT", dims = 1:20)
 
 seurat_resolution@images <- x.image
-seurat_resolution <- RunPCA(seurat_resolution,npcs = 15, verbose = FALSE) %>%
-  RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>%
-  FindNeighbors(reduction = "pca", dims = 1:15) %>%
+DefaultAssay(seurat_resolution) <- "integrated"
+seurat_resolution <- ScaleData(seurat_resolution, verbose = FALSE) %>%
+  RunPCA(npcs = 20, verbose = FALSE) %>%
+  RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>%
+  FindNeighbors(reduction = "pca", dims = 1:20) %>%
   FindClusters(resolution=0.7) 
 
+  
+  
 seurat_resolution <- SetIdent(seurat_resolution, value = seurat_resolution@meta.data[["area"]])
 #spatial areas 
 pdf(file.path("./results/area_manual/",filename = "area_spatial_.pdf"))
@@ -50,11 +54,27 @@ markers <- Seurat::FindAllMarkers(object = seurat_resolution,
                                       assay = "integrated",
                                       verbose = TRUE)
 
-markers_conserved <- FindConservedMarkers(object = seurat_resolution, 
-                                  assay = "integrated",
-                                  ident.1= "MM",
-                                  ident.2= "control",
-                                  verbose = TRUE)
+DefaultAssay(seurat_resolution) <- "Spatial"
+seurat_resolution <- SetIdent(seurat_resolution, value = seurat_resolution@meta.data[["area"]])
+bm_markers_control <- FindConservedMarkers(seurat_resolution,assay = "Spatial",ident.1 = "BM", grouping.var = "type", verbose = FALSE)
+bm_markers_MM <- FindConservedMarkers(seurat_resolution,assay = "Spatial", ident.1 = "BM", grouping.var = "type", verbose = FALSE)
+head(bm_markers_MM)
+
+FeaturePlot(seurat_resolution, features = c("Sem1", "Hist1h1a", "Actb", "Tmsb4x", "Anp32a", "Hist1h1b"), min.cutoff = "q9")
+df <- cbind(newColName = rownames(bm_markers_MM), bm_markers_MM)
+rownames(df) <- 1:nrow(df)
+df <- df[1:20,]
+markers.to.plot <- df$newColName
+
+canonical_hematopoietic <- canonical$Hematopoietic
+canonical_hematopoietic <- head(canonical_hematopoietic, n=14)
+
+markers.to.plot <- c("Sem1", "Hist1h1a", "Actb", "Tmsb4x", "Anp32a", "Hist1h1b")
+DotPlot(seurat_resolution, features = rev(canonical_hematopoietic), cols = c("blue", "red"), dot.scale = 8, 
+        split.by = "type") + RotatedAxis()
+
+
+
 
 markers_area <- subset(markers, p_val_adj < 0.05 & 0.5 < avg_log2FC)
 top20_area <- markers %>%
