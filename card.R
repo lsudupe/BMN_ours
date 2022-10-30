@@ -63,6 +63,8 @@ CARD_obj_M1_tib_1A = createCARDObject(
 CARD_M1_tib_1A = CARD_deconvolution(CARD_object = CARD_obj_M1_tib_1A)
 print(CARD_M1_tib_1A@Proportion_CARD[1:2,])
 
+CARD_M1_tib_1A_proportions <- CARD_M1_tib_1A@Proportion_CARD
+
 
 p1 <- CARD.visualize.pie(proportion = CARD_M1_tib_1A@Proportion_CARD,
                          spatial_location = CARD_M1_tib_1A@spatial_location,
@@ -93,3 +95,41 @@ p3 <- CARD.visualize.Cor(CARD_M1_tib_1A@Proportion_CARD,colors = NULL) # if not 
 pdf(file.path("./results/CARD/",filename = "3.pdf"))
 print(p3)
 dev.off()
+
+######Proportions
+
+M1_tib_1A_meta <- M1_tib_1A@meta.data
+M1_tib_1A_area <- M1_tib_1A_meta$area
+CARD_M1_tib_1A_proportions <- as.data.frame(CARD_M1_tib_1A_proportions)
+CARD_M1_tib_1A_proportions["area"] <- as.vector(M1_tib_1A_area)
+
+########create a function to get proportions
+
+AC_value <- CARD_M1_tib_1A_proportions[grepl("AC", CARD_M1_tib_1A_proportions[,6]),]
+AC_value$area <- NULL
+AC_HSC_PSC <- (sum(AC_value$HSC_PSC))*100/nrow(AC_value)
+AC_MSC <- (sum(AC_value$MSC))*100/nrow(AC_value)
+AC_NC <- (sum(AC_value$NC))*100/nrow(AC_value)
+AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
+
+
+
+
+as.numeric(rownames(AC_value)) 
+nrow(AC_value)
+
+BM_value <- CARD_M1_tib_1A_proportions[grepl("BM", CARD_M1_tib_1A_proportions[,6]),]
+BM_value$area <- NULL
+Muscle_value <- CARD_M1_tib_1A_proportions[grepl("Muscle", CARD_M1_tib_1A_proportions[,6]),]
+Muscle_value$area <- NULL
+GP_value <- CARD_M1_tib_1A_proportions[grepl("GP", CARD_M1_tib_1A_proportions[,6]),]
+GP_value$area <- NULL
+Bone_value <- CARD_M1_tib_1A_proportions[grepl("Bone", CARD_M1_tib_1A_proportions[,6]),]
+Bone_value$area <- NULL
+
+
+
+
+
+
+
