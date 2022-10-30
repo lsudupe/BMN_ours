@@ -112,8 +112,33 @@ AC_MSC <- (sum(AC_value$MSC))*100/nrow(AC_value)
 AC_NC <- (sum(AC_value$NC))*100/nrow(AC_value)
 AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
 
+BM_value <- CARD_M1_tib_1A_proportions[grepl("BM", CARD_M1_tib_1A_proportions[,6]),]
+BM_value$area <- NULL
+BM_HSC_PSC <- (sum(BM_value$HSC_PSC))*100/nrow(BM_value)
+BM_MSC <- (sum(BM_value$MSC))*100/nrow(BM_value)
+BM_NC <- (sum(BM_value$NC))*100/nrow(BM_value)
+BM_EC <- (sum(BM_value$EC))*100/nrow(BM_value)
 
+Muscle_value <- CARD_M1_tib_1A_proportions[grepl("Muscle", CARD_M1_tib_1A_proportions[,6]),]
+Muscle_value$area <- NULL
+Muscle_HSC_PSC <- (sum(Muscle_value$HSC_PSC))*100/nrow(Muscle_value)
+Muscle_MSC <- (sum(Muscle_value$MSC))*100/nrow(Muscle_value)
+Muscle_NC <- (sum(Muscle_value$NC))*100/nrow(Muscle_value)
+Muscle_EC <- (sum(Muscle_value$EC))*100/nrow(Muscle_value)
 
+GP_value <- CARD_M1_tib_1A_proportions[grepl("GP", CARD_M1_tib_1A_proportions[,6]),]
+GP_value$area <- NULL
+GP_HSC_PSC <- (sum(GP_value$HSC_PSC))*100/nrow(GP_value)
+GP_MSC <- (sum(GP_value$MSC))*100/nrow(GP_value)
+GP_NC <- (sum(GP_value$NC))*100/nrow(GP_value)
+GP_EC <- (sum(GP_value$EC))*100/nrow(GP_value)
+
+Bone_value <- CARD_M1_tib_1A_proportions[grepl("Bone", CARD_M1_tib_1A_proportions[,6]),]
+Bone_value$area <- NULL
+Bone_HSC_PSC <- (sum(Bone_value$HSC_PSC))*100/nrow(Bone_value)
+Bone_MSC <- (sum(Bone_value$MSC))*100/nrow(Bone_value)
+Bone_NC <- (sum(Bone_value$NC))*100/nrow(Bone_value)
+Bone_EC <- (sum(Bone_value$EC))*100/nrow(Bone_value)
 
 as.numeric(rownames(AC_value)) 
 nrow(AC_value)
