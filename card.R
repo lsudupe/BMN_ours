@@ -9,6 +9,9 @@ library(ggplot2)
 library(dplyr)
 #devtools::install_github('YingMa0107/CARD')
 library(CARD)
+library(gtools)
+library(scatterpie)
+library(ggcorrplot)
 
 source(file = "./card.plot2.R")
 
@@ -27,13 +30,68 @@ x@images[["M1_fem_1C"]]<- NULL
 x@images[["M3_tib_2A"]]<- NULL
 x@images[["M3_fem_1C"]]<- NULL
 list <- SplitObject(x, split.by = "orig.ident")
-list <- lapply(X = list, FUN = SCTransform, assay="Spatial")
 
-M1_tib_1A <- list[["M1_tib_1A"]]
-M1_tib_1A <-  RunPCA(M1_tib_1A, npcs = 20, verbose = FALSE) %>%
-  RunUMAP(reduction = "pca", dims = 1:20, verbose = FALSE) %>%
-  FindNeighbors(reduction = "pca", dims = 1:20) %>%
-  FindClusters(resolution=0.5) 
+#sc
+single_cell_bonemarrow_counts <- single_cell_bonemarrow@assays[["RNA"]]@counts
+single_cell_bonemarrow_meta <- single_cell_bonemarrow@meta.data
+#single_cell_bonemarrow_meta <- single_cell_bonemarrow_meta[, 6:7]
+
+for (i in 1:length(list)){
+  a <- list[[i]]
+  a <- SCTransform(a, assay="Spatial")
+  a <- RunPCA(a, npcs = 20, verbose = FALSE, assay="SCT")
+  a <- RunUMAP(a, reduction = "pca", dims = 1:20, verbose = FALSE)
+  a <- FindNeighbors(a, reduction = "pca", dims = 1:20)
+  a <- FindClusters(a, resolution=0.5)
+  a_count <- a@assays[["Spatial"]]@counts
+  a_location <- x.image[[names(list[i])]]@coordinates
+  a_location <- a_location[,2:3]
+  colnames(a_location) <- c("x", "y")
+  ###################CARD object creation
+  CARD_obj_a = createCARDObject(
+    sc_count = single_cell_bonemarrow_counts,
+    sc_meta = single_cell_bonemarrow_meta,
+    spatial_count = a_count,
+    spatial_location = a_location,
+    ct.varname = "groups",
+    ct.select = unique(single_cell_bonemarrow_meta$groups),
+    sample.varname = "metadata....experiment..",
+    minCountGene = 100,
+    minCountSpot = 5)
+  ###################Deco
+  CARD_a = CARD_deconvolution(CARD_object = CARD_obj_a)
+  b <- "aajajaj"
+  CARD_a_proportions <- CARD_a@Proportion_CARD
+  c <- "aajajaj"
+  ###################Plots
+  p1 <- CARD.visualize.pie(proportion = CARD_a@Proportion_CARD,
+                           spatial_location = CARD_a@spatial_location)
+  pdf(paste("./results/CARD/", names(list[i]),"_1.pdf",sep=""))
+  print(p1)
+  dev.off()
+  ## select the cell type that we are interested
+  ct.visualize = c("HSC_PSC","IC","MSC","NC","EC")
+  ## visualize the spatial distribution of the cell type proportion
+  p2 <- CARD.visualize.prop.2(
+    proportion = CARD_a@Proportion_CARD,        
+    spatial_location = CARD_a@spatial_location, 
+    ct.visualize = ct.visualize,                 ### selected cell types to visualize
+    colors = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
+    NumCols = 4)                                 ### number of columns in the figure panel
+  pdf(paste("./results/CARD/", names(list[i]),"_2.pdf",sep=""))
+  print(p2)
+  dev.off()
+  ## correlation
+  p3 <- CARD.visualize.Cor(CARD_a@Proportion_CARD,colors = NULL) # if not provide, we will use the default colors
+  pdf(paste("./results/CARD/", names(list[i]),"_3.pdf",sep=""))
+  print(p3)
+  dev.off()
+  ## save object
+  saveRDS(a,file = paste0("./objects/card/",names(list[i]),".rds"))
+  ## save card results
+  saveRDS(CARD_obj_a,file = paste0("./objects/card/",names(list[i]),"_CARD_obj.rds"))
+}
+
 
 M1_tib_1A_count <- M1_tib_1A@assays[["Spatial"]]@counts
 M1_tib_1A_location <- x.image[["M1_tib_1A"]]@coordinates
@@ -64,6 +122,7 @@ CARD_M1_tib_1A = CARD_deconvolution(CARD_object = CARD_obj_M1_tib_1A)
 print(CARD_M1_tib_1A@Proportion_CARD[1:2,])
 
 CARD_M1_tib_1A_proportions <- CARD_M1_tib_1A@Proportion_CARD
+
 
 
 p1 <- CARD.visualize.pie(proportion = CARD_M1_tib_1A@Proportion_CARD,
