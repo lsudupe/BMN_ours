@@ -89,73 +89,61 @@ for (i in 1:length(list)){
   ## save object
   saveRDS(a,file = paste0("./objects/card/",names(list[i]),".rds"))
   ## save card results
-  saveRDS(CARD_obj_a,file = paste0("./objects/card/",names(list[i]),"_CARD_obj.rds"))
+  saveRDS(CARD_a,file = paste0("./objects/card/",names(list[i]),"_CARD_obj.rds"))
 }
 
+## Card object
+M1_fem_1C_CARD_obj <- readRDS("./objects/card/M1_fem_1C_CARD_obj.rds")
+M1_tib_1A_CARD_obj <- readRDS("./objects/card/M1_tib_1A_CARD_obj.rds")
+M3_fem_1C_CARD_obj <- readRDS("./objects/card/M3_fem_1C_CARD_obj.rds")
+M3_tib_2A_CARD_obj <- readRDS("./objects/card/M3_tib_2A_CARD_obj.rds")
 
-M1_tib_1A_count <- M1_tib_1A@assays[["Spatial"]]@counts
-M1_tib_1A_location <- x.image[["M1_tib_1A"]]@coordinates
-M1_tib_1A_location <- M1_tib_1A_location[,2:3]
+card_list <- c(M1_fem_1C_CARD_obj, M1_tib_1A_CARD_obj, M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
+names(card_list) <- c("M1_fem_1C_CARD_obj","M1_tib_1A_CARD_obj","M3_fem_1C_CARD_obj","M3_tib_2A_CARD_obj")
 
-colnames(M1_tib_1A_location) <- c("x", "y")
+## Spatial object
+M1_fem_1C <- readRDS("./objects/card/M1_fem_1C.rds")
+M1_tib_1A <- readRDS("./objects/card/M1_tib_1A.rds")
+M3_fem_1C <- readRDS("./objects/card/M3_fem_1C.rds")
+M3_tib_2A <- readRDS("./objects/card/M3_tib_2A.rds")
 
-#sc
-single_cell_bonemarrow_counts <- single_cell_bonemarrow@assays[["RNA"]]@counts
-single_cell_bonemarrow_meta <- single_cell_bonemarrow@meta.data
-single_cell_bonemarrow_meta <- single_cell_bonemarrow_meta[, 6:7]
+spatial_list <- c(M1_fem_1C, M1_tib_1A, M3_fem_1C, M3_tib_2A)
+names(spatial_list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
 
+list <- list(spatial_list, card_list)
+names(list) <- c("spatial_list", "card_list")
 
-###################CARD object creation
-CARD_obj_M1_tib_1A = createCARDObject(
-  sc_count = single_cell_bonemarrow_counts,
-  sc_meta = single_cell_bonemarrow_meta,
-  spatial_count = M1_tib_1A_count,
-  spatial_location = M1_tib_1A_location,
-  ct.varname = "groups",
-  ct.select = unique(single_cell_bonemarrow_meta$groups),
-  sample.varname = "metadata....experiment..",
-  minCountGene = 100,
-  minCountSpot = 5)
+idx_vect_prueba <- c(1:length(list[[1]]))
+  
+######Proportions#######################################################################
+#https://stackoverflow.com/questions/46205479/looping-over-multiple-lists-with-base-r
+for (i in 1:length(list)){
+  a <- list[[1]][[i]]
+  b <- list[[2]][[i]]
+  ## 
+  a_meta <- a@meta.data
+  a_area <- a_meta$area
+  a_proportions <- b@Proportion_CARD
+  a_proportions <- as.data.frame(a_proportions)
+  a_proportions["area"] <- as.vector(a_area)
+  print(a_proportions)
+  #print(c(names(a), names(b)))
+  #print(c(names(a)))
+}
 
-###################Deco
-CARD_M1_tib_1A = CARD_deconvolution(CARD_object = CARD_obj_M1_tib_1A)
-print(CARD_M1_tib_1A@Proportion_CARD[1:2,])
+vect1 <- c(1, 2, 3)
+vect2 <- c('foo', 'bar', 'baz')
 
-CARD_M1_tib_1A_proportions <- CARD_M1_tib_1A@Proportion_CARD
+idx_list <- list(vect1, vect2)
+idx_vect <- c(1:length(idx_list[[1]]))
 
-
-
-p1 <- CARD.visualize.pie(proportion = CARD_M1_tib_1A@Proportion_CARD,
-                         spatial_location = CARD_M1_tib_1A@spatial_location,
-                              )
-
-pdf(file.path("./results/CARD/",filename = "1.pdf"))
-print(p1)
-dev.off()
-
-
-## select the cell type that we are interested
-ct.visualize = c("HSC_PSC","IC","MSC","NC","EC")
-## visualize the spatial distribution of the cell type proportion
-p2 <- CARD.visualize.prop.2(
-  proportion = CARD_M1_tib_1A@Proportion_CARD,        
-  spatial_location = CARD_M1_tib_1A@spatial_location, 
-  ct.visualize = ct.visualize,                 ### selected cell types to visualize
-  colors = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
-  NumCols = 4)                                 ### number of columns in the figure panel
-
-pdf(file.path("./results/CARD/",filename = "2.pdf"))
-print(p2)
-dev.off()
-
-
-p3 <- CARD.visualize.Cor(CARD_M1_tib_1A@Proportion_CARD,colors = NULL) # if not provide, we will use the default colors
-
-pdf(file.path("./results/CARD/",filename = "3.pdf"))
-print(p3)
-dev.off()
-
-######Proportions
+for(i in idx_vect_prueba){
+  x <- list[[1]][i]
+  j <- list[[2]][i]
+  #print(c(names(i), names(x), names(j)))
+  print(c(names(j)))
+  #print(c(names(x), names(j)))
+}
 
 M1_tib_1A_meta <- M1_tib_1A@meta.data
 M1_tib_1A_area <- M1_tib_1A_meta$area
