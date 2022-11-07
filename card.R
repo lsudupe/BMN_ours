@@ -60,9 +60,7 @@ for (i in 1:length(list)){
     minCountSpot = 5)
   ###################Deco
   CARD_a = CARD_deconvolution(CARD_object = CARD_obj_a)
-  b <- "aajajaj"
   CARD_a_proportions <- CARD_a@Proportion_CARD
-  c <- "aajajaj"
   ###################Plots
   p1 <- CARD.visualize.pie(proportion = CARD_a@Proportion_CARD,
                            spatial_location = CARD_a@spatial_location)
@@ -101,8 +99,8 @@ M3_tib_2A_CARD_obj <- readRDS("./objects/card/M3_tib_2A_CARD_obj.rds")
 card_list <- c(M1_fem_1C_CARD_obj, M1_tib_1A_CARD_obj, M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
 names(card_list) <- c("M1_fem_1C_CARD_obj","M1_tib_1A_CARD_obj","M3_fem_1C_CARD_obj","M3_tib_2A_CARD_obj")
 
-card_list <- c(M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
-names(card_list) <- c("M3_fem_1C_CARD_obj","M3_tib_2A_CARD_obj")
+card_list <- c(M1_fem_1C_CARD_obj, M1_tib_1A_CARD_obj)
+names(card_list) <- c("M1_fem_1C_CARD_obj","M1_tib_1A_CARD_obj")
 
 ## Spatial object
 M1_fem_1C <- readRDS("./objects/card/M1_fem_1C.rds")
@@ -113,8 +111,8 @@ M3_tib_2A <- readRDS("./objects/card/M3_tib_2A.rds")
 spatial_list <- c(M1_fem_1C, M1_tib_1A, M3_fem_1C, M3_tib_2A)
 names(spatial_list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
 
-spatial_list <- c(M3_fem_1C, M3_tib_2A)
-names(spatial_list) <- c("M3_fem_1C","M3_tib_2A")
+spatial_list <- c(M1_fem_1C, M1_tib_1A)
+names(spatial_list) <- c("M1_fem_1C","M1_tib_1A")
 
 list <- list(spatial_list, card_list)
 names(list) <- c("spatial_list", "card_list")
@@ -140,7 +138,8 @@ for (i in 1:length(list)){
   AC_MSC <- (sum(AC_value$MSC))*100/nrow(AC_value)
   AC_NC <- (sum(AC_value$NC))*100/nrow(AC_value)
   AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
-  AC_proportions <- c(AC_HSC_PSC, AC_MSC , AC_NC, AC_EC)
+  AC_IC <- (sum(AC_value$IC))*100/nrow(AC_value)
+  AC_proportions <- c(AC_HSC_PSC, AC_MSC , AC_NC, AC_EC, AC_IC)
   # BM
   BM_value <- a_proportions[grepl("BM", a_proportions[,6]),]
   BM_value$area <- NULL
@@ -148,7 +147,8 @@ for (i in 1:length(list)){
   BM_MSC <- (sum(BM_value$MSC))*100/nrow(BM_value)
   BM_NC <- (sum(BM_value$NC))*100/nrow(BM_value)
   BM_EC <- (sum(BM_value$EC))*100/nrow(BM_value)
-  BM_proportions <- c(BM_HSC_PSC, BM_MSC , BM_NC, BM_EC)
+  BM_IC <- (sum(BM_value$IC))*100/nrow(BM_value)
+  BM_proportions <- c(BM_HSC_PSC, BM_MSC , BM_NC, BM_EC, BM_IC)
   # Muscle
   Muscle_value <- a_proportions[grepl("Muscle", a_proportions[,6]),]
   Muscle_value$area <- NULL
@@ -156,7 +156,8 @@ for (i in 1:length(list)){
   Muscle_MSC <- (sum(Muscle_value$MSC))*100/nrow(Muscle_value)
   Muscle_NC <- (sum(Muscle_value$NC))*100/nrow(Muscle_value)
   Muscle_EC <- (sum(Muscle_value$EC))*100/nrow(Muscle_value)
-  Muscle_proportions <- c(Muscle_HSC_PSC, Muscle_MSC , Muscle_NC, Muscle_EC)
+  Muscle_IC <- (sum(Muscle_value$IC))*100/nrow(Muscle_value)
+  Muscle_proportions <- c(Muscle_HSC_PSC, Muscle_MSC , Muscle_NC, Muscle_EC, Muscle_IC)
   #GP
   GP_value <- a_proportions[grepl("GP", a_proportions[,6]),]
   GP_value$area <- NULL
@@ -164,7 +165,8 @@ for (i in 1:length(list)){
   GP_MSC <- (sum(GP_value$MSC))*100/nrow(GP_value)
   GP_NC <- (sum(GP_value$NC))*100/nrow(GP_value)
   GP_EC <- (sum(GP_value$EC))*100/nrow(GP_value)
-  GP_proportions <- c(GP_HSC_PSC, GP_MSC , GP_NC, GP_EC)
+  GP_IC <- (sum(GP_value$IC))*100/nrow(GP_value)
+  GP_proportions <- c(GP_HSC_PSC, GP_MSC , GP_NC, GP_EC, GP_IC)
   # Bone
   Bone_value <- a_proportions[grepl("Bone", a_proportions[,6]),]
   Bone_value$area <- NULL
@@ -172,10 +174,11 @@ for (i in 1:length(list)){
   Bone_MSC <- (sum(Bone_value$MSC))*100/nrow(Bone_value)
   Bone_NC <- (sum(Bone_value$NC))*100/nrow(Bone_value)
   Bone_EC <- (sum(Bone_value$EC))*100/nrow(Bone_value)
-  Bone_proportions <- c(Bone_HSC_PSC, Bone_MSC , Bone_NC, Bone_EC)
+  Bone_IC <- (sum(Bone_value$IC))*100/nrow(Bone_value)
+  Bone_proportions <- c(Bone_HSC_PSC, Bone_MSC , Bone_NC, Bone_EC, Bone_IC)
   ## dataframe
   pro_df_ <- data.frame(AC_proportions, BM_proportions, Muscle_proportions ,GP_proportions, Bone_proportions)
-  rownames(pro_df_) <- c("HSC_PSC", "MSC", "NC", "EC")
+  rownames(pro_df_) <- c("HSC_PSC", "MSC", "NC", "EC", "IC")
   write.csv(pro_df_, file = paste0("./results/CARD/",c,".csv"))
 }
 
@@ -192,6 +195,7 @@ AC_value$area <- NULL
 AC_HSC_PSC <- (sum(AC_value$HSC_PSC))*100/nrow(AC_value)
 AC_MSC <- (sum(AC_value$MSC))*100/nrow(AC_value)
 AC_NC <- (sum(AC_value$NC))*100/nrow(AC_value)
+AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
 AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
 AC_proportions <- c(AC_HSC_PSC, AC_MSC , AC_NC, AC_EC)
 
