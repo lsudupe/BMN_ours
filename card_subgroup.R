@@ -152,7 +152,8 @@ z <- z[2:33]
 #https://stackoverflow.com/questions/46205479/looping-over-multiple-lists-with-base-r
 for (i in 1:length(pro_list)){
   a <- pro_list[[i]]
-  v <- names(a)
+  v <- pro_list[i]
+  v <- names(v)
   # AC
   BM_value <- a[grepl("BM", a[,34]),]
   BM_value$area <- NULL
@@ -206,7 +207,34 @@ for (i in 1:length(pro_list)){
   
   ## dataframe
   pro_df_ <- data.frame(BM_proportions)
-  v <- c("jojo")
   rownames(pro_df_) <- z
   write.csv(pro_df_, file = paste0("./results/CARD/subgroups/",v,".csv"))
 }
+
+M1_fem_1C <- read.csv("./results/CARD/subgroups/M1_fem_1C.csv" ,row.names = 1, header= TRUE)
+M1_tib_1A <- read.csv("./results/CARD/subgroups/M1_tib_1A.csv",row.names = 1, header= TRUE)
+M3_fem_1C <- read.csv("./results/CARD/subgroups/M3_fem_1C.csv",row.names = 1, header= TRUE)
+M3_tib_2A <- read.csv("./results/CARD/subgroups/M3_tib_2A.csv",row.names = 1, header= TRUE)
+
+p1<-ggplot(M1_fem_1C, aes(x=rownames(M1_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
+  ggtitle("M1_fem_1C") +
+  geom_bar(stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p2<-ggplot(M1_tib_1A, aes(x=rownames(M1_tib_1A),y=BM_proportions ,fill=BM_proportions)) +
+  ggtitle("M1_tib_1A") +
+  geom_bar(stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p3<-ggplot(M3_fem_1C, aes(x=rownames(M3_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
+  ggtitle("M3_fem_1C") +
+  geom_bar(stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p4<-ggplot(M3_tib_2A, aes(x=rownames(M3_tib_2A),y=BM_proportions ,fill=BM_proportions)) +
+  ggtitle("M3_tib_2A") +
+  geom_bar(stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+(p1 + p2 + p3 + p4)
+
+
+
