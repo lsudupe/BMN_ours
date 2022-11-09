@@ -216,21 +216,29 @@ M1_tib_1A <- read.csv("./results/CARD/subgroups/M1_tib_1A.csv",row.names = 1, he
 M3_fem_1C <- read.csv("./results/CARD/subgroups/M3_fem_1C.csv",row.names = 1, header= TRUE)
 M3_tib_2A <- read.csv("./results/CARD/subgroups/M3_tib_2A.csv",row.names = 1, header= TRUE)
 
+general <-  data.frame(M1_fem_1C, M1_tib_1A$BM_proportions, M3_fem_1C$BM_proportions,M3_tib_2A$BM_proportions)
+colnames(general) <- c("M1_fem_1C", "M1_tib_1A","M3_fem_1C", "M3_tib_2A" )
+
+
 p1<-ggplot(M1_fem_1C, aes(x=rownames(M1_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
   ggtitle("M1_fem_1C") +
   geom_bar(stat="identity")+
+  scale_y_log10() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p2<-ggplot(M1_tib_1A, aes(x=rownames(M1_tib_1A),y=BM_proportions ,fill=BM_proportions)) +
   ggtitle("M1_tib_1A") +
   geom_bar(stat="identity")+
+  scale_y_log10() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p3<-ggplot(M3_fem_1C, aes(x=rownames(M3_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
   ggtitle("M3_fem_1C") +
   geom_bar(stat="identity")+
+  scale_y_log10() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p4<-ggplot(M3_tib_2A, aes(x=rownames(M3_tib_2A),y=BM_proportions ,fill=BM_proportions)) +
   ggtitle("M3_tib_2A") +
   geom_bar(stat="identity")+
+  scale_y_log10() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
