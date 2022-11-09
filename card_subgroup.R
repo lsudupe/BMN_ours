@@ -137,7 +137,7 @@ for (i in 1:length(list)){
   write.csv(a_proportions, file = paste0("./results/CARD/",c,"_pro_subgroup.csv"))
 }
 
-M1_fem_1C <- read.csv("./results/CARD/M1_tib_1A_pro_subgroup.csv")
+M1_fem_1C <- read.csv("./results/CARD/M1_fem_1C_pro_subgroup.csv")
 M1_tib_1A <- read.csv("./results/CARD/M1_tib_1A_pro_subgroup.csv")
 M3_fem_1C <- read.csv("./results/CARD/M3_fem_1C_pro_subgroup.csv")
 M3_tib_2A <- read.csv("./results/CARD/M3_tib_2A_pro_subgroup.csv")
