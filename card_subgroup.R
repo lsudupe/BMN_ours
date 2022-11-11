@@ -30,6 +30,9 @@ single_cell_bonemarrow_meta <- single_cell_bonemarrow@meta.data
 #single_cell_bonemarrow_meta <- single_cell_bonemarrow_meta[, 6:7]
 
 #spatial
+
+######Subset spatial data
+spatial <- subset(spatial,idents = c("BM"))
 x <- spatial
 x.image <- x@images
 x@images[["M1_tib_1A"]]<- NULL
@@ -37,6 +40,10 @@ x@images[["M1_fem_1C"]]<- NULL
 x@images[["M3_tib_2A"]]<- NULL
 x@images[["M3_fem_1C"]]<- NULL
 list <- SplitObject(x, split.by = "orig.ident")
+
+list[["M1_tib_1A"]] <- NULL
+list[["M1_fem_1C"]] <- NULL
+
 
 for (i in 1:length(list)){
   a <- list[[i]]
@@ -78,7 +85,7 @@ for (i in 1:length(list)){
     spatial_location = CARD_a@spatial_location, 
     ct.visualize = ct.visualize,                 ### selected cell types to visualize
     colors = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
-    NumCols = 4)                                 ### number of columns in the figure panel
+    NumCols = 8)                                 ### number of columns in the figure panel
   pdf(paste("./results/CARD/subgroups/", names(list[i]),"_2.pdf",sep=""))
   print(p2)
   dev.off()
@@ -223,22 +230,22 @@ colnames(general) <- c("M1_fem_1C", "M1_tib_1A","M3_fem_1C", "M3_tib_2A" )
 p1<-ggplot(M1_fem_1C, aes(x=rownames(M1_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
   ggtitle("M1_fem_1C") +
   geom_bar(stat="identity")+
-  scale_y_log10() +
+  coord_cartesian(ylim = c(0, 25)) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p2<-ggplot(M1_tib_1A, aes(x=rownames(M1_tib_1A),y=BM_proportions ,fill=BM_proportions)) +
   ggtitle("M1_tib_1A") +
   geom_bar(stat="identity")+
-  scale_y_log10() +
+  coord_cartesian(ylim = c(0, 25)) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p3<-ggplot(M3_fem_1C, aes(x=rownames(M3_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
   ggtitle("M3_fem_1C") +
   geom_bar(stat="identity")+
-  scale_y_log10() +
+  coord_cartesian(ylim = c(0, 25)) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p4<-ggplot(M3_tib_2A, aes(x=rownames(M3_tib_2A),y=BM_proportions ,fill=BM_proportions)) +
   ggtitle("M3_tib_2A") +
   geom_bar(stat="identity")+
-  scale_y_log10() +
+  coord_cartesian(ylim = c(0, 25)) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
