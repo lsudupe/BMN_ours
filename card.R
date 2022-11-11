@@ -20,9 +20,9 @@ source(file = "./card.plot2.R")
 spatial <- readRDS("./objects/sp/second/combined_filtered.rds")
 single_cell_bonemarrow <- readRDS("./objects/sc/single_cell_bonemarrow.rds")
 
-
 ######Prepare data
 #spatial
+spatial <- subset(spatial,idents = c("BM"))
 x <- spatial
 x.image <- x@images
 x@images[["M1_tib_1A"]]<- NULL
@@ -32,6 +32,7 @@ x@images[["M3_fem_1C"]]<- NULL
 list <- SplitObject(x, split.by = "orig.ident")
 
 #sc
+sub_list <- levels(single_cell_bonemarrow@meta.data[["groups"]])
 single_cell_bonemarrow_counts <- single_cell_bonemarrow@assays[["RNA"]]@counts
 single_cell_bonemarrow_meta <- single_cell_bonemarrow@meta.data
 #single_cell_bonemarrow_meta <- single_cell_bonemarrow_meta[, 6:7]
@@ -68,7 +69,7 @@ for (i in 1:length(list)){
   print(p1)
   dev.off()
   ## select the cell type that we are interested
-  ct.visualize = c("HSC_PSC","IC","MSC","NC","EC")
+  ct.visualize = sub_list
   ## visualize the spatial distribution of the cell type proportion
   p2 <- CARD.visualize.prop.2(
     proportion = CARD_a@Proportion_CARD,        
@@ -99,8 +100,8 @@ M3_tib_2A_CARD_obj <- readRDS("./objects/card/M3_tib_2A_CARD_obj.rds")
 card_list <- c(M1_fem_1C_CARD_obj, M1_tib_1A_CARD_obj, M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
 names(card_list) <- c("M1_fem_1C_CARD_obj","M1_tib_1A_CARD_obj","M3_fem_1C_CARD_obj","M3_tib_2A_CARD_obj")
 
-card_list <- c(M1_fem_1C_CARD_obj, M1_tib_1A_CARD_obj)
-names(card_list) <- c("M1_fem_1C_CARD_obj","M1_tib_1A_CARD_obj")
+card_list <- c(M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
+names(card_list) <- c("M3_fem_1C_CARD_obj","M3_tib_2A_CARD_obj")
 
 ## Spatial object
 M1_fem_1C <- readRDS("./objects/card/M1_fem_1C.rds")
@@ -111,8 +112,8 @@ M3_tib_2A <- readRDS("./objects/card/M3_tib_2A.rds")
 spatial_list <- c(M1_fem_1C, M1_tib_1A, M3_fem_1C, M3_tib_2A)
 names(spatial_list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
 
-spatial_list <- c(M1_fem_1C, M1_tib_1A)
-names(spatial_list) <- c("M1_fem_1C","M1_tib_1A")
+spatial_list <- c(M3_fem_1C, M3_tib_2A)
+names(spatial_list) <- c("M3_fem_1C","M3_tib_2A")
 
 list <- list(spatial_list, card_list)
 names(list) <- c("spatial_list", "card_list")
@@ -132,14 +133,14 @@ for (i in 1:length(list)){
   a_proportions["area"] <- as.vector(a_area)
   ## proportions per cell type and area
   # AC
-  AC_value <- a_proportions[grepl("AC", a_proportions[,6]),]
-  AC_value$area <- NULL
-  AC_HSC_PSC <- (sum(AC_value$HSC_PSC))*100/nrow(AC_value)
-  AC_MSC <- (sum(AC_value$MSC))*100/nrow(AC_value)
-  AC_NC <- (sum(AC_value$NC))*100/nrow(AC_value)
-  AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
-  AC_IC <- (sum(AC_value$IC))*100/nrow(AC_value)
-  AC_proportions <- c(AC_HSC_PSC, AC_MSC , AC_NC, AC_EC, AC_IC)
+  #AC_value <- a_proportions[grepl("AC", a_proportions[,6]),]
+  #AC_value$area <- NULL
+  #AC_HSC_PSC <- (sum(AC_value$HSC_PSC))*100/nrow(AC_value)
+  #AC_MSC <- (sum(AC_value$MSC))*100/nrow(AC_value)
+  #AC_NC <- (sum(AC_value$NC))*100/nrow(AC_value)
+  #AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
+  #AC_IC <- (sum(AC_value$IC))*100/nrow(AC_value)
+  #AC_proportions <- c(AC_HSC_PSC, AC_MSC , AC_NC, AC_EC, AC_IC)
   # BM
   BM_value <- a_proportions[grepl("BM", a_proportions[,6]),]
   BM_value$area <- NULL
@@ -150,105 +151,68 @@ for (i in 1:length(list)){
   BM_IC <- (sum(BM_value$IC))*100/nrow(BM_value)
   BM_proportions <- c(BM_HSC_PSC, BM_MSC , BM_NC, BM_EC, BM_IC)
   # Muscle
-  Muscle_value <- a_proportions[grepl("Muscle", a_proportions[,6]),]
-  Muscle_value$area <- NULL
-  Muscle_HSC_PSC <- (sum(Muscle_value$HSC_PSC))*100/nrow(Muscle_value)
-  Muscle_MSC <- (sum(Muscle_value$MSC))*100/nrow(Muscle_value)
-  Muscle_NC <- (sum(Muscle_value$NC))*100/nrow(Muscle_value)
-  Muscle_EC <- (sum(Muscle_value$EC))*100/nrow(Muscle_value)
-  Muscle_IC <- (sum(Muscle_value$IC))*100/nrow(Muscle_value)
-  Muscle_proportions <- c(Muscle_HSC_PSC, Muscle_MSC , Muscle_NC, Muscle_EC, Muscle_IC)
+  #Muscle_value <- a_proportions[grepl("Muscle", a_proportions[,6]),]
+  #Muscle_value$area <- NULL
+  #Muscle_HSC_PSC <- (sum(Muscle_value$HSC_PSC))*100/nrow(Muscle_value)
+  #Muscle_MSC <- (sum(Muscle_value$MSC))*100/nrow(Muscle_value)
+  #Muscle_NC <- (sum(Muscle_value$NC))*100/nrow(Muscle_value)
+  #Muscle_EC <- (sum(Muscle_value$EC))*100/nrow(Muscle_value)
+  #Muscle_IC <- (sum(Muscle_value$IC))*100/nrow(Muscle_value)
+  #Muscle_proportions <- c(Muscle_HSC_PSC, Muscle_MSC , Muscle_NC, Muscle_EC, Muscle_IC)
   #GP
-  GP_value <- a_proportions[grepl("GP", a_proportions[,6]),]
-  GP_value$area <- NULL
-  GP_HSC_PSC <- (sum(GP_value$HSC_PSC))*100/nrow(GP_value)
-  GP_MSC <- (sum(GP_value$MSC))*100/nrow(GP_value)
-  GP_NC <- (sum(GP_value$NC))*100/nrow(GP_value)
-  GP_EC <- (sum(GP_value$EC))*100/nrow(GP_value)
-  GP_IC <- (sum(GP_value$IC))*100/nrow(GP_value)
-  GP_proportions <- c(GP_HSC_PSC, GP_MSC , GP_NC, GP_EC, GP_IC)
+  #GP_value <- a_proportions[grepl("GP", a_proportions[,6]),]
+  #GP_value$area <- NULL
+  #GP_HSC_PSC <- (sum(GP_value$HSC_PSC))*100/nrow(GP_value)
+  #GP_MSC <- (sum(GP_value$MSC))*100/nrow(GP_value)
+  #GP_NC <- (sum(GP_value$NC))*100/nrow(GP_value)
+  #GP_EC <- (sum(GP_value$EC))*100/nrow(GP_value)
+  #GP_IC <- (sum(GP_value$IC))*100/nrow(GP_value)
+  #GP_proportions <- c(GP_HSC_PSC, GP_MSC , GP_NC, GP_EC, GP_IC)
   # Bone
-  Bone_value <- a_proportions[grepl("Bone", a_proportions[,6]),]
-  Bone_value$area <- NULL
-  Bone_HSC_PSC <- (sum(Bone_value$HSC_PSC))*100/nrow(Bone_value)
-  Bone_MSC <- (sum(Bone_value$MSC))*100/nrow(Bone_value)
-  Bone_NC <- (sum(Bone_value$NC))*100/nrow(Bone_value)
-  Bone_EC <- (sum(Bone_value$EC))*100/nrow(Bone_value)
-  Bone_IC <- (sum(Bone_value$IC))*100/nrow(Bone_value)
-  Bone_proportions <- c(Bone_HSC_PSC, Bone_MSC , Bone_NC, Bone_EC, Bone_IC)
+  #Bone_value <- a_proportions[grepl("Bone", a_proportions[,6]),]
+  #Bone_value$area <- NULL
+  #Bone_HSC_PSC <- (sum(Bone_value$HSC_PSC))*100/nrow(Bone_value)
+  #Bone_MSC <- (sum(Bone_value$MSC))*100/nrow(Bone_value)
+  #Bone_NC <- (sum(Bone_value$NC))*100/nrow(Bone_value)
+  #Bone_EC <- (sum(Bone_value$EC))*100/nrow(Bone_value)
+  #Bone_IC <- (sum(Bone_value$IC))*100/nrow(Bone_value)
+  #Bone_proportions <- c(Bone_HSC_PSC, Bone_MSC , Bone_NC, Bone_EC, Bone_IC)
   ## dataframe
-  pro_df_ <- data.frame(AC_proportions, BM_proportions, Muscle_proportions ,GP_proportions, Bone_proportions)
+ # pro_df_ <- data.frame(AC_proportions, BM_proportions, Muscle_proportions ,GP_proportions, Bone_proportions)
+  pro_df_ <- data.frame(BM_proportions)
   rownames(pro_df_) <- c("HSC_PSC", "MSC", "NC", "EC", "IC")
   write.csv(pro_df_, file = paste0("./results/CARD/",c,".csv"))
 }
 
+M1_fem_1C <- read.csv("./results/CARD/M1_fem_1C.csv" ,row.names = 1, header= TRUE)
+M1_tib_1A <- read.csv("./results/CARD/M1_tib_1A.csv",row.names = 1, header= TRUE)
+M3_fem_1C <- read.csv("./results/CARD/M3_fem_1C.csv",row.names = 1, header= TRUE)
+M3_tib_2A <- read.csv("./results/CARD/M3_tib_2A.csv",row.names = 1, header= TRUE)
 
-M1_tib_1A_meta <- M1_tib_1A@meta.data
-M1_tib_1A_area <- M1_tib_1A_meta$area
-CARD_M1_tib_1A_proportions <- as.data.frame(CARD_M1_tib_1A_proportions)
-CARD_M1_tib_1A_proportions["area"] <- as.vector(M1_tib_1A_area)
+general <-  data.frame(M1_fem_1C, M1_tib_1A$BM_proportions, M3_fem_1C$BM_proportions,M3_tib_2A$BM_proportions)
+colnames(general) <- c("M1_fem_1C", "M1_tib_1A","M3_fem_1C", "M3_tib_2A" )
 
-########create a function to get proportions
-
-AC_value <- CARD_M1_tib_1A_proportions[grepl("AC", CARD_M1_tib_1A_proportions[,6]),]
-AC_value$area <- NULL
-AC_HSC_PSC <- (sum(AC_value$HSC_PSC))*100/nrow(AC_value)
-AC_MSC <- (sum(AC_value$MSC))*100/nrow(AC_value)
-AC_NC <- (sum(AC_value$NC))*100/nrow(AC_value)
-AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
-AC_EC <- (sum(AC_value$EC))*100/nrow(AC_value)
-AC_proportions <- c(AC_HSC_PSC, AC_MSC , AC_NC, AC_EC)
-
-BM_value <- CARD_M1_tib_1A_proportions[grepl("BM", CARD_M1_tib_1A_proportions[,6]),]
-BM_value$area <- NULL
-BM_HSC_PSC <- (sum(BM_value$HSC_PSC))*100/nrow(BM_value)
-BM_MSC <- (sum(BM_value$MSC))*100/nrow(BM_value)
-BM_NC <- (sum(BM_value$NC))*100/nrow(BM_value)
-BM_EC <- (sum(BM_value$EC))*100/nrow(BM_value)
-BM_proportions <- c(BM_HSC_PSC, BM_MSC , BM_NC, BM_EC)
-
-Muscle_value <- CARD_M1_tib_1A_proportions[grepl("Muscle", CARD_M1_tib_1A_proportions[,6]),]
-Muscle_value$area <- NULL
-Muscle_HSC_PSC <- (sum(Muscle_value$HSC_PSC))*100/nrow(Muscle_value)
-Muscle_MSC <- (sum(Muscle_value$MSC))*100/nrow(Muscle_value)
-Muscle_NC <- (sum(Muscle_value$NC))*100/nrow(Muscle_value)
-Muscle_EC <- (sum(Muscle_value$EC))*100/nrow(Muscle_value)
-Muscle_proportions <- c(Muscle_HSC_PSC, Muscle_MSC , Muscle_NC, Muscle_EC)
-
-GP_value <- CARD_M1_tib_1A_proportions[grepl("GP", CARD_M1_tib_1A_proportions[,6]),]
-GP_value$area <- NULL
-GP_HSC_PSC <- (sum(GP_value$HSC_PSC))*100/nrow(GP_value)
-GP_MSC <- (sum(GP_value$MSC))*100/nrow(GP_value)
-GP_NC <- (sum(GP_value$NC))*100/nrow(GP_value)
-GP_EC <- (sum(GP_value$EC))*100/nrow(GP_value)
-GP_proportions <- c(GP_HSC_PSC, GP_MSC , GP_NC, GP_EC)
-
-Bone_value <- CARD_M1_tib_1A_proportions[grepl("Bone", CARD_M1_tib_1A_proportions[,6]),]
-Bone_value$area <- NULL
-Bone_HSC_PSC <- (sum(Bone_value$HSC_PSC))*100/nrow(Bone_value)
-Bone_MSC <- (sum(Bone_value$MSC))*100/nrow(Bone_value)
-Bone_NC <- (sum(Bone_value$NC))*100/nrow(Bone_value)
-Bone_EC <- (sum(Bone_value$EC))*100/nrow(Bone_value)
-Bone_proportions <- c(Bone_HSC_PSC, Bone_MSC , Bone_NC, Bone_EC)
-
-pro_df <- data.frame(AC_proportions, BM_proportions, Muscle_proportions ,GP_proportions, Bone_proportions)
-rownames(pro_df) <- c("HSC_PSC", "MSC", "NC", "EC")
-
-as.numeric(rownames(AC_value)) 
-nrow(AC_value)
-
-BM_value <- CARD_M1_tib_1A_proportions[grepl("BM", CARD_M1_tib_1A_proportions[,6]),]
-BM_value$area <- NULL
-Muscle_value <- CARD_M1_tib_1A_proportions[grepl("Muscle", CARD_M1_tib_1A_proportions[,6]),]
-Muscle_value$area <- NULL
-GP_value <- CARD_M1_tib_1A_proportions[grepl("GP", CARD_M1_tib_1A_proportions[,6]),]
-GP_value$area <- NULL
-Bone_value <- CARD_M1_tib_1A_proportions[grepl("Bone", CARD_M1_tib_1A_proportions[,6]),]
-Bone_value$area <- NULL
+p1<-ggplot(M1_fem_1C, aes(x=rownames(M1_fem_1C),y=BM_proportions ,fill=rownames(M1_fem_1C))) +
+  ggtitle("M1_fem_1C") +
+  geom_bar(stat="identity")+
+  coord_cartesian(ylim = c(0, 60)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p2<-ggplot(M1_tib_1A, aes(x=rownames(M1_tib_1A),y=BM_proportions ,fill=rownames(M1_tib_1A))) +
+  ggtitle("M1_tib_1A") +
+  geom_bar(stat="identity")+
+  coord_cartesian(ylim = c(0, 60)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p3<-ggplot(M3_fem_1C, aes(x=rownames(M3_fem_1C),y=BM_proportions ,fill=rownames(M3_fem_1C))) +
+  ggtitle("M3_fem_1C") +
+  geom_bar(stat="identity")+
+  coord_cartesian(ylim = c(0, 60)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p4<-ggplot(M3_tib_2A, aes(x=rownames(M3_tib_2A),y=BM_proportions ,fill=rownames(M3_tib_2A))) +
+  ggtitle("M3_tib_2A") +
+  geom_bar(stat="identity")+
+  coord_cartesian(ylim = c(0, 60)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
-
-
-
-
+(p1 + p2 + p3 + p4)
 
