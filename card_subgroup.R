@@ -107,7 +107,51 @@ M3_fem_1C_CARD_obj <- readRDS("./objects/card/M3_fem_1C_CARD_obj_subgroup.rds")
 M3_tib_2A_CARD_obj <- readRDS("./objects/card/M3_tib_2A_CARD_obj_subgroup.rds")
 
 card_list <- c(M1_fem_1C_CARD_obj, M1_tib_1A_CARD_obj, M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
-names(card_list) <- c("M1_fem_1C_CARD_obj","M1_tib_1A_CARD_obj","M3_fem_1C_CARD_obj","M3_tib_2A_CARD_obj")
+names(card_list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
+
+####featureplots
+for (i in 1:length(card_list)){
+  a <- card_list[[i]]
+  a_location <- x.image[[names(card_list[i])]]@coordinates
+  a_location <- a_location[,2:3]
+  colnames(a_location) <- c("x", "y")
+  ###features spatial plot
+  p1 <- CARD.visualize.gene(
+      spatial_expression = a@refined_expression,
+      spatial_location = a_location,
+      gene.visualize = c("CD64"),
+      colors = NULL,
+      NumCols = 1)
+  pdf(paste("./results/CARD/subgroups/features", names(card_list[i]),"_CD64.pdf",sep=""))
+  print(p1)
+  dev.off()
+}
+####
+
+## Spatial object
+M1_fem_1C <- readRDS("./objects/card/M1_fem_1C_subgroup.rds")
+M1_tib_1A <- readRDS("./objects/card/M1_tib_1A_subgroup.rds")
+M3_fem_1C <- readRDS("./objects/card/M3_fem_1C_subgroup.rds")
+M3_tib_2A <- readRDS("./objects/card/M3_tib_2A_subgroup.rds")
+
+##add spatial image again
+M1_fem_1C@images[["M1_fem_1C"]] <- x.image[["M1_fem_1C"]]
+M1_tib_1A@images[["M1_tib_1A"]] <- x.image[["M1_tib_1A"]]
+M3_fem_1C@images[["M3_fem_1C"]] <- x.image[["M3_fem_1C"]]
+M3_tib_2A@images[["M3_tib_2A"]] <- x.image[["M3_tib_2A"]]
+
+list <- c(M1_fem_1C, M1_tib_1A, M3_fem_1C, M3_tib_2A)
+names(list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
+
+for (i in 1:length(list)){
+  a <- list[[i]]
+  b <- c("Cd44")
+  ###features spatial plot
+  p1 <- SpatialFeaturePlot(a, features = b, pt.size = 3)
+  pdf(paste("./results/CARD/subgroups/features/", names(list[i]), b, ".pdf",sep=""))
+  print(p1)
+  dev.off()
+}
 
 card_list <- c(M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
 names(card_list) <- c("M3_fem_1C_CARD_obj","M3_tib_2A_CARD_obj")
