@@ -145,7 +145,7 @@ names(list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
 
 for (i in 1:length(list)){
   a <- list[[i]]
-  b <- c("Cd44")
+  b <- c("Cxcl6")
   ###features spatial plot
   p1 <- SpatialFeaturePlot(a, features = b, pt.size = 3)
   pdf(paste("./results/CARD/subgroups/features/", names(list[i]), b, ".pdf",sep=""))
