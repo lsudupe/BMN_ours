@@ -76,22 +76,28 @@ names(prueba)
 M1_tib_1A <- prueba[[2]]
 M1_tib_1A@meta.data[["type"]] <- "MM"
 M1_tib_1A@meta.data[["orig.ident"]] <- "M1_tib_1A" 
+M1_tib_1A@images[["M1_tib_1A"]]@scale.factors$lowres = M1_tib_1A@images[["M1_tib_1A"]]@scale.factors$hires
 
 M1_fem_1C <- prueba[[1]]
 M1_fem_1C@meta.data[["type"]] <- "MM"
 M1_fem_1C@meta.data[["orig.ident"]] <- "M1_fem_1C" 
+M1_fem_1C@images[["M1_fem_1C"]]@scale.factors$lowres = M1_fem_1C@images[["M1_fem_1C"]]@scale.factors$hires
 
 M3_tib_2A <- prueba[[4]]
 M3_tib_2A@meta.data[["type"]] <- "control"
 M3_tib_2A@meta.data[["orig.ident"]] <- "M3_tib_2A" 
+M3_tib_2A@images[["M3_tib_2A"]]@scale.factors$lowres = M3_tib_2A@images[["M3_tib_2A"]]@scale.factors$hires
 
 M3_fem_1C <- prueba[[3]]
 M3_fem_1C@meta.data[["type"]] <- "control"
 M3_fem_1C@meta.data[["orig.ident"]] <- "M3_fem_1C" 
+M3_fem_1C@images[["M3_fem_1C"]]@scale.factors$lowres = M3_fem_1C@images[["M3_fem_1C"]]@scale.factors$hires
+
 
 ##Merge them
-combined <- merge(M1_tib_1A, y = c(M1_fem_1C, M3_tib_2A, M3_fem_1C ), 
+combined <- merge(M1_tib_1A, y = c(M1_fem_1C, M3_tib_2A, M1_tib_1A), 
                   add.cell.ids = c("M1_tib_1A", "M1_fem_1C", "M3_tib_2A", "M3_fem_1C"), project = "BM")
+
 combined <- subset(x =combined, idents = c("Muscle", "Bone", "BM", "GP", "AC"))
 
 
@@ -121,11 +127,11 @@ FeatureScatter(combined, feature1 = "nCount_Spatial", feature2 = "nFeature_Spati
 dev.off()
 
 pdf(paste("./results/QC/combined.second/nFeature_Spatial.pdf",sep=""))
-SpatialFeaturePlot(combined, features = "nFeature_Spatial",combine = FALSE)
+SpatialFeaturePlot(combined, features = "nFeature_Spatial",combine = T, pt.size.factor = 10)
 dev.off()
 
 pdf(paste("./results/QC/combined.second/nCount_Spatial.pdf",sep=""))
-SpatialFeaturePlot(combined, features = "nCount_Spatial",combine = FALSE)
+SpatialFeaturePlot(combined, features = "nCount_Spatial",combine = T, pt.size.factor = 10)
 dev.off()
 
 ##########SPATIAL plots
