@@ -41,10 +41,6 @@ x@images[["M3_tib_2A"]]<- NULL
 x@images[["M3_fem_1C"]]<- NULL
 list <- SplitObject(x, split.by = "orig.ident")
 
-list[["M1_tib_1A"]] <- NULL
-list[["M1_fem_1C"]] <- NULL
-
-
 for (i in 1:length(list)){
   a <- list[[i]]
   a <- SCTransform(a, assay="Spatial")
