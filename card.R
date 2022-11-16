@@ -109,6 +109,17 @@ M1_tib_1A <- readRDS("./objects/card/M1_tib_1A.rds")
 M3_fem_1C <- readRDS("./objects/card/M3_fem_1C.rds")
 M3_tib_2A <- readRDS("./objects/card/M3_tib_2A.rds")
 
+##add spatial image again
+M1_fem_1C@images[["M1_fem_1C"]] <- x.image[["M1_fem_1C"]]
+M1_tib_1A@images[["M1_tib_1A"]] <- x.image[["M1_tib_1A"]]
+M3_fem_1C@images[["M3_fem_1C"]] <- x.image[["M3_fem_1C"]]
+M3_tib_2A@images[["M3_tib_2A"]] <- x.image[["M3_tib_2A"]]
+
+saveRDS(M1_fem_1C, "./objects/card/M1_fem_1C.rds")
+saveRDS(M1_tib_1A, "./objects/card/M1_tib_1A.rds")
+saveRDS(M3_fem_1C, "./objects/card/M3_fem_1C.rds")
+saveRDS(M3_tib_2A, "./objects/card/M3_tib_2A.rds")
+
 spatial_list <- c(M1_fem_1C, M1_tib_1A, M3_fem_1C, M3_tib_2A)
 names(spatial_list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
 
