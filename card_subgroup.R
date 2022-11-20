@@ -326,7 +326,6 @@ names(spatial_list) <- c("M3_fem_1C","M3_tib_2A")
 list <- list(spatial_list, card_list)
 names(list) <- c("spatial_list", "card_list")
 
-
 ##extract proportions and add them to spatial object
 for (i in 1:length(list)){
   a <- list[[1]][[i]]
@@ -339,18 +338,26 @@ for (i in 1:length(list)){
     for (o in cells){ 
       i_name <- o
       a@meta.data[[i_name]] <- xx_df[,i_name]
-      vv <- "jujij"
+      i_new <- gsub("/", ".", i_name)
+      ## plot
+      library(BuenColors)
+      color <- jdb_palette("brewer_spectra")
+      
+      u <- c(min(a@meta.data[[i_name]]),max(a@meta.data[[i_name]]))
+      label <- c("min", "max")
+      
+      p1 <- SpatialFeaturePlot(a, features = i_name, pt.size.factor = 10, combine=FALSE,alpha = 0.8)
+      fix.p1 <- scale_fill_gradientn(colours=color,breaks=u, labels = label,limits =u)
+      p2 <- lapply(p1, function (x) x + fix.p1)
+      
+      pdf(paste("./results/CARD/subgroups/onebyone/",c, "_" ,i_new,"_.pdf",sep=""))
+      print(CombinePlots(p2))
+      dev.off()
     }
-  ## plot
-  #p3 <- CARD.visualize.Cor(CARD_a@Proportion_CARD,colors = NULL) # if not provide, we will use the default colors
-  #pdf(paste("./results/CARD/subgroups/", names(list[i]),"_3.pdf",sep=""))
-  #print(p3)
-  #dev.off()
   ## save object
   saveRDS(a,file = paste0("./objects/card/",c,"_subgroup_deco.rds"))
 }
 
-x <- readRDS("./objects/card/M1_tib_1A_subgroup_deco.rds")
 
 #############################################
 
