@@ -144,6 +144,7 @@ saveRDS(M3_tib_2A, "./objects/card/M3_tib_2A_subgroup.rds")
 list <- c(M1_fem_1C, M1_tib_1A, M3_fem_1C, M3_tib_2A)
 names(list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
 
+##plot some features
 for (i in 1:length(list)){
   a <- list[[i]]
   b <- c("Cxcl6")
@@ -296,5 +297,60 @@ p4<-ggplot(M3_tib_2A, aes(x=rownames(M3_tib_2A),y=BM_proportions ,fill=BM_propor
 
 (p1 + p2 + p3 + p4)
 
+#########PLOT deconvolution results with images
 
+## Card object
+M1_fem_1C_CARD_obj <- readRDS("./objects/card/M1_fem_1C_CARD_obj_subgroup.rds")
+M1_tib_1A_CARD_obj <- readRDS("./objects/card/M1_tib_1A_CARD_obj_subgroup.rds")
+M3_fem_1C_CARD_obj <- readRDS("./objects/card/M3_fem_1C_CARD_obj_subgroup.rds")
+M3_tib_2A_CARD_obj <- readRDS("./objects/card/M3_tib_2A_CARD_obj_subgroup.rds")
+
+card_list <- c(M1_fem_1C_CARD_obj, M1_tib_1A_CARD_obj, M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
+names(card_list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
+
+card_list <- c(M3_fem_1C_CARD_obj, M3_tib_2A_CARD_obj)
+names(card_list) <- c("M3_fem_1C","M3_tib_2A")
+
+## Spatial object
+M1_fem_1C <- readRDS("./objects/card/M1_fem_1C_subgroup.rds")
+M1_tib_1A <- readRDS("./objects/card/M1_tib_1A_subgroup.rds")
+M3_fem_1C <- readRDS("./objects/card/M3_fem_1C_subgroup.rds")
+M3_tib_2A <- readRDS("./objects/card/M3_tib_2A_subgroup.rds")
+
+spatial_list <- c(M1_fem_1C, M1_tib_1A, M3_fem_1C, M3_tib_2A)
+names(spatial_list) <- c("M1_fem_1C","M1_tib_1A","M3_fem_1C","M3_tib_2A")
+
+spatial_list <- c(M3_fem_1C, M3_tib_2A)
+names(spatial_list) <- c("M3_fem_1C","M3_tib_2A")
+
+list <- list(spatial_list, card_list)
+names(list) <- c("spatial_list", "card_list")
+
+
+##extract proportions and add them to spatial object
+for (i in 1:length(list)){
+  a <- list[[1]][[i]]
+  cc <- list[[1]][i]
+  c <- names(cc)
+  b <- list[[2]][[i]]
+  ## 
+  xx_df <- as.data.frame(b@Proportion_CARD)
+  cells <- colnames(xx_df)
+    for (o in cells){ 
+      i_name <- o
+      a@meta.data[[i_name]] <- xx_df[,i_name]
+      vv <- "jujij"
+    }
+  ## plot
+  #p3 <- CARD.visualize.Cor(CARD_a@Proportion_CARD,colors = NULL) # if not provide, we will use the default colors
+  #pdf(paste("./results/CARD/subgroups/", names(list[i]),"_3.pdf",sep=""))
+  #print(p3)
+  #dev.off()
+  ## save object
+  saveRDS(a,file = paste0("./objects/card/",c,"_subgroup_deco.rds"))
+}
+
+x <- readRDS("./objects/card/M1_tib_1A_subgroup_deco.rds")
+
+#############################################
 
