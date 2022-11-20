@@ -95,7 +95,7 @@ M3_fem_1C@images[["M3_fem_1C"]]@scale.factors$lowres = M3_fem_1C@images[["M3_fem
 
 
 ##Merge them
-combined <- merge(M1_tib_1A, y = c(M1_fem_1C, M3_tib_2A, M1_tib_1A), 
+combined <- merge(M1_tib_1A, y = c(M1_fem_1C, M3_tib_2A, M3_fem_1C), 
                   add.cell.ids = c("M1_tib_1A", "M1_fem_1C", "M3_tib_2A", "M3_fem_1C"), project = "BM")
 
 combined <- subset(x =combined, idents = c("Muscle", "Bone", "BM", "GP", "AC"))
@@ -136,8 +136,7 @@ dev.off()
 
 ##########SPATIAL plots
 library(BuenColors)
-nuria <- jdb_palette("brewer_spectra")
-color <- nuria
+color <- jdb_palette("brewer_spectra")
 image.trans <- 0.5
 spot.trans <- 1
 
@@ -151,7 +150,7 @@ combined@meta.data[["log_nFeature_Spatial"]] <- a
 
 b <- c(5,9)
 label <- c("min", "max")
-p1 <- SpatialFeaturePlot(combined, features = "log_nFeature_Spatial",combine = FALSE)
+p1 <- SpatialFeaturePlot(combined, features = "log_nFeature_Spatial",pt.size.factor = 10, alpha=0.9,combine = FALSE)
 fix.p1 <- scale_fill_gradientn(colours=color,breaks=b, labels = label,limits =b)
 p2 <- lapply(p1, function (x) x + fix.p1)
 
@@ -165,7 +164,7 @@ combined@meta.data[["log_nCount_Spatial"]] <- a
 
 b <- c(4,11)
 label <- c("min", "max")
-p1 <- SpatialFeaturePlot(combined, features = "log_nCount_Spatial",combine = FALSE, alpha=0.9)
+p1 <- SpatialFeaturePlot(combined, features = "log_nCount_Spatial",combine = FALSE,pt.size.factor = 10, alpha=0.9)
 fix.p1 <- scale_fill_gradientn(colours=color,breaks=b, labels = label,limits =b)
 p2 <- lapply(p1, function (x) x + fix.p1)
 
