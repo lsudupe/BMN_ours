@@ -9,6 +9,11 @@ library(dplyr)
 library(ggplot2) 
 library(tidyverse)
 library(base)
+library(CARD)
+library(gtools)
+library(scatterpie)
+library(ggcorrplot)
+source(file = "./card.plot2.R")
 
 
 ## Spatial object
@@ -16,6 +21,14 @@ M1_fem_1C <- readRDS("./objects/card/M1_fem_1C_subgroup.rds")
 M1_tib_1A <- readRDS("./objects/card/M1_tib_1A_subgroup.rds")
 M3_fem_1C <- readRDS("./objects/card/M3_fem_1C_subgroup.rds")
 M3_tib_2A <- readRDS("./objects/card/M3_tib_2A_subgroup.rds")
+
+######Prepare data
+#single cell
+single_cell_bonemarrow <- readRDS("./objects/heterogeneity/single_cell_bonemarrow.rds")
+sub_list <- levels(single_cell_bonemarrow@meta.data[["ident"]])
+single_cell_bonemarrow_counts <- single_cell_bonemarrow@assays[["RNA"]]@counts
+single_cell_bonemarrow_meta <- single_cell_bonemarrow@meta.data
+
 
 ##Merge them
 combined <- merge(M1_fem_1C, y = c( M3_fem_1C), 
@@ -94,11 +107,72 @@ for (i in 1:length(samples)){
   #pdf(file.path("./results/clusters/integration/",filename = paste0("area_spatial_",names(samples[i]),".pdf")))
   #print(SpatialDimPlot(a, combine = FALSE,label.size = 1.5, label = T))
   #dev.off()
+  
+}
+
+Seurat::Idents(object = x) <- x@meta.data[["type"]]
+x.image <- x@images
+x@images[["M1_fem_1C"]]<- NULL
+x@images[["M3_fem_1C"]]<- NULL
+samples <- SplitObject(x, split.by = "type")
+names(samples) <- c("M1_fem_1C", "M3_fem_1C")
+
+  
+for (i in 1:length(samples)){
+  ####Deco
+  a <- samples[[i]]
+  a_count <- a@assays[["Spatial"]]@data
+  a_location <- x.image[[names(samples[i])]]@coordinates
+  a_location <- a_location[,2:3]
+  colnames(a_location) <- c("x", "y")
+  v<- ("jojoj")
+  
+  ###################CARD object creation
+  CARD_obj_a = createCARDObject(
+    sc_count = single_cell_bonemarrow_counts,
+    sc_meta = single_cell_bonemarrow_meta,
+    spatial_count = a_count,
+    spatial_location = a_location,
+    ct.varname = "ident",
+    ct.select = unique(single_cell_bonemarrow_meta$ident),
+    sample.varname = "metadata....experiment..",
+    minCountGene = 100,
+    minCountSpot = 5)
+  ###################Deco
+  CARD_a = CARD_deconvolution(CARD_object = CARD_obj_a)
+  CARD_a_proportions <- CARD_a@Proportion_CARD
+  ###################Plots
+  p1 <- CARD.visualize.pie(proportion = CARD_a@Proportion_CARD,
+                           spatial_location = CARD_a@spatial_location)
+  pdf(paste("./results/CARD/heterogeneity/", names(samples[i]),"_1.pdf",sep=""))
+  print(p1)
+  dev.off()
+  ## select the cell type that we are interested
+  ct.visualize = sub_list
+  ## visualize the spatial distribution of the cell type proportion
+  p2 <- CARD.visualize.prop.2(
+    proportion = CARD_a@Proportion_CARD,        
+    spatial_location = CARD_a@spatial_location, 
+    ct.visualize = ct.visualize,                 ### selected cell types to visualize
+    colors = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
+    NumCols = 8)                                 ### number of columns in the figure panel
+  pdf(paste("./results/CARD/heterogeneity//", names(samples[i]),"_2.pdf",sep=""))
+  print(p2)
+  dev.off()
+  ## correlation
+  p3 <- CARD.visualize.Cor(CARD_a@Proportion_CARD,colors = NULL) # if not provide, we will use the default colors
+  pdf(paste("./results/CARD/heterogeneity/", names(samples[i]),"_3.pdf",sep=""))
+  print(p3)
+  dev.off()
+  ## save object
+  saveRDS(a,file = paste0("./objects/card/heterogeneity/",names(samples[i]),"_subgroup.rds"))
+  ## save card results
+  saveRDS(CARD_a,file = paste0("./objects/card/heterogeneity/",names(samples[i]),"_CARD_obj_subgroup.rds"))
+  
 }
 
 
 ##################################CELL TYPE PROPORTIONS HETEROGENEITY
-single_cell_bonemarrow <- readRDS("./objects/heterogeneity/single_cell_bonemarrow.rds")
 
 
 
