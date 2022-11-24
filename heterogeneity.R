@@ -174,12 +174,167 @@ for (i in 1:length(samples)){
 
 ##################################CELL TYPE PROPORTIONS HETEROGENEITY
 
+## Spatial object
+M1_fem_1C <- readRDS("./objects/card/heterogeneity/M1_fem_1C_subgroup.rds")
+M3_fem_1C <- readRDS("./objects/card/heterogeneity/M3_fem_1C_subgroup.rds")
+
+##add spatial image again
+M1_fem_1C@images[["M1_fem_1C"]] <- x.image[["M1_fem_1C"]]
+M3_fem_1C@images[["M3_fem_1C"]] <- x.image[["M3_fem_1C"]]
+
+saveRDS(M1_fem_1C, "./objects/card/heterogeneity/M1_fem_1C_subgroup.rds")
+saveRDS(M3_fem_1C, "./objects/card/heterogeneity/M3_fem_1C_subgroup.rds")
+
+spatial_list <- c(M1_fem_1C, M3_fem_1C)
+names(spatial_list) <- c("M1_fem_1C","M3_fem_1C")
+
+## Card object
+M1_fem_1C_CARD_obj <- readRDS("./objects/card/heterogeneity/M1_fem_1C_CARD_obj_subgroup.rds")
+M3_fem_1C_CARD_obj <- readRDS("./objects/card/heterogeneity/M3_fem_1C_CARD_obj_subgroup.rds")
+
+card_list <- c(M1_fem_1C_CARD_obj, M3_fem_1C_CARD_obj)
+names(card_list) <- c("M1_fem_1C","M3_fem_1C")
+
+##both
+list <- list(spatial_list, card_list)
+names(list) <- c("spatial_list", "card_list")
+
+##extract proportions dataframe per sample
+for (i in 1:length(list)){
+  a <- list[[1]][[i]]
+  cc <- list[[1]][i]
+  c <- names(cc)
+  b <- list[[2]][[i]]
+  ## 
+  a_meta <- a@meta.data
+  a_area <- a_meta$area
+  a_proportions <- b@Proportion_CARD
+  a_proportions <- as.data.frame(a_proportions)
+  cell_type <- colnames(a_proportions)
+  a_proportions["area"] <- as.vector(a_area)
+  write.csv(a_proportions, file = paste0("./results/CARD/heterogeneity/",c,"_pro_subgroup.csv"))
+}
+
+##proportions
+M1_fem_1C <- read.csv("./results/CARD/heterogeneity/M1_fem_1C_pro_subgroup.csv")
+M3_fem_1C <- read.csv("./results/CARD/heterogeneity/M3_fem_1C_pro_subgroup.csv")
+
+pro_list <- list(M1_fem_1C, M3_fem_1C)
+names(pro_list) <- c("M1_fem_1C","M3_fem_1C")
+
+z <- colnames(M1_fem_1C)
+z <- z[2:14]
+
+######Proportions#######################################################################
+#https://stackoverflow.com/questions/46205479/looping-over-multiple-lists-with-base-r
+for (i in 1:length(pro_list)){
+  a <- pro_list[[i]]
+  v <- pro_list[i]
+  v <- names(v)
+  # AC
+  BM_value <- a[grepl("BM", a[,14]),]
+  BM_value$area <- NULL
+  
+  BM_PSC <- (sum(BM_value$PSC))*100/nrow(BM_value)
+  BM_Bcell <- (sum(BM_value$Bcell))*100/nrow(BM_value)
+  BM_Erythroblasts <- (sum(BM_value$Erythroblasts))*100/nrow(BM_value)
+  BM_Monocytes <- (sum(BM_value$Monocytes))*100/nrow(BM_value)
+  BM_Tcell <- (sum(BM_value$Tcell))*100/nrow(BM_value)
+  
+  BM_Neutrophils <- (sum(BM_value$Neutrophils))*100/nrow(BM_value)
+  BM_MSC <- (sum(BM_value$MSC))*100/nrow(BM_value)
+  BM_MSC_fibro <- (sum(BM_value$MSC_fibro))*100/nrow(BM_value)
+  BM_EC <- (sum(BM_value$EC))*100/nrow(BM_value)
+  BM_Chondrocytes <- (sum(BM_value$Chondrocytes))*100/nrow(BM_value)
+  
+  BM_DC <- (sum(BM_value$DC))*100/nrow(BM_value)
+  BM_IC <- (sum(BM_value$IC))*100/nrow(BM_value)
+ 
+  BM_proportions <- c(BM_PSC, BM_Bcell, BM_Erythroblasts, BM_Monocytes, BM_Tcell,
+                      BM_Neutrophils, BM_MSC,BM_MSC_fibro,  BM_EC, BM_Chondrocytes,
+                      BM_DC, BM_IC)
+  
+  ## dataframe
+  pro_df_ <- data.frame(BM_proportions)
+  rownames(pro_df_) <- z[1:12]
+  write.csv(pro_df_, file = paste0("./results/CARD/heterogeneity/",v,"pro.csv"))
+}
+
+
+M1_fem_1C <- read.csv("./results/CARD/heterogeneity/M1_fem_1Cpro.csv" ,row.names = 1, header= TRUE)
+M3_fem_1C <- read.csv("./results/CARD/heterogeneity/M3_fem_1Cpro.csv",row.names = 1, header= TRUE)
+
+general <-  data.frame(M1_fem_1C, M3_fem_1C)
+colnames(general) <- c("M1_fem_1C","M3_fem_1C")
+
+
+p1<-ggplot(M1_fem_1C, aes(x=rownames(M1_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
+  ggtitle("M1_fem_1C") +
+  geom_bar(stat="identity")+
+  coord_cartesian(ylim = c(0, 25)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+p2<-ggplot(M3_fem_1C, aes(x=rownames(M3_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
+  ggtitle("M3_fem_1C") +
+  geom_bar(stat="identity")+
+  coord_cartesian(ylim = c(0, 25)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
 
+(p1 + p2)
 
+#########PLOT deconvolution results with images
 
+## Card object
+M1_fem_1C_CARD_obj <- readRDS("./objects/card/heterogeneity/M1_fem_1C_CARD_obj_subgroup.rds")
+M3_fem_1C_CARD_obj <- readRDS("./objects/card/heterogeneity/M3_fem_1C_CARD_obj_subgroup.rds")
 
+card_list <- c(M1_fem_1C_CARD_obj, M3_fem_1C_CARD_obj)
+names(card_list) <- c("M1_fem_1C","M3_fem_1C")
+
+## Spatial object
+M1_fem_1C <- readRDS("./objects/card/heterogeneity/M1_fem_1C_subgroup.rds")
+M3_fem_1C <- readRDS("./objects/card/heterogeneity/M3_fem_1C_subgroup.rds")
+
+spatial_list <- c(M1_fem_1C, M3_fem_1C)
+names(spatial_list) <- c("M1_fem_1C","M3_fem_1C")
+
+list <- list(spatial_list, card_list)
+names(list) <- c("spatial_list", "card_list")
+
+##extract proportions and add them to spatial object
+for (i in 1:length(list)){
+  a <- list[[1]][[i]]
+  cc <- list[[1]][i]
+  c <- names(cc)
+  b <- list[[2]][[i]]
+  ## 
+  xx_df <- as.data.frame(b@Proportion_CARD)
+  cells <- colnames(xx_df)
+  for (o in cells){ 
+    i_name <- o
+    a@meta.data[[i_name]] <- xx_df[,i_name]
+    i_new <- gsub("/", ".", i_name)
+    ## plot
+    library(BuenColors)
+    color <- jdb_palette("brewer_spectra")
+    
+    u <- c(min(a@meta.data[[i_name]]),max(a@meta.data[[i_name]]))
+    #u <- c(0,1)
+    label <- c("min", "max")
+    
+    p1 <- SpatialFeaturePlot(a, features = i_name, pt.size.factor = 10, combine=FALSE,alpha = 0.8)
+    fix.p1 <- scale_fill_gradientn(colours=color,breaks=u, labels = label,limits =u)
+    p2 <- lapply(p1, function (x) x + fix.p1)
+    
+    pdf(paste("./results/CARD/heterogeneity/images/",c, "_" ,i_new,"_.pdf",sep=""))
+    print(CombinePlots(p2))
+    dev.off()
+  }
+  ## save object
+  saveRDS(a,file = paste0("./objects/card/heterogeneity/",c,"_subgroup_deco.rds"))
+}
 ##################################AMAIA PART HETEROGENEITY
 
 #ERYTHROBLAST. https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7689499/
