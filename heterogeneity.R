@@ -425,19 +425,32 @@ for (i in plasma_cells_core){
 }
 
 CD138
-SpatialFeaturePlot(M3_fem_1C, features = c(), pt.size.factor = 10, combine = FALSE)
+pdf(paste("./results/CARD/heterogeneity/images/features/PC/Cd27_spatial_M1_fem_1C_plasmacore.pdf",sep=""))
+print(SpatialFeaturePlot(M1_fem_1C, features = c("Cd27"), pt.size.factor = 10, combine = FALSE))
+dev.off()
 
-
-p1 <- SpatialFeaturePlot(spatial, features = "Fcgr1", pt.size.factor = 3, alpha= 0.6, combine = FALSE)
-fix.p1 <- scale_fill_gradientn(limits = c(0,15),
-                               breaks=c("Min","Max"),
+b <- c(0,3)
+p1 <- SpatialFeaturePlot(M3_fem_1C, features = "Cd81", pt.size.factor = 10, combine = FALSE)
+fix.p1 <- scale_fill_gradientn(colours=color,
+                               breaks=b,
                                labels=c("Min","Max"),
-                               colours=topo.colors(7))
+                               limits = b)
 p2 <- lapply(p1, function (x) x + fix.p1)
 
-pdf("./f.pdf")
-CombinePlots(p2)
+pdf(paste("./results/CARD/heterogeneity/images/features/PC/Cd81_spatial_M3_fem_1C.pdf",sep=""))
+print(CombinePlots(p2))
 dev.off()
+
+for (i in feature.list){
+  p1 <- SpatialFeaturePlot(dpi3, features = i, combine = FALSE)
+  #fix.p1 <- scale_fill_gradientn(colours=c(bl,"white", re), na.value = "grey98",limits = l,breaks=l, labels = c("min", "max"))
+  fix.p1 <- scale_fill_gradientn(colours=myPalette(100),breaks=b, labels = c("min", "max"),limits = b)
+  p2 <- lapply(p1, function (x) x + fix.p1)
+  
+  pdf(paste(i,"spatial.dpi3.pdf",sep=""))
+  print(CombinePlots(p2))
+  dev.off()
+}
 
 
 p1 <- SpatialFeaturePlot(spatial, features = "Fcgr1", pt.size.factor = 3, alpha = 0.6, combine = FALSE)
