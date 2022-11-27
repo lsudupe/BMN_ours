@@ -66,6 +66,7 @@ x <- RunPCA(x,npcs = 20, verbose = FALSE) %>%
 
 x@images <- x.image
 
+saveRDS(x, "./objects/heterogeneity/femur_integrated.rds")
 samples <- c(x)
 names(samples) <- c("femur")
 #names(samples) <- c("tibia")
@@ -347,52 +348,84 @@ MIP-1
 CCR1 #which is one pathway contributing to their decreased osteogenic capacity
 CXCL12
 
+femur <- readRDS("./objects/heterogeneity/femur_integrated.rds")
 
 
-DefaultAssay(x) <- "SCT"
-DefaultAssay(x) <- "integrated"
-SpatialDimPlot(x, features = c("active.ident"))
-FeaturePlot(x, features = "Ccr1")
-DimPlot(x, group.by = c("seurat_clusters"), label = T)
-SpatialDimPlot(x, label = T, crop = TRUE, pt.size.factor = 10)
-SpatialFeaturePlot(x,  features = c("Cxcl12"), pt.size = 10)
-SpatialFeaturePlot(x, features = c("Klf1"), pt.size = 10)
-SpatialFeaturePlot(x, features = c("Ccl3"), pt.size = 10)
 
-markers_seurat_area <- Seurat::FindAllMarkers(object = x, 
+DefaultAssay(femur) <- "SCT"
+DefaultAssay(femur) <- "integrated"
+SpatialDimPlot(femur, features = c("seurat_clusters"))
+FeaturePlot(femur, features = "Ccr1")
+DimPlot(femur, group.by = c("seurat_clusters"), label = T)
+SpatialDimPlot(femur, label = T, crop = TRUE, pt.size.factor = 10)
+SpatialFeaturePlot(femur,  features = c("Cxcl12"), pt.size = 10)
+SpatialFeaturePlot(femur, features = c("Klf1"), pt.size = 10)
+SpatialFeaturePlot(femur, features = c("Ccl3"), pt.size = 10)
+
+Seurat::Idents(object = femur) <- femur@meta.data[["seurat_clusters"]]
+markers_seurat_area <- Seurat::FindAllMarkers(object = femur, 
                                               assay = "integrated",
                                               slot = "data",
                                               verbose = TRUE, 
                                               only.pos = TRUE)
 
-markers_seurat <- subset(markers_seurat_area, p_val_adj < 0.05 & 0.5 < avg_log2FC)
+
+# Determine differentiating markers for cluster 6
+cluster_6 <- FindMarkers(femur,
+                          ident.1 = 6,
+                          ident.2 = c(0,1,2,3,4,5)) 
+
+cluster_6_f <- subset(cluster_6, p_val_adj < 0.05 & 1 < avg_log2FC)
 
 #Top5
-top20_area <- markers_seurat %>%
-  group_by(cluster) %>%
-  top_n(n = 20,
+top50 <- cluster_6_f %>%
+  top_n(n = 50,
         wt = avg_log2FC)
 
-DoHeatmap(x, features = top20_area$gene) + 
-  theme(text = element_text(size = 4.5))
+write.csv(top50, "./results/DE/femur/cluster6_amaia.csv", row.names =TRUE)
+
+pdf(paste("./results/CARD/heterogeneity/images/doheatmap.pdf",sep=""))
+print(DoHeatmap(femur, features = rownames(top20)) + 
+  theme(text = element_text(size = 4.5)))
+dev.off()
+
+genes <- rownames(top20)
+
+pdf(paste("./results/CARD/heterogeneity/images/featurepot_4.pdf",sep=""))
+print(FeaturePlot(femur, 
+            reduction = "umap", 
+            features = genes[15:18],
+            label = TRUE, 
+            order = TRUE,
+            min.cutoff = 'q10',
+            repel = TRUE
+))
+dev.off()
 
 cell_types <- as.list(as.vector(unique(top20_area$cluster)))
 names(cell_types) <- as.vector(unique(top20_area$cluster))
 
-for (i in 1:length(cell_types)){
-  a <- cell_types[[i]]
-  top20_area$cluster <- as.character(top20_area$cluster)
-  b <- top20_area[top20_area$cluster %in% c(a), ]
-  b <- as.vector(b$gene)
-  cell_types[[i]] <- b
+M1_fem_1C <- readRDS("./objects/card/heterogeneity/M1_fem_1C_subgroup.rds")
+M3_fem_1C <- readRDS("./objects/card/heterogeneity/M3_fem_1C_subgroup.rds")
+
+
+DefaultAssay(M3_fem_1C) <- "SCT"
+DefaultAssay(M1_fem_1C) <- "SCT"
+
+plasma_cells_core <- c("Irf4", "Sdc1", "Xbp1")
+plasma_cells_MM <- c( "Cd33", "Cd81", "Fcrl5", "Icam1",  "Ncam1")
+plasma_cells_MM_mouse <- c( "Cd33", "Cd81", "Fcrl5", "Icam1",  "Ncam1")
+
+for (i in plasma_cells_core){
+  library(BuenColors)
+  color <- jdb_palette("brewer_spectra")
+  pdf(paste("./results/CARD/heterogeneity/images/features/PC/",i,"spatial_M1_fem_1C_plasmacore.pdf",sep=""))
+  print(SpatialFeaturePlot(M1_fem_1C, features = i, pt.size.factor = 10, combine = FALSE))
+  dev.off()
 }
 
-cluster_5 <- as.vector(cell_types[6])
-
-DefaultAssay(x) <- "SCT"
-DefaultAssay(x) <- "integrated"
-DefaultAssay(x) <- "Spatial"
-SpatialFeaturePlot(x, features = c("Bst2"), pt.size = 10)
+CD138
+SpatialFeaturePlot(M3_fem_1C, features = c(), pt.size.factor = 10, combine = FALSE)
 
 
 p1 <- SpatialFeaturePlot(spatial, features = "Fcgr1", pt.size.factor = 3, alpha= 0.6, combine = FALSE)
