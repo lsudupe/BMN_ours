@@ -6,6 +6,7 @@
 library(Seurat)
 library(ggplot2)
 library(corrplot)
+require("corrplot")
 library(fpc)
 
 #Data---------------------------------
@@ -101,9 +102,11 @@ clust_5 <- types_b[grepl("5", types_b[,13]),]
 clust_5 <- clust_5[,1:12]
 
 ##cor
-matrix <- data.matrix(clust_5, rownames.force = NA)
+matrix <- data.matrix(clust_4, rownames.force = NA)
 M <- cor(matrix)
 
-pdf(file.path("./results/endogram/femur",filename = "cluster5_cor.pdf"))
-print(corrplot(M, method = "number", number.cex = 0.75, order="hclust"))
+pdf(file.path("./results/endogram/femur",filename = "cluster4_cor.pdf"))
+print(corrplot(M,
+      type = 'upper',
+               tl.col = "black",number.cex = 0.75))
 dev.off()
