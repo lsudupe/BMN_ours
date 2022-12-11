@@ -80,3 +80,30 @@ pdf(file.path("./results/endogram/femur",filename = "M1_spatial_hierarchical.pdf
 print(SpatialDimPlot(b, combine = FALSE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 10))
 dev.off()
 
+b <- SetIdent(femur_M1, value = femur_M1@meta.data[["seurat_clusters"]])
+pdf(file.path("./results/endogram/femur",filename = "M1_spatial_seurat.pdf"))
+print(SpatialDimPlot(b, combine = FALSE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 10))
+dev.off()
+
+###subset the data in hierarchical clustering
+meta_b <- b@meta.data
+types_b <- meta_b[,11:23]
+
+clust_1 <- types_b[grepl("1", types_b[,13]),]
+clust_1 <- clust_1[,1:12]
+clust_2 <- types_b[grepl("2", types_b[,13]),]
+clust_2 <- clust_2[,1:12]
+clust_3 <- types_b[grepl("3", types_b[,13]),]
+clust_3 <- clust_3[,1:12]
+clust_4 <- types_b[grepl("4", types_b[,13]),]
+clust_4 <- clust_4[,1:12]
+clust_5 <- types_b[grepl("5", types_b[,13]),]
+clust_5 <- clust_5[,1:12]
+
+##cor
+matrix <- data.matrix(clust_5, rownames.force = NA)
+M <- cor(matrix)
+
+pdf(file.path("./results/endogram/femur",filename = "cluster5_cor.pdf"))
+print(corrplot(M, method = "number", number.cex = 0.75, order="hclust"))
+dev.off()
