@@ -163,26 +163,24 @@ dev.off()
 
 ####Extract hierarchycal clustering porcentages
 
+#######proportions loop
 value <- as.vector(unique(types_b$clustering))
-for (i in length(value)){
+lista <- list()
+
+for (i in value){
 #select cluster of interest rows
 value_1 <- types_b[grepl(i, types_b$clustering),]
 value_1$clustering <- NULL
 
-#names <- colnames(value_1)
+###create list to add content
 proportions <- c()
-  for (o  in colnames(value_1)){ 
-    #paste(pro, "_",i_name)
-    sum(value_1[[o]])
-    pro <- (sum(value_1[[o]])*100/nrow(value_1))
-    ## plot
-    proportions[[length(proportions) + 1]] <- pro
-              
+  for (o in colnames(value_1)){ 
+    proportions <- c(proportions, (sum(value_1[[o]])*100/nrow(value_1)))
   }
-
+name <- paste('cluster:',i,sep='')
+lista[[name]] <- proportions
 
 }
-
 
 
 
