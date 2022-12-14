@@ -6,13 +6,19 @@
 library(Seurat)
 library(ggplot2)
 library(corrplot)
-require("corrplot")
 library(fpc)
+library(dplyr)
+library(clustertend)
+library(factoextra)
+library(gridExtra)
+library(dendextend)
 
 #Data---------------------------------
 femur_M1 <- readRDS("./objects/card/heterogeneity/M1_fem_1C_subgroup_deco.rds")
 femur_M3 <- readRDS("./objects/card/heterogeneity/M3_fem_1C_subgroup_deco.rds")
 
+femur <- merge(femur_M1, y = c(femur_M3),  project = "BM")
+femur
 
 #Analysis--------------------------------
 set.seed(20000)
@@ -22,7 +28,7 @@ types <- meta[,11:22]
 matrix <- data.matrix(types, rownames.force = NA)
 M <- cor(matrix)
 
-pdf(file.path("./results/endogram/femur",filename = "M1_cor.pdf"))
+pdf(file.path("./results/endogram/femur",filename = "both_cor.pdf"))
 print(corrplot(M, method = "number", number.cex = 0.75, order="hclust"))
 dev.off()
 
@@ -45,45 +51,89 @@ for (i in colnames) {
 }
 
 ###Prediagnostic
-library(clustertend)
-library(factoextra)
+
+###hierarchycal plot
+pdf(file.path("./results/endogram/femur",filename = "both_cor.pdf"))
 get_clust_tendency(types, 2, graph=TRUE, gradient=list(low="red", mid="white", high="blue"))
+dev.off()
 
 ###Optimal clustering
-library(gridExtra)
+
 a <- fviz_nbclust(types, FUNcluster = kmeans, method = "silhouette") + theme_classic() 
 b <- fviz_nbclust(types, FUNcluster = cluster::pam, method = "silhouette") + theme_classic() 
 c <- fviz_nbclust(types, FUNcluster = cluster::clara, method = "silhouette") + theme_classic() 
 d <- fviz_nbclust(types, FUNcluster = hcut, method = "silhouette") + theme_classic() 
 e <- fviz_nbclust(types, FUNcluster = cluster::fanny, method = "silhouette") + theme_classic() 
-grid.arrange(a, b, c, d, e, ncol=2)
 
+pdf(file.path("./results/endogram/femur",filename = "both_minckuster.pdf"))
+print(grid.arrange(a, b, c, d, e, ncol=2))
+dev.off()
 
 ###hierarchical clustering
-hc1 <- eclust(types, k=3, FUNcluster="hclust", hc_metric="euclidean", hc_method = "complete")
-plot(hc1, cex=0.6, hang=-1, main = "Dendrogram of HAC")
-rect.hclust(hc1, k=3, border='red')
+hc3 <- eclust(types, k=4, FUNcluster="hclust", hc_metric="euclidean", hc_method = "ward.D2")
+hc3 %>% 
+as.dendrogram()  -> dend
 
-hc3 <- eclust(types, k=5, FUNcluster="hclust", hc_metric="euclidean", hc_method = "ward.D2")
-plot(hc3, cex=0.6, hang=-1, main = "Dendrogram of HAC")
-rect.hclust(hc3, k=3, border='red')
+
+###ggplot automatic color scale
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+n = 8
+cols = gg_color_hue(n)
+###
+
+colors <- c("#F8766D", "#C49A00" ,"#53B400" ,"#00C094" ,"#00B6EB" ,"#A58AFF" ,"#FB61D7")
+names(colors) = c("0", "1", "2", "3", "4","5", "6")
+colors
+
+col = ifelse(x$a == "Africa", "yellow",
+             ifelse(x$a %in% c("North America", "South America"), "blue",
+                    ifelse(x$a == "Asia", "green",
+                           ifelse(x$a == "Europe", "lightblue",
+                                  ifelse(x$a == "Oceania", "purple", "black")))))
+
+col_1 = ifelse(meta$seurat_clusters == "0", "#F8766D",
+             ifelse(meta$seurat_clusters == "1", "#C49A00",
+                    ifelse(meta$seurat_clusters == "2", "#53B400", 
+                           ifelse(meta$seurat_clusters == "3", "#00C094",
+                                  ifelse(meta$seurat_clusters == "4", "#00B6EB",
+                                         ifelse(meta$seurat_clusters == "5", "#A58AFF", 
+                                                ifelse(meta$seurat_clusters == "6", "#FB61D7",
+                                                       ifelse(meta$seurat_clusters == "7", "#FF61CC", 'white'))))))))
+col = ifelse(meta$orig.ident, "grey", "gold")
+
+col <- cbind(col_1, col_2)
+
+pdf(file.path("./results/endogram/femur",filename = "both_dend.pdf"))
+# Make the dendrogram
+par(mar = c(10,2,1,1))
+dend %>%
+  set("labels_col", value = c("skyblue", "orange", "grey", "green"), k=4) %>%set("labels_cex", 0.1) %>%
+  set("branches_k_color", value = c("skyblue", "orange", "grey", "green"), k = 4) %>%
+  set("leaves_pch", 0.1)  %>% 
+  plot()
+colored_bars(colors = col, dend = dend, rowLabels = "seurat",sort_by_labels_order = FALSE)
+dev.off()
+
 # number of observations per cluster
 hc_stats3 <- cluster.stats(types, hc3$cluster)
 hc_stats3$cluster.size 
 
 ###ad clusters to spatial data
 a <- as.factor(hc3[["cluster"]])
-femur_M1@meta.data[["clustering"]] <- a
+femur@meta.data[["clustering"]] <- a
 
 ###plot
-b <- SetIdent(femur_M1, value = femur_M1@meta.data[["clustering"]])
-pdf(file.path("./results/endogram/femur",filename = "M1_spatial_hierarchical.pdf"))
-print(SpatialDimPlot(b, combine = FALSE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 10))
+b <- SetIdent(femur, value = femur@meta.data[["clustering"]])
+pdf(file.path("./results/endogram/femur",filename = "both_spatial_hierarchical.pdf"))
+print(SpatialDimPlot(b, combine = TRUE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 10))
 dev.off()
 
-b <- SetIdent(femur_M1, value = femur_M1@meta.data[["seurat_clusters"]])
-pdf(file.path("./results/endogram/femur",filename = "M1_spatial_seurat.pdf"))
-print(SpatialDimPlot(b, combine = FALSE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 10))
+b <- SetIdent(femur, value = femur@meta.data[["seurat_clusters"]])
+pdf(file.path("./results/endogram/femur",filename = "both_spatial_seurat.pdf"))
+print(SpatialDimPlot(b, combine = TRUE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 10))
 dev.off()
 
 ###subset the data in hierarchical clustering
@@ -98,15 +148,41 @@ clust_3 <- types_b[grepl("3", types_b[,13]),]
 clust_3 <- clust_3[,1:12]
 clust_4 <- types_b[grepl("4", types_b[,13]),]
 clust_4 <- clust_4[,1:12]
-clust_5 <- types_b[grepl("5", types_b[,13]),]
-clust_5 <- clust_5[,1:12]
+
 
 ##cor
-matrix <- data.matrix(clust_4, rownames.force = NA)
+matrix <- data.matrix(clust_3, rownames.force = NA)
 M <- cor(matrix)
 
-pdf(file.path("./results/endogram/femur",filename = "cluster4_cor.pdf"))
+pdf(file.path("./results/endogram/femur",filename = "both_cluster3_cor.pdf"))
 print(corrplot(M,
       type = 'upper',
                tl.col = "black",number.cex = 0.75))
 dev.off()
+
+
+####Extract hierarchycal clustering porcentages
+
+value <- as.vector(unique(types_b$clustering))
+for (i in length(value)){
+#select cluster of interest rows
+value_1 <- types_b[grepl(i, types_b$clustering),]
+value_1$clustering <- NULL
+
+names <- colnames(value_1)
+
+BM_DC <- (sum(BM_value$DC))*100/nrow(BM_value)
+BM_IC <- (sum(BM_value$IC))*100/nrow(BM_value)
+
+BM_proportions <- c(BM_PSC, BM_Bcell, BM_Erythroblasts, BM_Monocytes, BM_Tcell,
+                    BM_Neutrophils, BM_MSC,BM_MSC_fibro,  BM_EC, BM_Chondrocytes,
+                    BM_DC, BM_IC)
+
+}
+
+
+
+
+
+
+
