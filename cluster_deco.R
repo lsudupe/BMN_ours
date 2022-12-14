@@ -169,14 +169,17 @@ for (i in length(value)){
 value_1 <- types_b[grepl(i, types_b$clustering),]
 value_1$clustering <- NULL
 
-names <- colnames(value_1)
+#names <- colnames(value_1)
+proportions <- c()
+  for (o  in colnames(value_1)){ 
+    #paste(pro, "_",i_name)
+    sum(value_1[[o]])
+    pro <- (sum(value_1[[o]])*100/nrow(value_1))
+    ## plot
+    proportions[[length(proportions) + 1]] <- pro
+              
+  }
 
-BM_DC <- (sum(BM_value$DC))*100/nrow(BM_value)
-BM_IC <- (sum(BM_value$IC))*100/nrow(BM_value)
-
-BM_proportions <- c(BM_PSC, BM_Bcell, BM_Erythroblasts, BM_Monocytes, BM_Tcell,
-                    BM_Neutrophils, BM_MSC,BM_MSC_fibro,  BM_EC, BM_Chondrocytes,
-                    BM_DC, BM_IC)
 
 }
 
