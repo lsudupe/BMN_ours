@@ -441,24 +441,63 @@ pdf(paste("./results/CARD/heterogeneity/images/features/PC/Cd81_spatial_M3_fem_1
 print(CombinePlots(p2))
 dev.off()
 
-for (i in feature.list){
-  p1 <- SpatialFeaturePlot(dpi3, features = i, combine = FALSE)
-  #fix.p1 <- scale_fill_gradientn(colours=c(bl,"white", re), na.value = "grey98",limits = l,breaks=l, labels = c("min", "max"))
-  fix.p1 <- scale_fill_gradientn(colours=myPalette(100),breaks=b, labels = c("min", "max"),limits = b)
+
+#####
+genes_MIC <- read.csv("./data/single-cell/PC/MM_MIC_genes.csv")
+genes_MIC <- as.vector(genes_MIC$x)
+genes <- intersect(genes_MIC, rownames(M3_fem_1C@assays[["SCT"]]@data))
+genes_MM <- intersect(genes_MIC, rownames(M1_fem_1C@assays[["SCT"]]@data))
+
+a <- list(genes_MM)
+
+DefaultAssay(M1_fem_1C) <- "SCT"
+DefaultAssay(M1_fem_1C) <- "integrated"
+DefaultAssay(M1_fem_1C) <- "Spatial"
+library(GSEABase)
+genes <- list(as.vector(genes))
+genes_set <- GeneSet(genes)
+
+M3_fem_1C_module <- AddModuleScore(M3_fem_1C, features = a, name = c("MIC_"))
+M1_fem_1C_module <- AddModuleScore(M1_fem_1C, features = a, name = c("MIC_"))
+
+a <-FeaturePlot(M3_fem_1C_module, features = "MIC_1", label = TRUE, repel = TRUE) +
+  scale_colour_gradientn(colours = color)
+b <-FeaturePlot(M1_fem_1C_module, features = "MIC_1", label = TRUE, repel = TRUE) +
+  scale_colour_gradientn(colours = color)
+
+pdf("./results/addModuleScore/heterogeneity/umap_score_MM_PC.pdf")
+print(a + b)
+dev.off()
+
+##spatial plot
+
+b <- c(0,0.6)
+p1 <- SpatialFeaturePlot(M1_fem_1C_module, features = "MIC_1", pt.size.factor = 10, combine = FALSE)
+fix.p1 <- scale_fill_gradientn(colours=color,
+                               breaks=b,
+                               labels=c("Min","Max"),
+                               limits = b)
+p2 <- lapply(p1, function (x) x + fix.p1)
+
+pdf(paste("./results/addModuleScore/heterogeneity/satial_M1_fem_1C.pdf",sep=""))
+print(CombinePlots(p2))
+dev.off()
+
+bl <- colorRampPalette(c("navy","royalblue","lightskyblue"))(200)                      
+re <- colorRampPalette(c("mistyrose", "red2","darkred"))(200)
+
+for (i in clusters){
+  p1 <- SpatialFeaturePlot(M1_fem_1C_module, features = c("MIC_1"), pt.size.factor = 10, combine = FALSE)
+  fix.p1 <- scale_fill_gradientn(colours=c(bl,"white", re), na.value = "grey98",limits = c(0,0.6))
   p2 <- lapply(p1, function (x) x + fix.p1)
   
-  pdf(paste(i,"spatial.dpi3.pdf",sep=""))
+  pdf(paste(i,".pdf",sep=""))
   print(CombinePlots(p2))
   dev.off()
 }
 
 
-p1 <- SpatialFeaturePlot(spatial, features = "Fcgr1", pt.size.factor = 3, alpha = 0.6, combine = FALSE)
-fix.p1 <- scale_fill_continuous(type = "viridis")
-p2 <- lapply(p1, function (x) x + fix.p1)
 
-pdf(paste(i,".pdf",sep=""))
-print(CombinePlots(p2))
-dev.off()
+
 
 ##################################AMAIA PART HETEROGENEITY
