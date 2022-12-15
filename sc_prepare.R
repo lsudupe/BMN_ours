@@ -40,19 +40,19 @@ levels(a) <- list(PSC  = "Ery/Mk prog.",
                   MSC = "Ng2+ MSCs",
                   NC = "Schwann cells",
                   MSC = "Osteoblasts",
-                  MSC_fibro = "Arteriolar fibro.",
+                  Fibro = "Arteriolar fibro.",
                   EC = "Sinusoidal ECs",
                   MSC = "Osteo-CAR",
                   Bcell = "small pre-B.",
                   Chondrocytes = "Chondrocytes",
-                  MSC_fibro = "Endosteal fibro.",
-                  Fibro_Chondro_p = "Fibro/Chondro p.",
-                  MSC_fibro = "Stromal fibro.",
+                  Fibro = "Endosteal fibro.",
+                  Fibro = "Fibro/Chondro p.",
+                  Fibro = "Stromal fibro.",
                   EC = "Arteriolar ECs",
-                  MSC_fibro = "Myofibroblasts",
+                  Fibro = "Myofibroblasts",
                   MSC = "Smooth muscle",
                   DC = "Dendritic cells",
-                  IC = "NK cells",
+                  NK = "NK cells",
                   Bcell = "B cell"
 )
 
@@ -105,14 +105,14 @@ MM_genes <- Seurat::FindAllMarkers(object = PC_MM,
                                               only.pos = TRUE)
 cluster_MIC <- subset(MM_genes, p_val_adj < 0.05 & 0.05 < avg_log2FC)
 genes <- cluster_MIC[grepl("MM_MIC", cluster_MIC[,6]),]
-genes <- genes$gene
+genes <- cluster_MIC$gene
 
 #Top5
 top50 <- cluster_6_f %>%
   top_n(n = 50,
         wt = avg_log2FC)
 
-write.csv(genes, "./data/single-cell/PC/MM_MIC_genes.csv")
+write.csv(genes, "./data/single-cell/PC/MM_MIC_genes.csv", row.names = FALSE)
 
 
 
