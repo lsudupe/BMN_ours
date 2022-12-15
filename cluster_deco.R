@@ -182,22 +182,18 @@ lista[[name]] <- proportions
 
 }
 
+######create a df 
+rows = colnames(value_1)
+df = data.frame(matrix(nrow = length(colnames(value_1)), ncol = 0)) 
+rownames(df) = colnames(value_1)
 
-
-columns = colnames(types_b)
-df = data.frame(matrix(nrow = length(value), ncol = length(columns))) 
-colnames(df) = columns
-rownames(df) = value
-df
-
-for (i in colnames(df)){ 
-  df
-  proportions <- c(proportions, (sum(value_1[[o]])*100/nrow(value_1)))
+##add list values to df
+for (i in 1:length(lista)){
+  a <- lista[[i]]
+  df[, ncol(df) + 1] <- a
+  names(df)[ncol(df)] <- names(lista[i])
 }
-name <- paste('cluster:',i,sep='')
-lista[[name]] <- proportions
 
-}
 
 ## dataframe
 pro_df_ <- data.frame(BM_proportions)
