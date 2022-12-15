@@ -44,7 +44,7 @@ levels(a) <- list(PSC  = "Ery/Mk prog.",
                   EC = "Sinusoidal ECs",
                   MSC = "Osteo-CAR",
                   Bcell = "small pre-B.",
-                  Chondrocytes = "Chondrocytes",
+                  MSC = "Chondrocytes",
                   Fibro = "Endosteal fibro.",
                   Fibro = "Fibro/Chondro p.",
                   Fibro = "Stromal fibro.",
@@ -60,7 +60,7 @@ levels(a) <- list(PSC  = "Ery/Mk prog.",
 single_cell_bonemarrow@meta.data[["ident"]] <- a
 Seurat::Idents(object = single_cell_bonemarrow) <- single_cell_bonemarrow@meta.data[["ident"]]
 
-single_cell_bonemarrow <- subset(x = single_cell_bonemarrow, idents = c("NC", "Fibro_Chondro_p"), invert = TRUE)
+single_cell_bonemarrow <- subset(x = single_cell_bonemarrow, idents = c("NC", "PSC"), invert = TRUE)
 single_cell_bonemarrow@meta.data[["ident"]] <- single_cell_bonemarrow@active.ident
 
 
