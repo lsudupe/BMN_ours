@@ -12,6 +12,7 @@ library(clustertend)
 library(factoextra)
 library(gridExtra)
 library(dendextend)
+library(tidyr)
 
 #Data---------------------------------
 femur_M1 <- readRDS("./objects/card/heterogeneity/M1_fem_1C_subgroup_deco.rds")
@@ -194,11 +195,23 @@ for (i in 1:length(lista)){
   names(df)[ncol(df)] <- names(lista[i])
 }
 
+#df <- t(df)
+df <- cbind(celltype = rownames(df), df)
+rownames(df) <- 1:nrow(df)
 
-## dataframe
-pro_df_ <- data.frame(BM_proportions)
-rownames(pro_df_) <- z[1:12]
-write.csv(pro_df_, file = paste0("./results/CARD/heterogeneity/",v,"pro.csv"))
+library(tidyr)
+library(ggplot2)
+DF <- data.frame(group = c(df$celltype),
+                 cluster1 = c(df$`cluster:1`),
+                 cluster2 = c(df$`cluster:2`),
+                 cluster3 = c(df$`cluster:3`),
+                 cluster4 = c(df$`cluster:4`))
+DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster4)
+DFtall
+
+ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
 
 
+## savedDataframe
+write.csv(df, file = paste0("./results/endogram/femur/mean_porcentages.csv"))
 
