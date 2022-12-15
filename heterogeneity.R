@@ -276,11 +276,13 @@ rownames(df) <- 1:nrow(df)
 library(tidyr)
 library(ggplot2)
 DF <- data.frame(group = c(df$celltype),
-                 cluster1 = c(df$`area:BM`))
-DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster1)
+                 areaBM = c(df$`area:BM`))
+DFtall <- DF %>% gather(key = Area, value = Value, areaBM)
 DFtall
 
-ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
+pdf(paste("./results/CARD/heterogeneity/porcentages.pdf"))
+print(ggplot(DFtall, aes(group, Value, fill = Area)) + geom_col(position = "dodge") + theme(text = element_text(size = 6)) )
+dev.off()
 
 
 #########PLOT deconvolution results with images
