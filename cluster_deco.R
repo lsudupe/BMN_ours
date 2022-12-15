@@ -24,7 +24,7 @@ femur
 #Analysis--------------------------------
 set.seed(20000)
 meta <- femur@meta.data
-types <- meta[,11:22]
+types <- meta[,10:19]
 
 matrix <- data.matrix(types, rownames.force = NA)
 M <- cor(matrix)
@@ -46,7 +46,7 @@ for(i in vars){
 Outliers
 ##plot te outliers
 par(mfrow=c(2,2))
-colnames <- colnames(types[,c(2:5,9:11)])
+colnames <- colnames(types[,c(1:10)])
 for (i in colnames) {
   plot(types[,i], main = paste("Plot of ", i), ylab = i)
 }
@@ -54,7 +54,7 @@ for (i in colnames) {
 ###Prediagnostic
 
 ###hierarchycal plot
-pdf(file.path("./results/endogram/femur",filename = "both_cor.pdf"))
+pdf(file.path("./results/endogram/femur",filename = "both_cor_.pdf"))
 get_clust_tendency(types, 2, graph=TRUE, gradient=list(low="red", mid="white", high="blue"))
 dev.off()
 
@@ -105,7 +105,7 @@ col_1 = ifelse(meta$seurat_clusters == "0", "#F8766D",
                                                        ifelse(meta$seurat_clusters == "7", "#FF61CC", 'white'))))))))
 col = ifelse(meta$orig.ident, "grey", "gold")
 
-col <- cbind(col_1, col_2)
+#col <- cbind(col_1, col_2)
 
 pdf(file.path("./results/endogram/femur",filename = "both_dend.pdf"))
 # Make the dendrogram
@@ -139,23 +139,23 @@ dev.off()
 
 ###subset the data in hierarchical clustering
 meta_b <- b@meta.data
-types_b <- meta_b[,11:23]
+types_b <- meta_b[,10:20]
 
-clust_1 <- types_b[grepl("1", types_b[,13]),]
-clust_1 <- clust_1[,1:12]
-clust_2 <- types_b[grepl("2", types_b[,13]),]
-clust_2 <- clust_2[,1:12]
-clust_3 <- types_b[grepl("3", types_b[,13]),]
-clust_3 <- clust_3[,1:12]
-clust_4 <- types_b[grepl("4", types_b[,13]),]
-clust_4 <- clust_4[,1:12]
+clust_1 <- types_b[grepl("1", types_b$clustering),]
+clust_1$clustering <- NULL
+clust_2 <- types_b[grepl("2", types_b$clustering),]
+clust_2$clustering <- NULL
+clust_3 <- types_b[grepl("3", types_b$clustering),]
+clust_3$clustering <- NULL
+clust_4 <- types_b[grepl("4", types_b$clustering),]
+clust_4$clustering <- NULL
 
 
 ##cor
-matrix <- data.matrix(clust_3, rownames.force = NA)
+matrix <- data.matrix(clust_4, rownames.force = NA)
 M <- cor(matrix)
 
-pdf(file.path("./results/endogram/femur",filename = "both_cluster3_cor.pdf"))
+pdf(file.path("./results/endogram/femur",filename = "both_cluster4_cor.pdf"))
 print(corrplot(M,
       type = 'upper',
                tl.col = "black",number.cex = 0.75))
@@ -209,9 +209,9 @@ DF <- data.frame(group = c(df$celltype),
 DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster4)
 DFtall
 
+pdf(file.path("./results/endogram/femur",filename = "clustering_percentages.pdf"))
 ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
+dev.off()
 
 
-## savedDataframe
-write.csv(df, file = paste0("./results/endogram/femur/mean_porcentages.csv"))
 
