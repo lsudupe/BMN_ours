@@ -18,9 +18,9 @@ source(file = "./card.plot2.R")
 
 ## Spatial object
 M1_fem_1C <- readRDS("./objects/card/M1_fem_1C_subgroup.rds")
-M1_tib_1A <- readRDS("./objects/card/M1_tib_1A_subgroup.rds")
+#M1_tib_1A <- readRDS("./objects/card/M1_tib_1A_subgroup.rds")
 M3_fem_1C <- readRDS("./objects/card/M3_fem_1C_subgroup.rds")
-M3_tib_2A <- readRDS("./objects/card/M3_tib_2A_subgroup.rds")
+#M3_tib_2A <- readRDS("./objects/card/M3_tib_2A_subgroup.rds")
 
 ######Prepare data
 #single cell
@@ -67,6 +67,7 @@ x <- RunPCA(x,npcs = 20, verbose = FALSE) %>%
 x@images <- x.image
 
 saveRDS(x, "./objects/heterogeneity/femur_integrated.rds")
+x <- readRDS("./objects/heterogeneity/femur_integrated.rds")
 samples <- c(x)
 names(samples) <- c("femur")
 #names(samples) <- c("tibia")
@@ -157,7 +158,7 @@ for (i in 1:length(samples)){
     ct.visualize = ct.visualize,                 ### selected cell types to visualize
     colors = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
     NumCols = 8)                                 ### number of columns in the figure panel
-  pdf(paste("./results/CARD/heterogeneity//", names(samples[i]),"_2.pdf",sep=""))
+  pdf(paste("./results/CARD/heterogeneity/", names(samples[i]),"_2.pdf",sep=""))
   print(p2)
   dev.off()
   ## correlation
@@ -231,59 +232,56 @@ z <- z[2:14]
 for (i in 1:length(pro_list)){
   a <- pro_list[[i]]
   v <- pro_list[i]
-  v <- names(v)
   # AC
-  BM_value <- a[grepl("BM", a[,14]),]
-  BM_value$area <- NULL
+  #BM_value <- a[grepl("BM", a[,14]),]
+  #BM_value$area <- NULL
   
-  BM_PSC <- (sum(BM_value$PSC))*100/nrow(BM_value)
-  BM_Bcell <- (sum(BM_value$Bcell))*100/nrow(BM_value)
-  BM_Erythroblasts <- (sum(BM_value$Erythroblasts))*100/nrow(BM_value)
-  BM_Monocytes <- (sum(BM_value$Monocytes))*100/nrow(BM_value)
-  BM_Tcell <- (sum(BM_value$Tcell))*100/nrow(BM_value)
+  value <- as.vector(unique(a$area))
+  lista <- list()
   
-  BM_Neutrophils <- (sum(BM_value$Neutrophils))*100/nrow(BM_value)
-  BM_MSC <- (sum(BM_value$MSC))*100/nrow(BM_value)
-  BM_MSC_fibro <- (sum(BM_value$MSC_fibro))*100/nrow(BM_value)
-  BM_EC <- (sum(BM_value$EC))*100/nrow(BM_value)
-  BM_Chondrocytes <- (sum(BM_value$Chondrocytes))*100/nrow(BM_value)
-  
-  BM_DC <- (sum(BM_value$DC))*100/nrow(BM_value)
-  BM_IC <- (sum(BM_value$IC))*100/nrow(BM_value)
- 
-  BM_proportions <- c(BM_PSC, BM_Bcell, BM_Erythroblasts, BM_Monocytes, BM_Tcell,
-                      BM_Neutrophils, BM_MSC,BM_MSC_fibro,  BM_EC, BM_Chondrocytes,
-                      BM_DC, BM_IC)
-  
-  ## dataframe
-  pro_df_ <- data.frame(BM_proportions)
-  rownames(pro_df_) <- z[1:12]
-  write.csv(pro_df_, file = paste0("./results/CARD/heterogeneity/",v,"pro.csv"))
+  for (i in value){
+    #select cluster or group of interest rows
+    value_1 <- a[grepl(i, a$area),]
+    value_1$area <- NULL
+    value_1$X <- NULL
+    
+    ###create list to add content
+    proportions <- c()
+    for (o in colnames(value_1)){ 
+      proportions <- c(proportions, (sum(value_1[[o]])*100/nrow(value_1)))
+    }
+    name <- paste('area:',i,sep='')
+    lista[[name]] <- proportions
+    
+  }
+
 }
 
+######create a df 
+rows = colnames(value_1)
+df = data.frame(matrix(nrow = length(colnames(value_1)), ncol = 0)) 
+rownames(df) = colnames(value_1)
 
-M1_fem_1C <- read.csv("./results/CARD/heterogeneity/M1_fem_1Cpro.csv" ,row.names = 1, header= TRUE)
-M3_fem_1C <- read.csv("./results/CARD/heterogeneity/M3_fem_1Cpro.csv",row.names = 1, header= TRUE)
+##add list values to df
+for (i in 1:length(lista)){
+  a <- lista[[i]]
+  df[, ncol(df) + 1] <- a
+  names(df)[ncol(df)] <- names(lista[i])
+}
 
-general <-  data.frame(M1_fem_1C, M3_fem_1C)
-colnames(general) <- c("M1_fem_1C","M3_fem_1C")
+#df <- t(df)
+df <- cbind(celltype = rownames(df), df)
+rownames(df) <- 1:nrow(df)
 
+library(tidyr)
+library(ggplot2)
+DF <- data.frame(group = c(df$celltype),
+                 cluster1 = c(df$`area:BM`))
+DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster1)
+DFtall
 
-p1<-ggplot(M1_fem_1C, aes(x=rownames(M1_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
-  ggtitle("M1_fem_1C") +
-  geom_bar(stat="identity")+
-  coord_cartesian(ylim = c(0, 25)) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
 
-p2<-ggplot(M3_fem_1C, aes(x=rownames(M3_fem_1C),y=BM_proportions ,fill=BM_proportions)) +
-  ggtitle("M3_fem_1C") +
-  geom_bar(stat="identity")+
-  coord_cartesian(ylim = c(0, 25)) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-
-
-(p1 + p2)
 
 #########PLOT deconvolution results with images
 
