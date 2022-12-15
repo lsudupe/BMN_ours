@@ -184,6 +184,25 @@ lista[[name]] <- proportions
 
 
 
+columns = colnames(types_b)
+df = data.frame(matrix(nrow = length(value), ncol = length(columns))) 
+colnames(df) = columns
+rownames(df) = value
+df
+
+for (i in colnames(df)){ 
+  df
+  proportions <- c(proportions, (sum(value_1[[o]])*100/nrow(value_1)))
+}
+name <- paste('cluster:',i,sep='')
+lista[[name]] <- proportions
+
+}
+
+## dataframe
+pro_df_ <- data.frame(BM_proportions)
+rownames(pro_df_) <- z[1:12]
+write.csv(pro_df_, file = paste0("./results/CARD/heterogeneity/",v,"pro.csv"))
 
 
 
