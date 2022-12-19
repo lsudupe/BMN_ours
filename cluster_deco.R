@@ -145,6 +145,14 @@ dev.off()
 meta_b <- b@meta.data
 types_b <- meta_b[,10:20]
 
+##distribution plot
+pdf(file.path("./results/endogram/femur",filename = "clustering_distribution.pdf"))
+types_b %>%
+  pivot_longer(cols = -clustering) %>%
+  mutate(Cluster = factor(clustering)) %>%
+  ggplot(aes(x = name, y = value, fill = Cluster)) + geom_violin()
+dev.off()
+
 clust_1 <- types_b[grepl("1", types_b$clustering),]
 clust_1$clustering <- NULL
 clust_2 <- types_b[grepl("2", types_b$clustering),]
