@@ -126,6 +126,10 @@ hc_stats3$cluster.size
 a <- as.factor(hc3[["cluster"]])
 femur@meta.data[["clustering"]] <- a
 
+
+##save object
+saveRDS(femur, "./objects/heterogeneity/femur_hierarchical.rds")
+
 ###plot
 b <- SetIdent(femur, value = femur@meta.data[["clustering"]])
 pdf(file.path("./results/endogram/femur",filename = "both_spatial_hierarchical.pdf"))
