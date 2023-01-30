@@ -2,53 +2,56 @@
 
 ## 15.09.22 Laura Sudupe , git @lsudupe
 
-#Libraries---------------------------------
+## Libraries
 library(Seurat)
+library(tidyverse)
 
-#Data--------------------------------------
-M1_tib_1A <- Load10X_Spatial(data.dir = "./data/M1_tib_1A/outs/",
-                      filename = "filtered_feature_bc_matrix.h5",
-                      assay = "Spatial",
-                      slice = "M1_tib_1A",
-                      filter.matrix = TRUE)
 
-M1_fem_2B <- Load10X_Spatial(data.dir = "./data/spatial_no_optimal_results/M1_fem_2B/outs/",
-                             filename = "filtered_feature_bc_matrix.h5",
-                             assay = "Spatial",
-                             slice = "M1_fem_2B",
-                             filter.matrix = TRUE)
 
-M3_fem_1C <- Load10X_Spatial(data.dir = "./data/spatial_no_optimal_results/M3_fem_1C/outs/",
-                             filename = "filtered_feature_bc_matrix.h5",
-                             assay = "Spatial",
-                             slice = "M3_fem_1C",
-                             filter.matrix = TRUE)
+## Read data
+#Variables---------------------------------
+DIR_ROOT <- file.path(getwd())
+DIR_DATA <- file.path(DIR_ROOT, "data/data/")
 
-M3_tib_1A <- Load10X_Spatial(data.dir = "./data/spatial_no_optimal_results/M3_tib_1A/outs/",
-                             filename = "filtered_feature_bc_matrix.h5",
-                             assay = "Spatial",
-                             slice = "M3_tib_1A",
-                             filter.matrix = TRUE)
+## samples
+samples <- dir(path = DIR_DATA)
+samples <- samples[! samples %in% c("M1_tib_1A", "M3_tib_2A" )]
 
-#####add area info
-######add area data
-area_M1_tib_1A <- read.csv( "./data/mahtab_cloupe/M1_tibia_1A.csv")
-area_M1_tib_1A <- as.vector(area_M1_tib_1A$tibia_1A)
-M1_tib_1A@meta.data["area"] <- as.factor(area_M1_tib_1A)
+## Create each individual Seurat object for every sample
+lista <- c(samples)
+names(lista) <- samples
+prueba <-c()
 
-area_M1_fem_2B <- read.csv( "./data/mahtab_cloupe/M1_femur_2B.csv")
-area_M1_fem_2B <- as.vector(area_M1_fem_2B$femur_2B)
-M1_fem_2B@meta.data["area"] <- as.factor(area_M1_fem_2B)
+for (i in lista){
+  a <- Load10X_Spatial(data.dir = paste0(DIR_DATA, i),
+                       filename = "filtered_feature_bc_matrix.h5",
+                       assay = "Spatial",
+                       slice = i,
+                       filter.matrix = TRUE)
+  
+  ## add area data
+  area_a <- read.csv(paste0(DIR_DATA, i, "/area.csv"))
+  area_a <- as.vector(area_a$area)
+  a@meta.data["area"] <- as.factor(area_a)
+  a@meta.data["orig.ident"] <- i
+  ######subset data
+  Seurat::Idents(object = a) <- a@meta.data[["area"]]
+  a <- subset(x =a, idents = c("bone", "bone_marrow"))
+  a@meta.data[["area"]] <- a@active.ident
+  ######add object to list
+  prueba[[length(prueba) + 1]] <- a
+  
+}
+names(prueba) <- samples
 
-area_M3_tib_1A <- read.csv( "./data/mahtab_cloupe/M3_tibia_1A.csv")
-area_M3_tib_1A <- as.vector(area_M3_tib_1A$M3_tibia_1A)
-M3_tib_1A@meta.data["area"] <- as.factor(area_M3_tib_1A)
+## separate list
+list2env(prueba,envir=.GlobalEnv)
 
-area_M3_fem_1C <- read.csv( "./data/mahtab_cloupe/M3_femur_1C.csv")
-area_M3_fem_1C <- as.vector(area_M3_fem_1C$femur_1C)
-M3_fem_1C@meta.data["area"] <- as.factor(area_M3_fem_1C)
-M3_fem_1C@images[["M3_fem_1C"]]@spot.radius <- 0.01248195
+## combine
+combined <- merge(M1_fem_1C, y = c(M2_F_2B, M3_F_1C, M3_fem_1C, M8_F2_1C, M9_F2_1C ), 
+                  add.cell.ids = c("M1_fem_1C", "M2_F_2B", "M3_F_1C", "M3_fem_1C", "M8_F2_1C", "M9_F2_1C"), project = "BM")
 
+saveRDS(combined, "./objects/sp/combined.rds")
 ###########################################################
 
 lista <- c(M1_tib_1A, M1_fem_2B, M3_fem_1C, M3_tib_1A)
