@@ -6,8 +6,6 @@
 library(Seurat)
 library(tidyverse)
 
-
-
 ## Read data
 #Variables---------------------------------
 DIR_ROOT <- file.path(getwd())
@@ -34,10 +32,17 @@ for (i in lista){
   area_a <- as.vector(area_a$area)
   a@meta.data["area"] <- as.factor(area_a)
   a@meta.data["orig.ident"] <- i
-  ######subset data
+  ## subset data
   Seurat::Idents(object = a) <- a@meta.data[["area"]]
   a <- subset(x =a, idents = c("bone", "bone_marrow"))
   a@meta.data[["area"]] <- a@active.ident
+  ## fix image
+  #https://stackoverflow.com/questions/73131436/error-in-funleft-right-non-numeric-argument-to-binary-operator-when-runni
+  a@images[[i]]@coordinates[["tissue"]] <- as.integer(a@images[[i]]@coordinates[["tissue"]])
+  a@images[[i]]@coordinates[["row"]] <- as.integer(a@images[[i]]@coordinates[["row"]])
+  a@images[[i]]@coordinates[["col"]] <- as.integer(a@images[[i]]@coordinates[["col"]])
+  a@images[[i]]@coordinates[["imagerow"]] <- as.integer(a@images[[i]]@coordinates[["imagerow"]])
+  a@images[[i]]@coordinates[["imagecol"]] <- as.integer(a@images[[i]]@coordinates[["imagecol"]])
   ######add object to list
   prueba[[length(prueba) + 1]] <- a
   
@@ -53,21 +58,6 @@ combined <- merge(M1_fem_1C, y = c(M2_F_2B, M3_F_1C, M3_fem_1C, M8_F2_1C, M9_F2_
 
 saveRDS(combined, "./objects/sp/combined.rds")
 ###########################################################
-
-lista <- c(M1_tib_1A, M1_fem_2B, M3_fem_1C, M3_tib_1A)
-names(lista) <- c("M1_tib_1A","M1_fem_2B","M3_fem_1C","M3_tib_1A")
-
-for (i in 1:length(lista)) {
-  #https://stackoverflow.com/questions/73131436/error-in-funleft-right-non-numeric-argument-to-binary-operator-when-runni
-  a <- lista[[i]]
-  b <- names(lista[i])
-  a@images[[b]]@coordinates[["tissue"]] <- as.integer(a@images[[b]]@coordinates[["tissue"]])
-  a@images[[b]]@coordinates[["row"]] <- as.integer(a@images[[b]]@coordinates[["row"]])
-  a@images[[b]]@coordinates[["col"]] <- as.integer(a@images[[b]]@coordinates[["col"]])
-  a@images[[b]]@coordinates[["imagerow"]] <- as.integer(a@images[[b]]@coordinates[["imagerow"]])
-  a@images[[b]]@coordinates[["imagecol"]] <- as.integer(a@images[[b]]@coordinates[["imagecol"]])
-  saveRDS(a,file = paste0("./objects/sp/",names(lista[i]),".rds"))
-}
 
 ##for python
 a <- data.frame(M1_tib_1A@images[["M1_tib_1A"]]@coordinates)
