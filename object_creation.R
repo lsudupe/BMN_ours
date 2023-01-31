@@ -13,7 +13,7 @@ DIR_DATA <- file.path(DIR_ROOT, "data/data/")
 
 ## samples
 samples <- dir(path = DIR_DATA)
-samples <- samples[! samples %in% c("M1_tib_1A", "M3_tib_2A" )]
+samples <- samples[! samples %in% c("M1_tib_1A", "M3_tib_2A" ,"untitled folder","BM_human_AP-B08805")]
 
 ## Create each individual Seurat object for every sample
 lista <- c(samples)
@@ -36,6 +36,9 @@ for (i in lista){
   Seurat::Idents(object = a) <- a@meta.data[["area"]]
   a <- subset(x =a, idents = c("bone", "bone_marrow"))
   a@meta.data[["area"]] <- a@active.ident
+  ## fix scalefactor
+  #https://github.com/satijalab/seurat/issues/5614
+  a@images[[i]]@scale.factors$lowres = a@images[[i]]@scale.factors$hires
   ## fix image
   #https://stackoverflow.com/questions/73131436/error-in-funleft-right-non-numeric-argument-to-binary-operator-when-runni
   a@images[[i]]@coordinates[["tissue"]] <- as.integer(a@images[[i]]@coordinates[["tissue"]])
