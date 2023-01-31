@@ -10,7 +10,7 @@ library(ggplot2)
 #Data--------------------------------------
 M1_tib_1A  <- readRDS("./objects/sp/M1_tib_1A.rds")
 M1_fem_2B  <- readRDS("./objects/sp/M1_fem_2B.rds")
-M3_tib_1A  <- readRDS("./objects/sp/M3_tib_1A.rds")
+#M3_tib_1A  <- readRDS("./objects/sp/M3_tib_1A.rds")
 M3_fem_1C  <- readRDS("./objects/sp/M3_fem_1C.rds")
 
 
@@ -27,8 +27,8 @@ M3_tib_1A@meta.data[["type"]] <- "control"
 M3_tib_1A@meta.data[["orig.ident"]] <- "M3_tib_1A" 
 
 ##Merge them
-combined <- merge(M1_tib_1A, y = c(M1_fem_2B, M3_fem_1C, M3_tib_1A), 
-                  add.cell.ids = c("M1_tib_1A", "M1_fem_2B", "M3_fem_1C", "M3_tib_1A"), project = "BM")
+combined <- merge(M1_tib_1A, y = c(M1_fem_2B, M3_fem_1C), 
+                  add.cell.ids = c("M1_tib_1A", "M1_fem_2B", "M3_fem_1C"), project = "BM")
 
 ###clean
 a <- combined
