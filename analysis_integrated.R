@@ -13,14 +13,19 @@ library(base)
 library(scclusteval)
 
 #Data--------------------------------------
-combined  <- readRDS("./objects/sp/second/combined_filtered.rds")
+combined  <- readRDS("./objects/sp/combined_filtered.rds")
 x <- combined
 
-x.image <- x@images
-x@images[["M1_tib_1A"]]<- NULL
-x@images[["M1_fem_1C"]]<- NULL
-x@images[["M3_tib_2A"]]<- NULL
-x@images[["M3_fem_1C"]]<- NULL
+Seurat::Idents(object = x) <- combined@meta.data[["orig.ident"]]
+images <- combined@images
+
+## samples
+samples <- unique(combined@meta.data[["orig.ident"]])
+
+for (i in samples){
+  x@images[[i]] <- NULL
+}
+
 
 ###separate the data
 seurat_resolution <- x
