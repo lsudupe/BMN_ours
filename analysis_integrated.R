@@ -14,11 +14,18 @@ library(scclusteval)
 
 #Data--------------------------------------
 combined  <- readRDS("./objects/sp/combined_filtered.rds")
-x <- combined
 
 ## subset data, take out bone
-Seurat::Idents(object = x) <- x@meta.data[["area"]]
-x <- subset(x = x, idents = c("bone_marrow"))
+Seurat::Idents(object = combined) <- combined@meta.data[["area"]]
+combined <- subset(x = combined, idents = c("bone_marrow"))
+
+combined <- SCTransform(combined, assay = "Spatial", verbose = TRUE, method = "poisson")
+combined <- RunPCA(combined, assay = "SCT", verbose = FALSE)
+combined <- FindNeighbors(combined, reduction = "pca", dims = 1:30)
+combined <- FindClusters(combined, verbose = FALSE)
+combined <- RunUMAP(combined, reduction = "pca", dims = 1:30)
+
+x <- combined
 
 Seurat::Idents(object = x) <- combined@meta.data[["type"]]
 images <- x@images
@@ -39,49 +46,30 @@ harmony_resolution <- x
 list <- SplitObject(seurat_resolution, split.by = "type")
 list <- lapply(X = list, FUN = SCTransform, assay="Spatial")
 features <- SelectIntegrationFeatures(object.list = list, nfeatures = 3000)
-list <- PrepSCTIntegration(object.list = list, anchor.features = features)
+list <- PrepSCTIntegration(object.list = list, anchor.features = features, verbose = FALSE)
 anchors <- FindIntegrationAnchors(object.list = list, normalization.method = "SCT",
-                                  anchor.features = features)
-seurat_resolution <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
+                                  anchor.features = features, verbose = FALSE)
+seurat_resolution <- IntegrateData(anchorset = anchors, normalization.method = "SCT", verbose = FALSE)
 
-seurat_resolution <- RunPCA(seurat_resolution,npcs = 15, verbose = FALSE) %>%
-  RunUMAP(reduction = "pca", dims = 1:15, verbose = FALSE) %>%
-  FindNeighbors(reduction = "pca", dims = 1:15) %>%
-  FindClusters(resolution=0.7) 
+seurat_resolution <- RunPCA(seurat_resolution, verbose = FALSE) %>%
+  FindNeighbors(dims = 1:30) %>%
+  FindClusters(resolution=0.7) %>%
+  RunUMAP(dims = 1:30) 
 
 seurat_resolution@images <- images
-
-#a <- as.factor(integrated_seurat@meta.data[["area"]])
-#levels(a) <- list(BM_SOC  = "bone marrow (SOC)", 
- #                 AC_mix = "AC mix",
-  #                DT = "DT",
-   #               cortical_bone = "cortical bone",
-    #              BM_B = "bone marrow/bone",
-     #             NS = "NS",
-      #            adipocyte_BM = "adipocyte in bone marrow",
-       #           adipocyte_M = "adipocyte in muscle",
-#                  AC = "AC",
- #                 muscle = "muscle",
-  #                endosteal_B = "endosteal bone",
-   #               periosteal_B = "periosteal bone",
-    #              trabecular_bone_in_BM = "trabecular bone in bone marrow",
-     #             SOC_GP = "SOC-GP",
-      #            GP_POC = "GP-POC",
-       #           BM = "bone marrow",
-        #          B = "bone")
-#integrated_seurat@meta.data[["area"]] <- a
 saveRDS(seurat_resolution, "./objects/sp/integrated/integrated.seurat.rds")
+
 
 ######harmony#####
 harmony_resolution <- harmony_resolution %>%
   NormalizeData() %>%
   ScaleData() %>%
   FindVariableFeatures() %>%
-  RunPCA(npcs = 15) %>%
-  RunHarmony(assay.use="Spatial",reduction = "pca", dims = 1:15, group.by.vars = "type") %>%
-  FindNeighbors(reduction = "harmony", dims = 1:15) %>%
+  RunPCA(npcs = 30) %>%
+  RunHarmony(assay.use="Spatial",reduction = "pca", dims = 1:30, group.by.vars = "type") %>%
+  FindNeighbors(reduction = "harmony", dims = 1:30) %>%
   FindClusters(resolution=0.7) %>%
-  RunUMAP(reduction = "harmony", dims = 1:15, n.epochs = 1e3) 
+  RunUMAP(reduction = "harmony", dims = 1:30, n.epochs = 1e3) 
 
 harmony_resolution@images <- images
 saveRDS(harmony_resolution, "./objects/sp/integrated/integrated.harmony.rds")
@@ -163,6 +151,12 @@ for (i in 1:length(samples)){
   dev.off()
 }
 
+for (i in 1:length(samples)){
+  a <- samples[[i]]
+  pdf(file.path("./results/clusters/individual/",filename = paste0("Xkr4_",names(samples[i]),".pdf")))
+  print(SpatialPlot(a ,features = c("Col1a2"), pt.size.factor = 7))
+  dev.off()
+}
 
 ###Markers
 x <- integrated_seurat
