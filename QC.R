@@ -1,164 +1,148 @@
-## SCRIPT: QC of the spatial data BMN project
+## SCRIPT: QC of the seurat spatial objects BMN project
 
-## 15.09.22 Laura Sudupe , git @lsudupe
+## 24.06.22 Laura Sudupe , git @lsudupe
 
 #Libraries---------------------------------
 library(Seurat)
 library(dplyr)
 library(ggplot2)
 
-#Data--------------------------------------
-M1_tib_1A  <- readRDS("./objects/sp/M1_tib_1A.rds")
-M1_fem_2B  <- readRDS("./objects/sp/M1_fem_2B.rds")
-#M3_tib_1A  <- readRDS("./objects/sp/M3_tib_1A.rds")
-M3_fem_1C  <- readRDS("./objects/sp/M3_fem_1C.rds")
+## Read data
+combined <- readRDS("./objects/sp/combined.rds")
 
-
-M1_tib_1A@meta.data[["type"]] <- "MM"
-M1_tib_1A@meta.data[["orig.ident"]] <- "M1_tib_1A" 
-
-M1_fem_2B@meta.data[["type"]] <- "MM"
-M1_fem_2B@meta.data[["orig.ident"]] <- "M1_fem_2B" 
-
-M3_fem_1C@meta.data[["type"]] <- "control"
-M3_fem_1C@meta.data[["orig.ident"]] <- "M3_fem_1C" 
-
-M3_tib_1A@meta.data[["type"]] <- "control"
-M3_tib_1A@meta.data[["orig.ident"]] <- "M3_tib_1A" 
-
-##Merge them
-combined <- merge(M1_tib_1A, y = c(M1_fem_2B, M3_fem_1C), 
-                  add.cell.ids = c("M1_tib_1A", "M1_fem_2B", "M3_fem_1C"), project = "BM")
-
-###clean
-a <- combined
-a@meta.data[["area"]] <- as.factor(a@meta.data[["area"]])
-levels(a@meta.data[["area"]])[20] <- "NS"
-a <- SetIdent(a, value = a@meta.data[["area"]])
-combined <- a
-
-saveRDS(combined, "./objects/sp/combined.rds")
-
-###PLOTS###
-######quality metrics per area
-pdf(file.path("./results/QC/",filename = "Number of spot per area.pdf"))
+##Visualization
+# Visualize the number of spots counts per sample
+pdf(file.path("./results/QC",filename = "Number of spot per sample.pdf"))
 combined@meta.data%>% 
-  ggplot(aes(x=area, fill=orig.ident)) + 
-  geom_bar(alpha=0.8) +
+  ggplot(aes(x=orig.ident, fill=orig.ident)) + 
+  geom_bar() +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
   theme(plot.title = element_text(hjust=0.5, face="bold")) +
   ggtitle("NSpots")
 dev.off()
 
-pdf(file.path("./results/QC/",filename = "Number of spot per area.tissue.pdf"))
-combined@meta.data%>% 
-  ggplot(aes(x=orig.ident, fill=area)) + 
-  geom_bar(alpha=0.8) +
+# Visualize the distribution of genes detected per spot via boxplot
+pdf(file.path("./results/QC",filename = "genes detected per spot boxplot.pdf"))
+combined@meta.data %>% 
+  ggplot(aes(x=orig.ident, y=log10(nFeature_Spatial), fill=orig.ident)) + 
+  geom_boxplot() + 
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
   theme(plot.title = element_text(hjust=0.5, face="bold")) +
-  ggtitle("NSpots")
+  ggtitle("Ngenes vs Npots")
 dev.off()
 
 # Visualize the distribution of genes detected per spot via histogram
-pdf(file.path("./results/QC/combined/",filename = "genes detected per spot histogram.pdf"))
+pdf(file.path("./results/QC",filename = "genes detected per spot histogram.pdf"))
 combined@meta.data %>% 
   ggplot(aes(color=orig.ident, x=nFeature_Spatial, fill=orig.ident)) + 
   geom_density(alpha = 0.2) + 
   theme_classic() +
   scale_x_log10() + 
-  geom_vline(xintercept = 100)
+  geom_vline(xintercept = 300)
 dev.off()
 
-# Visualize the distribution of genes detected per spot via histogram
-pdf(file.path("./results/QC/",filename = paste("genes boxplot per area.pdf",sep="")))
-combined@meta.data%>% 
-  ggplot(aes(x=nFeature_Spatial, y= area, fill=area)) + 
-  geom_boxplot(alpha=0.8) +  
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  xlim(0, 1500) +
-  geom_vline(xintercept = 100) +
-  theme(plot.title = element_text(hjust=0.5, face="bold"))
-dev.off()
-
-# Visualize the distribution of UMI detected per spot via histogram
-pdf(file.path("./results/QC/combined/",filename = "UMIs detected per spot histogram.pdf"))
+# Visualize the number UMIs/transcripts per cell
+pdf(file.path("./results/QC",filename = "number UMIs sati transcripts per spot.pdf"))
 combined@meta.data %>% 
   ggplot(aes(color=orig.ident, x=nCount_Spatial, fill=orig.ident)) + 
   geom_density(alpha = 0.2) + 
+  scale_x_log10() + 
   theme_classic() +
-  scale_x_log10() +
-  geom_vline(xintercept = 200)
+  ylab("Cell density") +
+  geom_vline(xintercept = 500)
 dev.off()
 
-# Visualize the distribution of UMI detected per spot via histogram
-pdf(file.path("./results/QC/",filename = paste("UMI boxplot per area.pdf",sep="")))
-combined@meta.data%>% 
-  ggplot(aes(x=nCount_Spatial, y= area, fill=area)) + 
-  geom_boxplot(alpha=0.8) +  
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  xlim(0, 1500) +
-  geom_vline(xintercept = 100) +
-  theme(plot.title = element_text(hjust=0.5, face="bold"))
-dev.off()
 
-pdf(file.path("./results/QC/combined",filename = "features.pdf"))
-FeatureScatter(combined, feature1 = "nCount_Spatial", feature2 = "nFeature_Spatial", group.by = "orig.ident")
-dev.off()
-
-##########SPATIAL plots
+## spatial plots
 library(BuenColors)
-nuria <- jdb_palette("brewer_spectra")
-#solar <- jdb_palette("solar_extra")
+color <- jdb_palette("brewer_spectra")
 
-color <- nuria
-image.trans <- 0.5
-spot.trans <- 1
+feature.list <- c("nCount_Spatial", "nFeature_Spatial")
+sample <- c(unique(combined$orig.ident))
+samples <- c()
+Seurat::Idents(object = combined) <- combined@meta.data[["orig.ident"]]
+images <- combined@images
 
-##specific plots
+for (i in sample){
+combined@images[[i]] <- NULL
+}
 
-a <- as.vector(combined@meta.data[["nFeature_Spatial"]])
-a <- log(a)
-hist(a)
-combined@meta.data[["log_nFeature_Spatial"]] <- a
-combined <- a
+for (i in sample){
+  a <- subset(x = combined, idents = i)
+  a@images[[i]] <- images[[i]]
+  samples[[length(samples) + 1]] <- a
+}
+names(samples) <- sample
 
-b <- c(2,9)
-label <- c("min", "max")
-p1 <- SpatialFeaturePlot(combined, features = "log_nFeature_Spatial",combine = FALSE)
-fix.p1 <- scale_fill_gradientn(colours=color,breaks=b, labels = label,limits =b)
-p2 <- lapply(p1, function (x) x + fix.p1)
+## separate list
+list2env(prueba,envir=.GlobalEnv)
 
-pdf(paste("./results/QC/combined/log_nFeature_Spatial.pdf",sep=""))
-CombinePlots(p2)
+for (i in 1:length(samples)){
+  a <- samples[[i]]
+  b <- c(min(a@meta.data[["nFeature_Spatial"]]), max(a@meta.data[["nFeature_Spatial"]]))
+  p1 <- SpatialFeaturePlot(a, features = c("nFeature_Spatial"), combine = FALSE, ncol = 1, pt.size.factor = 7)
+  fix.p1 <- scale_fill_gradientn(colours=color,
+                                 breaks=b,
+                                 labels=c("Min","Max"),
+                                 limits = b)
+  p2 <- lapply(p1, function (x) x + fix.p1)
+  
+  pdf(paste("./results/QC/unique/",names(samples[i]),"_feature_spatial.pdf",sep=""))
+  print(CombinePlots(p2))
+  dev.off()
+}
+
+for (i in 1:length(samples)){
+  a <- samples[[i]]
+  b <- c(min(a@meta.data[["nCount_Spatial"]]), max(a@meta.data[["nCount_Spatial"]]))
+  p1 <- SpatialFeaturePlot(a, features = c("nCount_Spatial"), combine = FALSE, ncol = 1, pt.size.factor = 7)
+  fix.p1 <- scale_fill_gradientn(colours=color,
+                                 breaks=b,
+                                 labels=c("Min","Max"),
+                                 limits = b)
+  p2 <- lapply(p1, function (x) x + fix.p1)
+  
+  pdf(paste("./results/QC/unique/",names(samples[i]),"_count_spatial.pdf",sep=""))
+  print(CombinePlots(p2))
+  dev.off()
+}
+
+combined.meta <- combined@meta.data
+
+###########count/feature correlation
+
+# Visualize the correlation between genes detected and number of UMIs and determine whether strong presence of cells with low numbers of genes/UMIs
+pdf(paste("./results/QC/count_features_cor.pdf",sep=""))
+combined.meta %>% 
+  ggplot(aes(x=nCount_Spatial, y=nFeature_Spatial)) + 
+  geom_point() + 
+  scale_colour_gradient(low = "gray90", high = "black") +
+  stat_smooth(method=lm) +
+  scale_x_log10() + 
+  theme_classic() +
+  geom_vline(xintercept = 500) +
+  geom_hline(yintercept = 250) +
+  facet_wrap(~orig.ident)
 dev.off()
 
-a <- as.vector(combined@meta.data[["nCount_Spatial"]])
-a <- log(a)
-combined@meta.data[["log_nCount_Spatial"]] <- a
-hist(a)
-
-b <- c(3,11)
-label <- c("min", "max")
-p1 <- SpatialFeaturePlot(combined, features = "log_nCount_Spatial",combine = FALSE, alpha=0.9)
-fix.p1 <- scale_fill_gradientn(colours=color,breaks=b, labels = label,limits =b)
-p2 <- lapply(p1, function (x) x + fix.p1)
-
-pdf(paste("./results/QC/combined/log_nCount_Spatial.pdf",sep=""))
-CombinePlots(p2)
+pdf(paste("./results/QC/features_violinplot.pdf",sep=""))
+VlnPlot(object = combined, features = 'nFeature_Spatial', split.by = 'orig.ident')
 dev.off()
 
+pdf(paste("./results/QC/count_violinplot.pdf",sep=""))
+VlnPlot(object = combined, features = 'nCount_Spatial', split.by = 'orig.ident')
+dev.off()
+
+
+## add image
+combined@images <- images
 
 # Filter out low quality cells using selected thresholds - these will change with experiment
-combined <- subset(x = combined, idents = c("3","4","5","7","8","9","10"))
-combined <- subset(x = combined, 
-                            subset= (nCount_Spatial >= 200 & nCount_Spatial <= 25000) & 
-                              (nFeature_Spatial >= 100 & nFeature_Spatial <= 5500))
+filtered_combined <- subset(x = combined, 
+                          subset= (nCount_Spatial >= 200 & nCount_Spatial <= 45000) & 
+                            (nFeature_Spatial >= 150 & nFeature_Spatial <= 7500))
 
-saveRDS(combined, "./objects/sp/combined_filtered.rds")
-
-
-
+#####save combined
+saveRDS(filtered_combined,"./objects/sp/combined_filtered.rds")
