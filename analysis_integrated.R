@@ -43,18 +43,22 @@ seurat_resolution <- x
 harmony_resolution <- x
 
 ######seurat#####
+#https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_07_spatial.html#Dimensionality_reduction_and_clustering
+# need to set maxSize for PrepSCTIntegration to work
+options(future.globals.maxSize = 2000 * 1024^2)  # set allowed size to 2K MiB
+
 list <- SplitObject(seurat_resolution, split.by = "type")
-list <- lapply(X = list, FUN = SCTransform, assay="Spatial")
-features <- SelectIntegrationFeatures(object.list = list, nfeatures = 3000)
+list <- lapply(X = list, FUN = SCTransform, assay="Spatial", method = "poisson")
+features <- SelectIntegrationFeatures(object.list = list, nfeatures = 3000, verbose = FALSE)
 list <- PrepSCTIntegration(object.list = list, anchor.features = features, verbose = FALSE)
 anchors <- FindIntegrationAnchors(object.list = list, normalization.method = "SCT",
                                   anchor.features = features, verbose = FALSE)
-seurat_resolution <- IntegrateData(anchorset = anchors, normalization.method = "SCT", verbose = FALSE)
+integrated_seurat <- IntegrateData(anchorset = anchors, normalization.method = "SCT", verbose = FALSE)
 
-seurat_resolution <- RunPCA(seurat_resolution, verbose = FALSE) %>%
-  FindNeighbors(dims = 1:30) %>%
+seurat_resolution <- RunPCA(integrated_seurat, verbose = FALSE) %>%
+  FindNeighbors(dims = 1:20) %>%
   FindClusters(resolution=0.7) %>%
-  RunUMAP(dims = 1:30) 
+  RunUMAP(dims = 1:20) 
 
 seurat_resolution@images <- images
 saveRDS(seurat_resolution, "./objects/sp/integrated/integrated.seurat.rds")
@@ -65,11 +69,11 @@ harmony_resolution <- harmony_resolution %>%
   NormalizeData() %>%
   ScaleData() %>%
   FindVariableFeatures() %>%
-  RunPCA(npcs = 30) %>%
-  RunHarmony(assay.use="Spatial",reduction = "pca", dims = 1:30, group.by.vars = "type") %>%
-  FindNeighbors(reduction = "harmony", dims = 1:30) %>%
+  RunPCA(npcs = 20) %>%
+  RunHarmony(assay.use="Spatial",reduction = "pca", dims = 1:20, group.by.vars = "type") %>%
+  FindNeighbors(reduction = "harmony", dims = 1:20) %>%
   FindClusters(resolution=0.7) %>%
-  RunUMAP(reduction = "harmony", dims = 1:30, n.epochs = 1e3) 
+  RunUMAP(reduction = "harmony", dims = 1:20, n.epochs = 1e3) 
 
 harmony_resolution@images <- images
 saveRDS(harmony_resolution, "./objects/sp/integrated/integrated.harmony.rds")
