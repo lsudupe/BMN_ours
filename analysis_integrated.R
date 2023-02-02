@@ -16,8 +16,12 @@ library(scclusteval)
 combined  <- readRDS("./objects/sp/combined_filtered.rds")
 x <- combined
 
-Seurat::Idents(object = x) <- combined@meta.data[["orig.ident"]]
-images <- combined@images
+## subset data, take out bone
+Seurat::Idents(object = x) <- x@meta.data[["area"]]
+x <- subset(x = x, idents = c("bone_marrow"))
+
+Seurat::Idents(object = x) <- combined@meta.data[["type"]]
+images <- x@images
 
 ## samples
 samples <- unique(combined@meta.data[["orig.ident"]])
@@ -45,7 +49,7 @@ seurat_resolution <- RunPCA(seurat_resolution,npcs = 15, verbose = FALSE) %>%
   FindNeighbors(reduction = "pca", dims = 1:15) %>%
   FindClusters(resolution=0.7) 
 
-seurat_resolution@images <- x.image
+seurat_resolution@images <- images
 
 #a <- as.factor(integrated_seurat@meta.data[["area"]])
 #levels(a) <- list(BM_SOC  = "bone marrow (SOC)", 
@@ -66,7 +70,7 @@ seurat_resolution@images <- x.image
        #           BM = "bone marrow",
         #          B = "bone")
 #integrated_seurat@meta.data[["area"]] <- a
-saveRDS(seurat_resolution, "./objects/sp/integrated/second/integrated.seurat_type.rds")
+saveRDS(seurat_resolution, "./objects/sp/integrated/integrated.seurat.rds")
 
 ######harmony#####
 harmony_resolution <- harmony_resolution %>%
@@ -79,39 +83,19 @@ harmony_resolution <- harmony_resolution %>%
   FindClusters(resolution=0.7) %>%
   RunUMAP(reduction = "harmony", dims = 1:15, n.epochs = 1e3) 
 
-harmony_resolution@images <- x.image
-saveRDS(harmony_resolution, "./objects/sp/integrated/second/integrated.harmony_type.rds")
+harmony_resolution@images <- images
+saveRDS(harmony_resolution, "./objects/sp/integrated/integrated.harmony.rds")
 
-integrated_seurat <- readRDS("./objects/sp/integrated/second/integrated.seurat_type.rds")
-integrated_harmony <- readRDS("./objects/sp/integrated/second/integrated.harmony_type.rds")
+integrated_seurat <- readRDS("./objects/sp/integrated/integrated.seurat.rds")
+integrated_harmony <- readRDS("./objects/sp/integrated/integrated.harmony.rds")
 
 ######Jackard index harmony clusters vs seurat
-pdf(file.path("./results/jackard/second",filename = "jackard_type.pdf"))                                                         
+pdf(file.path("./results/jackard/",filename = "jackard_type_harmonyvsseurat.pdf"))                                                         
 PairWiseJaccardSetsHeatmap(integrated_seurat@active.ident,
                            integrated_harmony@active.ident)
 dev.off()
 
-######Jackard index seurat clusters vs area
-clusters <- integrated_seurat
-clusters <- SetIdent(clusters, value = clusters@meta.data[["seurat_clusters"]])
-area <- integrated_seurat
-area <- SetIdent(area, value = area@meta.data[["area"]])
-
-pdf(file.path("./results/jackard",filename = "jackard_seurat_clusters_vs_area.pdf"))                                                         
-PairWiseJaccardSetsHeatmap(clusters@active.ident,
-                           area@active.ident)
-dev.off()
-
-######Jackard index harmony clusters vs area
-clusters <- integrated_harmony
-clusters <- SetIdent(clusters, value = clusters@meta.data[["seurat_clusters"]])
-area <- integrated_seurat
-area <- SetIdent(area, value = area@meta.data[["area"]])
-
-pdf(file.path("./results/jackard",filename = "jackard_harmony_clusters_vs_area.pdf"))                                                         
-PairWiseJaccardSetsHeatmap(clusters@active.ident,
-                           area@active.ident)
-dev.off()
+## spatial plots
 
 samples <- c(integrated_seurat, integrated_harmony)
 names(samples) <- c("integrated_seurat", "integrated_harmony")
@@ -119,11 +103,11 @@ names(samples) <- c("integrated_seurat", "integrated_harmony")
 for (i in 1:length(samples)){
   a <- samples[[i]]
   #umap separate in cell type
-  pdf(file.path("./results/clusters/integration/second/",filename = paste0("umap_clusters_",names(samples[i]),".pdf")))
+  pdf(file.path("./results/clusters/integration/",filename = paste0("umap_clusters_",names(samples[i]),".pdf")))
   print(DimPlot(a, group.by = c("seurat_clusters"), label = T) + ggtitle("cell type"))
   dev.off()
   #umap separate in samples
-  pdf(file.path("./results/clusters/integration/second/",filename = paste0("umap_samples_",names(samples[i]),".pdf")))
+  pdf(file.path("./results/clusters/integration/",filename = paste0("umap_samples_",names(samples[i]),".pdf")))
   print(DimPlot(a, group.by = c("orig.ident"), label = T) + ggtitle("sample"))
   dev.off()
   #umap separate in samples
@@ -131,13 +115,13 @@ for (i in 1:length(samples)){
   #print(DimPlot(a, group.by = c("area"),repel=TRUE, label = T) + ggtitle("sample"))
   #dev.off()
   #umap separate in samples
-  pdf(file.path("./results/clusters/integration/second/",filename = paste0("umap_type_",names(samples[i]),".pdf")))
+  pdf(file.path("./results/clusters/integration/",filename = paste0("umap_type_",names(samples[i]),".pdf")))
   print(DimPlot(a, group.by = c("type"), label = T) + ggtitle("sample"))
   dev.off()
   a <- SetIdent(a, value = a@meta.data[["seurat_clusters"]])
   #spatial umap 
-  pdf(file.path("./results/clusters/integration/second/",filename = paste0("cluster_spatial_",names(samples[i]),".pdf")))
-  print(SpatialDimPlot(a, combine = FALSE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 2.5))
+  pdf(file.path("./results/clusters/integration/",filename = paste0("cluster_spatial_",names(samples[i]),".pdf")))
+  print(SpatialDimPlot(a, combine = FALSE,label.size = 1.5, crop=TRUE,label = T, pt.size.factor = 7))
   dev.off()
   #a <- SetIdent(a, value = a@meta.data[["area"]])
   #spatial umap 
@@ -146,31 +130,41 @@ for (i in 1:length(samples)){
   #dev.off()
 }
 
+## check samples in object
+sample <- c(unique(integrated_seurat$orig.ident))
 
-###PLOTS###
-######quality metrics per area
-pdf(file.path("./results/clusters/integration/",filename = "Number of spot per area.pdf"))
-integrated_seurat@meta.data%>% 
-  ggplot(aes(x=area, fill=orig.ident)) + 
-  geom_bar(alpha=0.8) +
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  theme(plot.title = element_text(hjust=0.5, face="bold")) +
-  ggtitle("NSpots")
-dev.off()
+## take out image
+images <- integrated_seurat@images
 
-pdf(file.path("./results/clusters/integration/",filename = "Number of spot per area tissue.pdf"))
-integrated_seurat@meta.data%>% 
-  ggplot(aes(x=orig.ident, fill=area)) + 
-  geom_bar(alpha=0.8) +
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  theme(plot.title = element_text(hjust=0.5, face="bold")) +
-  ggtitle("NSpots")
-dev.off()
+## set all the images null
+for (i in sample){
+  integrated_seurat@images[[i]] <- NULL
+}
+
+## separate samples in list
+list <- SplitObject(integrated_seurat, split.by = "orig.ident")
+
+## add to each element in list its image
+samples <- c()
+for (i in sample){
+  a <- list[[i]]
+  a@images[[i]] <- images[[i]]
+  samples[[length(samples) + 1]] <- a
+}
+names(samples) <- sample
+
+## separate list
+#list2env(list,envir=.GlobalEnv)
+
+for (i in 1:length(samples)){
+  a <- samples[[i]]
+  pdf(file.path("./results/clusters/individual/",filename = paste0("cluster_spatial_",names(samples[i]),".pdf")))
+  print(SpatialDimPlot(a ,label = T,crop = TRUE, pt.size.factor = 7))
+  dev.off()
+}
+
 
 ###Markers
-
 x <- integrated_seurat
 x <- SetIdent(x, value = x@meta.data[["area"]])
 markers_seurat_area <- Seurat::FindAllMarkers(object = x, 
