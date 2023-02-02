@@ -55,6 +55,14 @@ names(prueba) <- samples
 ## separate list
 list2env(prueba,envir=.GlobalEnv)
 
+## add sample info
+M1_fem_1C@meta.data[["type"]] <- "MM"
+M2_F_2B@meta.data[["type"]] <- "MM"
+M3_F_1C@meta.data[["type"]] <- "control"
+M3_fem_1C@meta.data[["type"]] <- "control"
+M8_F2_1C@meta.data[["type"]] <- "MM"
+M9_F2_1C@meta.data[["type"]] <- "MM"
+
 ## combine
 combined <- merge(M1_fem_1C, y = c(M2_F_2B, M3_F_1C, M3_fem_1C, M8_F2_1C, M9_F2_1C ), 
                   add.cell.ids = c("M1_fem_1C", "M2_F_2B", "M3_F_1C", "M3_fem_1C", "M8_F2_1C", "M9_F2_1C"), project = "BM")
