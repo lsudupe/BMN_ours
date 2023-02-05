@@ -15,10 +15,7 @@ library(scclusteval)
 #Data--------------------------------------
 combined  <- readRDS("./objects/sp/combined_filtered.rds")
 
-## subset data, take out bone
-Seurat::Idents(object = combined) <- combined@meta.data[["area"]]
-combined <- subset(x = combined, idents = c("bone_marrow"))
-
+## analysis
 combined <- SCTransform(combined, assay = "Spatial", verbose = TRUE, method = "poisson")
 combined <- RunPCA(combined, assay = "SCT", verbose = FALSE)
 combined <- FindNeighbors(combined, reduction = "pca", dims = 1:30)
@@ -47,7 +44,7 @@ harmony_resolution <- x
 # need to set maxSize for PrepSCTIntegration to work
 options(future.globals.maxSize = 2000 * 1024^2)  # set allowed size to 2K MiB
 
-list <- SplitObject(seurat_resolution, split.by = "type")
+list <- SplitObject(seurat_resolution, split.by = "orig.ident")
 list <- lapply(X = list, FUN = SCTransform, assay="Spatial", method = "poisson")
 features <- SelectIntegrationFeatures(object.list = list, nfeatures = 3000, verbose = FALSE)
 list <- PrepSCTIntegration(object.list = list, anchor.features = features, verbose = FALSE)
@@ -70,7 +67,7 @@ harmony_resolution <- harmony_resolution %>%
   ScaleData() %>%
   FindVariableFeatures() %>%
   RunPCA(npcs = 20) %>%
-  RunHarmony(assay.use="Spatial",reduction = "pca", dims = 1:20, group.by.vars = "type") %>%
+  RunHarmony(assay.use="Spatial",reduction = "pca", dims = 1:20, group.by.vars = "orig.ident") %>%
   FindNeighbors(reduction = "harmony", dims = 1:20) %>%
   FindClusters(resolution=0.7) %>%
   RunUMAP(reduction = "harmony", dims = 1:20, n.epochs = 1e3) 
@@ -84,7 +81,8 @@ integrated_harmony <- readRDS("./objects/sp/integrated/integrated.harmony.rds")
 ######Jackard index harmony clusters vs seurat
 pdf(file.path("./results/jackard/",filename = "jackard_type_harmonyvsseurat.pdf"))                                                         
 PairWiseJaccardSetsHeatmap(integrated_seurat@active.ident,
-                           integrated_harmony@active.ident)
+                           integrated_harmony@active.ident,
+                           best_match = TRUE)
 dev.off()
 
 ## spatial plots
@@ -92,14 +90,17 @@ dev.off()
 samples <- c(integrated_seurat, integrated_harmony)
 names(samples) <- c("integrated_seurat", "integrated_harmony")
 
+samples <- c(seurat_resolution, harmony_resolution)
+names(samples) <- c("seurat_resolution", "harmony_resolution")
+
 for (i in 1:length(samples)){
   a <- samples[[i]]
   #umap separate in cell type
-  pdf(file.path("./results/clusters/integration/",filename = paste0("umap_clusters_",names(samples[i]),".pdf")))
+  pdf(file.path("./results/clusters/integration/orig.ident",filename = paste0("umap_clusters_",names(samples[i]),".pdf")))
   print(DimPlot(a, group.by = c("seurat_clusters"), label = T) + ggtitle("cell type"))
   dev.off()
   #umap separate in samples
-  pdf(file.path("./results/clusters/integration/",filename = paste0("umap_samples_",names(samples[i]),".pdf")))
+  pdf(file.path("./results/clusters/integration/orig.ident",filename = paste0("umap_samples_",names(samples[i]),".pdf")))
   print(DimPlot(a, group.by = c("orig.ident"), label = T) + ggtitle("sample"))
   dev.off()
   #umap separate in samples
@@ -107,12 +108,12 @@ for (i in 1:length(samples)){
   #print(DimPlot(a, group.by = c("area"),repel=TRUE, label = T) + ggtitle("sample"))
   #dev.off()
   #umap separate in samples
-  pdf(file.path("./results/clusters/integration/",filename = paste0("umap_type_",names(samples[i]),".pdf")))
+  pdf(file.path("./results/clusters/integration/orig.ident",filename = paste0("umap_type_",names(samples[i]),".pdf")))
   print(DimPlot(a, group.by = c("type"), label = T) + ggtitle("sample"))
   dev.off()
   a <- SetIdent(a, value = a@meta.data[["seurat_clusters"]])
   #spatial umap 
-  pdf(file.path("./results/clusters/integration/",filename = paste0("cluster_spatial_",names(samples[i]),".pdf")))
+  pdf(file.path("./results/clusters/integration/orig.ident",filename = paste0("cluster_spatial_",names(samples[i]),".pdf")))
   print(SpatialDimPlot(a, combine = FALSE,label.size = 1.5, crop=TRUE,label = T, pt.size.factor = 7))
   dev.off()
   #a <- SetIdent(a, value = a@meta.data[["area"]])
@@ -155,12 +156,7 @@ for (i in 1:length(samples)){
   dev.off()
 }
 
-for (i in 1:length(samples)){
-  a <- samples[[i]]
-  pdf(file.path("./results/clusters/individual/",filename = paste0("Xkr4_",names(samples[i]),".pdf")))
-  print(SpatialPlot(a ,features = c("Col1a2"), pt.size.factor = 7))
-  dev.off()
-}
+x <- integrated_seurat
 
 ###Markers
 x <- integrated_seurat
