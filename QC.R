@@ -10,6 +10,10 @@ library(ggplot2)
 ## Read data
 combined <- readRDS("./objects/sp/combined.rds")
 
+## subset data, take out bone
+Seurat::Idents(object = combined) <- combined@meta.data[["area"]]
+combined <- subset(x = combined, idents = c("bone_marrow"))
+
 ##Visualization
 # Visualize the number of spots counts per sample
 pdf(file.path("./results/QC",filename = "Number of spot per sample.pdf"))
@@ -141,8 +145,8 @@ combined@images <- images
 
 # Filter out low quality cells using selected thresholds - these will change with experiment
 filtered_combined <- subset(x = combined, 
-                          subset= (nCount_Spatial >= 200 & nCount_Spatial <= 45000) & 
-                            (nFeature_Spatial >= 150 & nFeature_Spatial <= 7500))
+                          subset= (nCount_Spatial >= 200 & nCount_Spatial <= 100000) & 
+                            (nFeature_Spatial >= 150 & nFeature_Spatial <= 10000))
 
 #####save combined
 saveRDS(filtered_combined,"./objects/sp/combined_filtered.rds")
