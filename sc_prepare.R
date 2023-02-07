@@ -10,6 +10,7 @@ library(ggplot2)
 library('magrittr')
 library(tidyverse)
 library(base)
+library(harmony)
 
 #Data--------------------------------------
 load(file='./data/single-cell/RNAMagnetDataBundle/NicheMarkers10x.rda')
@@ -70,30 +71,69 @@ single_cell_bonemarrow <- readRDS("./objects/heterogeneity/single_cell_bonemarro
 
 ############READ AZARI data
 PC_MM <- readRDS("./data/single-cell/PC/scRNA_MM_PC.rds")
-PC_MM <- subset(x = PC_MM, idents = c("MM_MIC"))
+#PC_MM <- subset(x = PC_MM, idents = c("MM_MIC"))
 PC_MM@meta.data[["ident"]] <- PC_MM@active.ident
 
 
 #####integrate data
 ##Merge them
+single_cell_bonemarrow@meta.data[["orig.ident"]] <- "ref"
 combined_sc <- merge(single_cell_bonemarrow, y = c( PC_MM), 
                   add.cell.ids = c("single_cell_bonemarrow", "PC_MM"), project = "BM")
 combined_sc@meta.data[["split"]] <- combined_sc@active.ident
+Seurat::Idents(object = combined_sc) <- combined_sc@meta.data[["orig.ident"]]
 x <- combined_sc
-# Select the most variable features to use for integration
+###separate the data
+seurat <- x
+harmony <- x
 
-list <- SplitObject(x, split.by = "split")
+## SEURAT
+# Select the most variable features to use for integration
+options(future.globals.maxSize = 2000 * 1024^2)  # set allowed size to 2K MiB
+list <- SplitObject(seurat, split.by = "orig.ident")
 list <- lapply(X = list, FUN = SCTransform, assay="RNA")
 features <- SelectIntegrationFeatures(object.list = list, nfeatures = 3000)
 list <- PrepSCTIntegration(object.list = list, anchor.features = features)
 anchors <- FindIntegrationAnchors(object.list = list, normalization.method = "SCT",
                                   anchor.features = features)
-x <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
+seurat_i <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
 
-x <- RunPCA(x, verbose=FALSE) %>%
-  RunUMAP(reduction = "pca", dims = 1:20) #%>%
-  #FindNeighbors(reduction = "pca", dims = 1:20) %>%
-  #FindClusters(resolution=0.8) 
+seurat_i <- RunPCA(seurat_i, verbose=FALSE) %>%
+  RunUMAP(reduction = "pca", dims = 1:20) %>%
+  FindNeighbors(reduction = "pca", dims = 1:20) %>%
+  FindClusters(resolution=0.7) 
+
+saveRDS(seurat_i, "./objects/sc/integrated/integrated_sc_seurat.rds")
+
+## Harmony
+harmony_i <- harmony %>%
+    NormalizeData() %>%
+    ScaleData() %>%
+    FindVariableFeatures() %>%
+    RunPCA(npcs = 20) %>%
+    RunHarmony(assay.use="RNA",reduction = "pca", dims = 1:20, group.by.vars = "orig.ident") %>%
+    FindNeighbors(reduction = "harmony", dims = 1:20) %>%
+    FindClusters(resolution=0.7) %>%
+    RunUMAP(reduction = "harmony", dims = 1:20, n.epochs = 1e3) 
+
+saveRDS(harmony_i, "./objects/sc/integrated/integrated_sc_harmony.rds")
+
+
+## plots
+samples <- c(seurat_i, harmony_i)
+names(samples) <- c("seurat_i", "harmony_i")
+
+for (i in 1:length(samples)){
+  a <- samples[[i]]
+  #umap separate in cell type
+  pdf(file.path("./results/clusters/single_cell/integration/",filename = paste0("umap_orig.ident_",names(samples[i]),".pdf")))
+  print(DimPlot(a, group.by = c("orig.ident"), label = T) + ggtitle("cell type"))
+  dev.off()
+  #umap separate in samples
+  pdf(file.path("./results/clusters/single_cell/integration/",filename = paste0("umap_split_",names(samples[i]),".pdf")))
+  print(DimPlot(a, group.by = c("split"), label = T) + ggtitle("sample"))
+  dev.off()
+}
 
 ####marker genes for MM
 # Determine differentiating markers for PC_MM
