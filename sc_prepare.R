@@ -11,6 +11,7 @@ library('magrittr')
 library(tidyverse)
 library(base)
 library(harmony)
+library(scclusteval)
 
 #Data--------------------------------------
 load(file='./data/single-cell/RNAMagnetDataBundle/NicheMarkers10x.rda')
@@ -61,7 +62,7 @@ levels(a) <- list(PSC  = "Ery/Mk prog.",
 single_cell_bonemarrow@meta.data[["ident"]] <- a
 Seurat::Idents(object = single_cell_bonemarrow) <- single_cell_bonemarrow@meta.data[["ident"]]
 
-single_cell_bonemarrow <- subset(x = single_cell_bonemarrow, idents = c("NC", "PSC"), invert = TRUE)
+single_cell_bonemarrow <- subset(x = single_cell_bonemarrow, idents = c("NC", "PSC", "Fibro"), invert = TRUE)
 single_cell_bonemarrow@meta.data[["ident"]] <- single_cell_bonemarrow@active.ident
 
 
@@ -71,7 +72,7 @@ single_cell_bonemarrow <- readRDS("./objects/heterogeneity/single_cell_bonemarro
 
 ############READ AZARI data
 PC_MM <- readRDS("./data/single-cell/PC/scRNA_MM_PC.rds")
-#PC_MM <- subset(x = PC_MM, idents = c("MM_MIC"))
+PC_MM <- subset(x = PC_MM, idents = c("MM_MIC"))
 PC_MM@meta.data[["ident"]] <- PC_MM@active.ident
 
 
@@ -118,7 +119,6 @@ harmony_i <- harmony %>%
 
 saveRDS(harmony_i, "./objects/sc/integrated/integrated_sc_harmony.rds")
 
-
 ## plots
 samples <- c(seurat_i, harmony_i)
 names(samples) <- c("seurat_i", "harmony_i")
@@ -134,6 +134,16 @@ for (i in 1:length(samples)){
   print(DimPlot(a, group.by = c("split"), label = T) + ggtitle("sample"))
   dev.off()
 }
+
+######Jackard index harmony clusters vs seurat
+Seurat::Idents(object = seurat_i) <- seurat_i@meta.data[["split"]]
+Seurat::Idents(object = harmony_i) <- harmony_i@meta.data[["split"]]
+
+pdf(file.path("./results/jackard/",filename = "jackard_type_harmonyvsseurat_singlecell.pdf"))                                                         
+PairWiseJaccardSetsHeatmap(seurat_i@active.ident,
+                           harmony_i@active.ident,
+                           best_match = TRUE)
+dev.off()
 
 ####marker genes for MM
 # Determine differentiating markers for PC_MM
