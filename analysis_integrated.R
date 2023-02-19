@@ -16,24 +16,22 @@ library(scclusteval)
 combined  <- readRDS("./objects/sp/combined_filtered.rds")
 
 ## analysis
-combined <- SCTransform(combined, assay = "Spatial", verbose = TRUE, method = "poisson")
-combined <- RunPCA(combined, assay = "SCT", verbose = FALSE)
-combined <- FindNeighbors(combined, reduction = "pca", dims = 1:30)
-combined <- FindClusters(combined, verbose = FALSE)
-combined <- RunUMAP(combined, reduction = "pca", dims = 1:30)
-
 x <- combined
-
-Seurat::Idents(object = x) <- combined@meta.data[["type"]]
 images <- x@images
 
 ## samples
 samples <- unique(combined@meta.data[["orig.ident"]])
-
 for (i in samples){
   x@images[[i]] <- NULL
 }
 
+x <- SCTransform(x, assay = "Spatial", verbose = TRUE, method = "poisson")
+x <- RunPCA(x, assay = "SCT", verbose = FALSE)
+x <- FindNeighbors(x, reduction = "pca", dims = 1:30)
+x <- FindClusters(x, verbose = FALSE)
+x <- RunUMAP(x, reduction = "pca", dims = 1:30)
+
+Seurat::Idents(object = x) <- combined@meta.data[["type"]]
 
 ###separate the data
 seurat_resolution <- x
@@ -90,8 +88,6 @@ dev.off()
 samples <- c(integrated_seurat, integrated_harmony)
 names(samples) <- c("integrated_seurat", "integrated_harmony")
 
-samples <- c(seurat_resolution, harmony_resolution)
-names(samples) <- c("seurat_resolution", "harmony_resolution")
 
 for (i in 1:length(samples)){
   a <- samples[[i]]
