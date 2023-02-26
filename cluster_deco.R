@@ -13,6 +13,7 @@ library(factoextra)
 library(gridExtra)
 library(dendextend)
 library(tidyr)
+library(STutility)
 
 #Data---------------------------------
 femur_M1 <- readRDS("./objects/card/heterogeneity/M1_fem_1C_subgroup_deco.rds")
@@ -21,15 +22,21 @@ femur_M3 <- readRDS("./objects/card/heterogeneity/M3_fem_1C_subgroup_deco.rds")
 femur <- merge(femur_M1, y = c(femur_M3),  project = "BM")
 femur
 
+se <- readRDS("./objects/sc/integrated/se_deco.rds")
+
+
 #Analysis--------------------------------
 set.seed(20000)
 meta <- femur@meta.data
 types <- meta[,10:19]
 
+meta <- se@meta.data
+types <- meta[,12:21]
+
 matrix <- data.matrix(types, rownames.force = NA)
 M <- cor(matrix)
 
-pdf(file.path("./results/endogram/femur",filename = "both_cor.pdf"))
+pdf(file.path("./results/endogram/st",filename = "both_cor.pdf"))
 print(corrplot(M, method = "number", number.cex = 0.75, order="hclust"))
 dev.off()
 
@@ -54,7 +61,7 @@ for (i in colnames) {
 ###Prediagnostic
 
 ###hierarchycal plot
-pdf(file.path("./results/endogram/femur",filename = "both_cor_.pdf"))
+pdf(file.path("./results/endogram/st",filename = "both_cor_.pdf"))
 get_clust_tendency(types, 2, graph=TRUE, gradient=list(low="red", mid="white", high="blue"))
 dev.off()
 
@@ -66,12 +73,12 @@ c <- fviz_nbclust(types, FUNcluster = cluster::clara, method = "silhouette") + t
 d <- fviz_nbclust(types, FUNcluster = hcut, method = "silhouette") + theme_classic() 
 e <- fviz_nbclust(types, FUNcluster = cluster::fanny, method = "silhouette") + theme_classic() 
 
-pdf(file.path("./results/endogram/femur",filename = "both_minckuster.pdf"))
-print(grid.arrange(a, b, c, d, e, ncol=2))
+pdf(file.path("./results/endogram/st",filename = "both_minckuster.pdf"))
+print(grid.arrange(a, b, c, d, ncol=2))
 dev.off()
 
 ###hierarchical clustering
-hc3 <- eclust(types, k=4, FUNcluster="hclust", hc_metric="euclidean", hc_method = "ward.D2")
+hc3 <- eclust(types, k=7, FUNcluster="hclust", hc_metric="euclidean", hc_method = "ward.D2")
 hc3 %>% 
 as.dendrogram()  -> dend
 
@@ -107,7 +114,6 @@ col = ifelse(meta$orig.ident, "grey", "gold")
 
 #col <- cbind(col_1, col_2)
 
-pdf(file.path("./results/endogram/femur",filename = "both_dend.pdf"))
 # Make the dendrogram
 par(mar = c(10,2,1,1))
 dend %>%
@@ -124,29 +130,31 @@ hc_stats3$cluster.size
 
 ###ad clusters to spatial data
 a <- as.factor(hc3[["cluster"]])
-femur@meta.data[["clustering"]] <- a
+#femur@meta.data[["clustering"]] <- a
+se@meta.data[["clustering"]] <- a
 
 
 ##save object
-saveRDS(femur, "./objects/heterogeneity/femur_hierarchical.rds")
+saveRDS(se, "./objects/heterogeneity/se_hierarchical.rds")
 
 ###plot
-b <- SetIdent(femur, value = femur@meta.data[["clustering"]])
-pdf(file.path("./results/endogram/femur",filename = "both_spatial_hierarchical.pdf"))
-print(SpatialDimPlot(b, combine = TRUE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 10))
+b <- SetIdent(se, value = se@meta.data[["clustering"]])
+pdf(file.path("./results/endogram/st",filename = "both_spatial_hierarchical.pdf"))
+print(FeatureOverlay(b, features = "clustering", sampleids = 1:6, ncols = 2,pt.size = 0.7))
 dev.off()
 
-b <- SetIdent(femur, value = femur@meta.data[["seurat_clusters"]])
-pdf(file.path("./results/endogram/femur",filename = "both_spatial_seurat.pdf"))
-print(SpatialDimPlot(b, combine = TRUE,label.size = 1.5, label = T, crop = TRUE, pt.size.factor = 10))
+b <- SetIdent(se, value = se@meta.data[["seurat_clusters"]])
+pdf(file.path("./results/endogram/st",filename = "both_spatial_seurat.pdf"))
+print(FeatureOverlay(b, features = "seurat_clusters", sampleids = 1:6, ncols = 2,pt.size = 0.7))
 dev.off()
 
 ###subset the data in hierarchical clustering
 meta_b <- b@meta.data
-types_b <- meta_b[,10:20]
+types_b <- meta_b[,12:21]
+types_b["clustering"] <- as.vector(b@meta.data[["clustering"]])
 
 ##distribution plot
-pdf(file.path("./results/endogram/femur",filename = "clustering_distribution.pdf"))
+pdf(file.path("./results/endogram/st",filename = "clustering_distribution.pdf"))
 types_b %>%
   pivot_longer(cols = -clustering) %>%
   mutate(Cluster = factor(clustering)) %>%
@@ -175,7 +183,6 @@ dev.off()
 
 
 ####Extract hierarchycal clustering porcentages
-
 #######proportions loop
 value <- as.vector(unique(types_b$clustering))
 lista <- list()
@@ -217,11 +224,15 @@ DF <- data.frame(group = c(df$celltype),
                  cluster1 = c(df$`cluster:1`),
                  cluster2 = c(df$`cluster:2`),
                  cluster3 = c(df$`cluster:3`),
-                 cluster4 = c(df$`cluster:4`))
-DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster4)
+                 cluster4 = c(df$`cluster:4`),
+                 cluster5 = c(df$`cluster:5`),
+                 cluster6 = c(df$`cluster:6`),
+                 cluster7 = c(df$`cluster:7`)
+                 )
+DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster7)
 DFtall
 
-pdf(file.path("./results/endogram/femur",filename = "clustering_percentages.pdf"))
+pdf(file.path("./results/endogram/st",filename = "clustering_percentages.pdf"))
 ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
 dev.off()
 
