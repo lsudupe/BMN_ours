@@ -78,7 +78,7 @@ print(grid.arrange(a, b, c, d, ncol=2))
 dev.off()
 
 ###hierarchical clustering
-hc3 <- eclust(types, k=7, FUNcluster="hclust", hc_metric="euclidean", hc_method = "ward.D2")
+hc3 <- eclust(types, k=6, FUNcluster="hclust", hc_metric="euclidean", hc_method = "ward.D2")
 hc3 %>% 
 as.dendrogram()  -> dend
 
@@ -136,6 +136,7 @@ se@meta.data[["clustering"]] <- a
 
 ##save object
 saveRDS(se, "./objects/heterogeneity/se_hierarchical.rds")
+se <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
 
 ###plot
 b <- SetIdent(se, value = se@meta.data[["clustering"]])
@@ -236,5 +237,20 @@ pdf(file.path("./results/endogram/st",filename = "clustering_percentages.pdf"))
 ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
 dev.off()
 
+# Stacked + percent
+pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot.pdf"))
+ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
+  geom_bar(position="fill", stat="identity")
+dev.off()
+
+##borrar no healthy
+new <- DFtall[!grepl("cluster6", DFtall$Cluster),]
+new <- new[!grepl("cluster7", new$Cluster),]
+
+# Stacked + percent
+pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_onlyhealthy.pdf"))
+ggplot(new, aes(fill=group, y=Value, x=Cluster)) + 
+  geom_bar(position="fill", stat="identity")
+dev.off()
 
 
