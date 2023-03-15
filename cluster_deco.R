@@ -162,6 +162,7 @@ types_b %>%
   ggplot(aes(x = name, y = value, fill = Cluster)) + geom_violin()
 dev.off()
 
+#####correlation per cluster
 clust_1 <- types_b[grepl("1", types_b$clustering),]
 clust_1$clustering <- NULL
 clust_2 <- types_b[grepl("2", types_b$clustering),]
@@ -170,13 +171,17 @@ clust_3 <- types_b[grepl("3", types_b$clustering),]
 clust_3$clustering <- NULL
 clust_4 <- types_b[grepl("4", types_b$clustering),]
 clust_4$clustering <- NULL
+clust_5 <- types_b[grepl("5", types_b$clustering),]
+clust_5$clustering <- NULL
+clust_6 <- types_b[grepl("6", types_b$clustering),]
+clust_6$clustering <- NULL
 
 
 ##cor
-matrix <- data.matrix(clust_4, rownames.force = NA)
+matrix <- data.matrix(clust_6, rownames.force = NA)
 M <- cor(matrix)
 
-pdf(file.path("./results/endogram/femur",filename = "both_cluster4_cor.pdf"))
+pdf(file.path("./results/endogram/st/",filename = "cluster6_cor.pdf"))
 print(corrplot(M,
       type = 'upper',
                tl.col = "black",number.cex = 0.75))
@@ -227,10 +232,9 @@ DF <- data.frame(group = c(df$celltype),
                  cluster3 = c(df$`cluster:3`),
                  cluster4 = c(df$`cluster:4`),
                  cluster5 = c(df$`cluster:5`),
-                 cluster6 = c(df$`cluster:6`),
-                 cluster7 = c(df$`cluster:7`)
+                 cluster6 = c(df$`cluster:6`)
                  )
-DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster7)
+DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster6)
 DFtall
 
 pdf(file.path("./results/endogram/st",filename = "clustering_percentages.pdf"))
@@ -244,8 +248,8 @@ ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) +
 dev.off()
 
 ##borrar no healthy
-new <- DFtall[!grepl("cluster6", DFtall$Cluster),]
-new <- new[!grepl("cluster7", new$Cluster),]
+new <- DFtall[!grepl("cluster5", DFtall$Cluster),]
+new <- new[!grepl("cluster6", new$Cluster),]
 
 # Stacked + percent
 pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_onlyhealthy.pdf"))
