@@ -70,6 +70,7 @@ saveRDS(single_cell_bonemarrow, "./objects/heterogeneity/single_cell_bonemarrow.
 single_cell_bonemarrow <- readRDS("./objects/heterogeneity/single_cell_bonemarrow.rds")
 
 
+
 ############READ AZARI data
 PC_MM <- readRDS("./data/single-cell/PC/scRNA_MM_PC.rds")
 PC_MM <- subset(x = PC_MM, idents = c("MM_MIC"))
@@ -118,6 +119,14 @@ harmony_i <- harmony %>%
     RunUMAP(reduction = "harmony", dims = 1:20, n.epochs = 1e3) 
 
 saveRDS(harmony_i, "./objects/sc/integrated/integrated_sc_harmony.rds")
+harmony <- readRDS("./objects/sc/integrated/integrated_sc_harmony.rds")
+
+Seurat::Idents(object = harmony) <- harmony@meta.data[["ident"]]
+
+pdf(file.path("./results/clusters/single_cell/",filename = "groups_sc.pdf"))
+#print(DimPlot(single_cell_bonemarrow, reduction = "tsne", label = TRUE))
+print(DimPlot(harmony, group.by = c("ident"), label = TRUE, repel=TRUE))
+dev.off()
 
 ## plots
 samples <- c(seurat_i, harmony_i)
