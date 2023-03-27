@@ -176,6 +176,25 @@ clust_5$clustering <- NULL
 clust_6 <- types_b[grepl("6", types_b$clustering),]
 clust_6$clustering <- NULL
 
+###keep healthy
+types_b["sample"] <- as.vector(b@meta.data[["name"]])
+healthy <- types_b[!grepl("M1_fem_1C", types_b$sample),]
+healthy <- healthy[!grepl("M2_F_2B", healthy$sample),]
+healthy <- healthy[!grepl("M8_F2_1C", healthy$sample),]
+healthy <- healthy[!grepl("M9_F2_1C", healthy$sample),]
+healthy$sample <- NULL
+
+matrix <- data.matrix(healthy, rownames.force = NA)
+M <- cor(matrix)
+
+pdf(file.path("./results/endogram/st/",filename = "healthy_cor.pdf"))
+print(corrplot(M,
+               type = 'upper',
+               title="healthy cell types correlation",
+               tl.col = "black",number.cex = 0.75,
+               mar=c(0,0,1,0)))
+dev.off()
+
 
 ##cor
 matrix <- data.matrix(clust_6, rownames.force = NA)
@@ -187,23 +206,34 @@ print(corrplot(M,
                tl.col = "black",number.cex = 0.75))
 dev.off()
 
+##coor all
+se.subset <- SubsetSTData(se, features = keep.features)
+
+pdf(file.path("./results/endogram/st/",filename = "cluster6_cor.pdf"))
+print(corrplot(M,
+               type = 'upper',
+               tl.col = "black",number.cex = 0.75))
+dev.off()
+
 
 ####Extract hierarchycal clustering porcentages
 #######proportions loop
 value <- as.vector(unique(types_b$clustering))
+value <- as.vector(unique(types_b$sample))
+
 lista <- list()
 
 for (i in value){
 #select cluster of interest rows
-value_1 <- types_b[grepl(i, types_b$clustering),]
-value_1$clustering <- NULL
+value_1 <- types_b[grepl(i, types_b$sample),]
+value_1$sample <- NULL
 
 ###create list to add content
 proportions <- c()
   for (o in colnames(value_1)){ 
     proportions <- c(proportions, (sum(value_1[[o]])*100/nrow(value_1)))
   }
-name <- paste('cluster:',i,sep='')
+name <- paste('sample:',i,sep='')
 lista[[name]] <- proportions
 
 }
@@ -219,6 +249,21 @@ for (i in 1:length(lista)){
   df[, ncol(df) + 1] <- a
   names(df)[ncol(df)] <- names(lista[i])
 }
+
+write.csv(df, "./celltypes.csv", row.names=TRUE)
+
+df["celltype"] <- as.vector(rownames(df))
+
+
+# Basic piechart
+pdf(file.path("./results/endogram/st",filename = "clustering_percentages_piechart.pdf"))
+ggplot(df, aes(x="", y=df$`sample:M1_fem_1C`, fill=df$celltype)) +
+  geom_bar(stat="identity", width=1) +
+  geom_text(aes(label = df$`sample:M1_fem_1C`),
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start=0)
+dev.off()
+
 
 #df <- t(df)
 df <- cbind(celltype = rownames(df), df)
