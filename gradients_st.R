@@ -37,7 +37,36 @@ pdf(file.path("./results/ST/gradient/gradient_rojo.pdf"))
 print(p)
 dev.off()
 
+####marker genes https://www.nature.com/articles/s41467-022-33944-z
+
+###ANORMAL plasma cells
+p <-FeatureOverlay(se, features = c("Xbp1"), sampleids = 1:6,pt.size = 0.7,ncol = 2 , 
+                   value.scale = "all" ,cols = c("lightgray", "mistyrose", "red", "dark red", "black"))
+
+pdf(file.path("./results/ST/gradient/pc_markers/Xbp1.pdf"))
+print(p)
+dev.off()
+
+p <-FeatureOverlay(se, features = c("Irf4"), sampleids = 1:6,pt.size = 0.7,ncol = 2 , 
+                   value.scale = "all" ,cols = c("lightgray", "mistyrose", "red", "dark red", "black"))
+
+pdf(file.path("./results/ST/gradient/pc_markers/Irf4.pdf"))
+print(p)
+dev.off()
+
+p <-FeatureOverlay(se, features = c("Itgb2"), sampleids = 1:6,pt.size = 0.7,ncol = 2 , 
+                   value.scale = "all" ,cols = c("lightgray", "mistyrose", "red", "dark red", "black"))
+
+pdf(file.path("./results/ST/gradient/pc_markers/Itgb2.pdf"))
+print(p)
+dev.off()
+
+
+####marker genes FIN
+
 meta <- se@meta.data
+meta_mm <- meta[grepl("MM", meta$condition),]
+meta_healthy <- meta[grepl("control", meta$condition),]
 
 ## density plots
 # Make the histogram
@@ -59,11 +88,12 @@ print(ggplot(data=meta, aes(x=MM_MIC, group=name, fill=name)) +
 dev.off()
 
 # Using Small multiple
-pdf(file.path("./results/ST/gradient/density_separate.pdf"))
-ggplot(data=meta, aes(x=MM_MIC, group=name, fill=name)) +
+pdf(file.path("./results/ST/gradient/density_mm.pdf"))
+ggplot(data=meta_mm, aes(x=MM_MIC, group=name, fill=name)) +
   geom_density(adjust=1.5) +
   theme_ipsum() +
   facet_wrap(~name) +
+  xlim(0, 1) +
   theme(
     legend.position="none",
     panel.spacing = unit(0.1, "lines"),
@@ -82,4 +112,7 @@ for (i in 1:length(lista)){
     xlab("MM values (%)")
   dev.off()
 }
+
+
+ex
 
