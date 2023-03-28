@@ -6,6 +6,7 @@
 library(Seurat)
 library(dplyr)
 library(ggplot2)
+library(STutility)
 
 ## Read data
 se <- readRDS("./objects/sc/integrated/se_deco.rds")
@@ -23,9 +24,11 @@ color <- rev(color)
 p <- ST.FeaturePlot(se, features = "nFeature_RNA", ncol = 2 ,pt.size = 0.65, show.sb = FALSE, palette = "Spectral")
 p <-FeatureOverlay(se, features = c("nFeature_RNA"), sampleids = 1:6,pt.size = 0.40,ncol = 2 , 
                    value.scale = "all" ,cols = color)
+p <-FeatureOverlay(se, features = c("nCount_RNA"), sampleids = 1:6,pt.size = 0.40,ncol = 2 , 
+                   value.scale = "all" ,cols = color)
 
 
 
-pdf(file.path("./results/ST/QC/",filename = "nfeature.pdf"))
+pdf(file.path("./results/ST/QC/",filename = "nCount.pdf"))
 print(p & theme_bw())
 dev.off()
