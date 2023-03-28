@@ -159,24 +159,21 @@ se_merge <- MergeSTData(M3_F_1C, y = c(M3_fem_1C),
                          add.spot.ids = c("M3_F_1C", "M3_fem_1C"), project = "BM")
 
 ###porcentage plots
-meta_pro <- se_merge@meta.data
-
 se_subset <- SubsetSTData(se, idents = c("M3_F_1C","M3_fem_1C"))
 
 
-se@meta.data[["Tcell"]] <- se_merge@meta.data[["Tcell"]]
-se@meta.data[["Bcell"]] <- se_merge@meta.data[["Bcell"]]
-se@meta.data[["MM_MIC"]] <- se_merge@meta.data[["MM_MIC"]]
-se@meta.data[["Erythroblasts"]] <- se_merge@meta.data[["Erythroblasts"]]
-se@meta.data[["Monocytes"]] <- se_merge@meta.data[["Monocytes"]]
-se@meta.data[["Neutrophils"]] <- se_merge@meta.data[["Neutrophils"]]
-se@meta.data[["MSC"]] <- se_merge@meta.data[["MSC"]]
-se@meta.data[["EC"]] <- se_merge@meta.data[["EC"]]
-se@meta.data[["DC"]] <- se_merge@meta.data[["DC"]]
-se@meta.data[["NK"]] <- se_merge@meta.data[["NK"]]
+se_subset@meta.data[["Tcell"]] <- se_merge@meta.data[["Tcell"]]
+se_subset@meta.data[["Bcell"]] <- se_merge@meta.data[["Bcell"]]
+se_subset@meta.data[["Erythroblasts"]] <- se_merge@meta.data[["Erythroblasts"]]
+se_subset@meta.data[["Monocytes"]] <- se_merge@meta.data[["Monocytes"]]
+se_subset@meta.data[["Neutrophils"]] <- se_merge@meta.data[["Neutrophils"]]
+se_subset@meta.data[["MSC"]] <- se_merge@meta.data[["MSC"]]
+se_subset@meta.data[["EC"]] <- se_merge@meta.data[["EC"]]
+se_subset@meta.data[["DC"]] <- se_merge@meta.data[["DC"]]
+se_subset@meta.data[["NK"]] <- se_merge@meta.data[["NK"]]
 
-saveRDS(se_merge, "./objects/sc/integrated/se_deco_healthy.rds")
-se_merge <- readRDS("./objects/sc/integrated/se_deco_healthy.rds")
+saveRDS(se_subset, "./objects/sc/integrated/se_deco_healthy.rds")
+se_subset <- readRDS("./objects/sc/integrated/se_deco_healthy.rds")
 
 
 
