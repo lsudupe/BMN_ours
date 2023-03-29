@@ -15,13 +15,7 @@ library(dendextend)
 library(tidyr)
 library(STutility)
 
-#Data---------------------------------
-femur_M1 <- readRDS("./objects/card/heterogeneity/M1_fem_1C_subgroup_deco.rds")
-femur_M3 <- readRDS("./objects/card/heterogeneity/M3_fem_1C_subgroup_deco.rds")
-
-femur <- merge(femur_M1, y = c(femur_M3),  project = "BM")
-femur
-
+#Data--------------------------------
 se <- readRDS("./objects/sc/integrated/se_deco.rds")
 
 
@@ -82,38 +76,6 @@ hc3 <- eclust(types, k=6, FUNcluster="hclust", hc_metric="euclidean", hc_method 
 hc3 %>% 
 as.dendrogram()  -> dend
 
-
-###ggplot automatic color scale
-gg_color_hue <- function(n) {
-  hues = seq(15, 375, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
-}
-n = 8
-cols = gg_color_hue(n)
-###
-
-colors <- c("#F8766D", "#C49A00" ,"#53B400" ,"#00C094" ,"#00B6EB" ,"#A58AFF" ,"#FB61D7")
-names(colors) = c("0", "1", "2", "3", "4","5", "6")
-colors
-
-col = ifelse(x$a == "Africa", "yellow",
-             ifelse(x$a %in% c("North America", "South America"), "blue",
-                    ifelse(x$a == "Asia", "green",
-                           ifelse(x$a == "Europe", "lightblue",
-                                  ifelse(x$a == "Oceania", "purple", "black")))))
-
-col_1 = ifelse(meta$seurat_clusters == "0", "#F8766D",
-             ifelse(meta$seurat_clusters == "1", "#C49A00",
-                    ifelse(meta$seurat_clusters == "2", "#53B400", 
-                           ifelse(meta$seurat_clusters == "3", "#00C094",
-                                  ifelse(meta$seurat_clusters == "4", "#00B6EB",
-                                         ifelse(meta$seurat_clusters == "5", "#A58AFF", 
-                                                ifelse(meta$seurat_clusters == "6", "#FB61D7",
-                                                       ifelse(meta$seurat_clusters == "7", "#FF61CC", 'white'))))))))
-col = ifelse(meta$orig.ident, "grey", "gold")
-
-#col <- cbind(col_1, col_2)
-
 # Make the dendrogram
 par(mar = c(10,2,1,1))
 dend %>%
@@ -162,78 +124,76 @@ types_b %>%
   ggplot(aes(x = name, y = value, fill = Cluster)) + geom_violin()
 dev.off()
 
-#####correlation per cluster
-clust_1 <- types_b[grepl("1", types_b$clustering),]
-clust_1$clustering <- NULL
-clust_2 <- types_b[grepl("2", types_b$clustering),]
-clust_2$clustering <- NULL
-clust_3 <- types_b[grepl("3", types_b$clustering),]
-clust_3$clustering <- NULL
-clust_4 <- types_b[grepl("4", types_b$clustering),]
-clust_4$clustering <- NULL
-clust_5 <- types_b[grepl("5", types_b$clustering),]
-clust_5$clustering <- NULL
+#######CORRELATION 
+types_b
+
+##cor cluster6
 clust_6 <- types_b[grepl("6", types_b$clustering),]
 clust_6$clustering <- NULL
-
-###keep healthy
-types_b["sample"] <- as.vector(b@meta.data[["name"]])
-healthy <- types_b[!grepl("M1_fem_1C", types_b$sample),]
-healthy <- healthy[!grepl("M2_F_2B", healthy$sample),]
-healthy <- healthy[!grepl("M8_F2_1C", healthy$sample),]
-healthy <- healthy[!grepl("M9_F2_1C", healthy$sample),]
-healthy$sample <- NULL
-
-matrix <- data.matrix(healthy, rownames.force = NA)
-M <- cor(matrix)
-
-pdf(file.path("./results/endogram/st/",filename = "healthy_cor.pdf"))
-print(corrplot(M,
-               type = 'upper',
-               title="healthy cell types correlation",
-               tl.col = "black",number.cex = 0.75,
-               mar=c(0,0,1,0)))
-dev.off()
-
-
-##cor
 matrix <- data.matrix(clust_6, rownames.force = NA)
 M <- cor(matrix)
 
-pdf(file.path("./results/endogram/st/",filename = "cluster6_cor.pdf"))
-print(corrplot(M,
-      type = 'upper',
-               tl.col = "black",number.cex = 0.75))
+pdf(file.path("./results/endogram/st/",filename = "cor_cluster6_square.pdf"))
+print(corrplot(M, method = 'square', title="Cluster 6 cell type correlation",
+               order = 'original', type = 'lower', diag = FALSE,
+               mar=c(0,0,1,0)))
 dev.off()
 
-##coor all
-se.subset <- SubsetSTData(se, features = keep.features)
+##cor cluster5
+clust_5 <- types_b[grepl("5", types_b$clustering),]
+clust_5$clustering <- NULL
+matrix <- data.matrix(clust_5, rownames.force = NA)
+M <- cor(matrix)
 
-pdf(file.path("./results/endogram/st/",filename = "cluster6_cor.pdf"))
-print(corrplot(M,
-               type = 'upper',
-               tl.col = "black",number.cex = 0.75))
+pdf(file.path("./results/endogram/st/",filename = "cor_cluster5_square.pdf"))
+print(corrplot(M, method = 'square', title="Cluster 5 cell type correlation",
+               order = 'original', type = 'lower',diag = FALSE,
+               mar=c(0,0,1,0)))
 dev.off()
 
+##cor cluster4
+clust_4 <- types_b[grepl("4", types_b$clustering),]
+clust_4$clustering <- NULL
+matrix <- data.matrix(clust_4, rownames.force = NA)
+M <- cor(matrix)
+
+pdf(file.path("./results/endogram/st/",filename = "cor_cluster4_square.pdf"))
+print(corrplot(M, method = 'square', title="Cluster 4 cell type correlation",
+               order = 'original', type = 'lower', diag = FALSE,
+               mar=c(0,0,1,0)))
+dev.off()
+
+types_b$clustering <- NULL
+
+matrix <- data.matrix(types_b, rownames.force = NA)
+M <- cor(matrix)
+
+pdf(file.path("./results/endogram/st/",filename = "cor_al_square.pdf"))
+print(corrplot(M, method = 'square', title="MM samples cell type correlation",
+               order = 'original', type = 'lower', diag = FALSE,
+               mar=c(0,0,1,0)))
+dev.off()
+
+#######CORRELATION fin
 
 ####Extract hierarchycal clustering porcentages
 #######proportions loop
 value <- as.vector(unique(types_b$clustering))
-value <- as.vector(unique(types_b$sample))
+#value <- as.vector(unique(types_b$sample))
 
 lista <- list()
 
 for (i in value){
 #select cluster of interest rows
-value_1 <- types_b[grepl(i, types_b$sample),]
-value_1$sample <- NULL
+value_1 <- types_b[grepl(i, types_b$clustering),]
+value_1$clustering <- NULL
 
 ###create list to add content
 proportions <- c()
   for (o in colnames(value_1)){ 
     proportions <- c(proportions, (sum(value_1[[o]])*100/nrow(value_1)))
   }
-name <- paste('sample:',i,sep='')
+name <- paste('cluster:',i,sep='')
 lista[[name]] <- proportions
 
 }
@@ -252,10 +212,8 @@ for (i in 1:length(lista)){
 
 write.csv(df, "./celltypes.csv", row.names=TRUE)
 
-df["celltype"] <- as.vector(rownames(df))
-
-
 # Basic piechart
+df["celltype"] <- as.vector(rownames(df))
 pdf(file.path("./results/endogram/st",filename = "clustering_percentages_piechart.pdf"))
 ggplot(df, aes(x="", y=df$`sample:M1_fem_1C`, fill=df$celltype)) +
   geom_bar(stat="identity", width=1) +
