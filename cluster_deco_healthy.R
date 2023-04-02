@@ -123,7 +123,9 @@ matrix <- data.matrix(types_only, rownames.force = NA)
 M <- cor(matrix)
 
 pdf(file.path("./results/endogram/st/healthy/",filename = "healthy_cor.pdf"))
-print(corrplot(M, method = 'square', order = 'FPC', type = 'lower', diag = FALSE))
+print(corrplot(M, method = 'square', 
+               col=colorRampPalette(c("lightblue","white","red"))(100),
+               order = 'FPC', type = 'lower', diag = FALSE))
 dev.off()
 
 
@@ -132,9 +134,9 @@ matrix <- data.matrix(clust_6, rownames.force = NA)
 M <- cor(matrix)
 
 pdf(file.path("./results/endogram/st/",filename = "cluster6_cor.pdf"))
-print(corrplot(M,
-      type = 'upper',
-               tl.col = "black",number.cex = 0.75))
+print(corrplot(M, method = 'square', 
+               col=colorRampPalette(c("lightblue","white","red"))(100),
+               order = 'FPC', type = 'lower', diag = FALSE))
 dev.off()
 
 ##cor BY CLUSTER FIN
