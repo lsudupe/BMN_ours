@@ -135,9 +135,11 @@ M <- cor(matrix)
 
 pdf(file.path("./results/endogram/st/",filename = "cor_cluster6_square.pdf"))
 print(corrplot(M, method = 'square', title="Cluster 6 cell type correlation",
+               col=colorRampPalette(c("blue","white","red"))(100),
                order = 'original', type = 'lower', diag = FALSE,
                mar=c(0,0,1,0)))
 dev.off()
+
 
 ##cor cluster5
 clust_5 <- types_b[grepl("5", types_b$clustering),]
@@ -147,6 +149,7 @@ M <- cor(matrix)
 
 pdf(file.path("./results/endogram/st/",filename = "cor_cluster5_square.pdf"))
 print(corrplot(M, method = 'square', title="Cluster 5 cell type correlation",
+               col=colorRampPalette(c("blue","white","red"))(100),
                order = 'original', type = 'lower',diag = FALSE,
                mar=c(0,0,1,0)))
 dev.off()
@@ -159,6 +162,7 @@ M <- cor(matrix)
 
 pdf(file.path("./results/endogram/st/",filename = "cor_cluster4_square.pdf"))
 print(corrplot(M, method = 'square', title="Cluster 4 cell type correlation",
+               col=colorRampPalette(c("blue","white","red"))(100),
                order = 'original', type = 'lower', diag = FALSE,
                mar=c(0,0,1,0)))
 dev.off()
@@ -170,6 +174,7 @@ M <- cor(matrix)
 
 pdf(file.path("./results/endogram/st/",filename = "cor_al_square.pdf"))
 print(corrplot(M, method = 'square', title="MM samples cell type correlation",
+               col=colorRampPalette(c("blue","white","red"))(100),
                order = 'original', type = 'lower', diag = FALSE,
                mar=c(0,0,1,0)))
 dev.off()
