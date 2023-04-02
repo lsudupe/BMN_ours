@@ -135,7 +135,7 @@ M <- cor(matrix)
 
 pdf(file.path("./results/endogram/st/",filename = "cluster6_cor.pdf"))
 print(corrplot(M, method = 'square', 
-               col=colorRampPalette(c("lightblue","white","red"))(100),
+               col=colorRampPalette(c("blue","white","red"))(100),
                order = 'FPC', type = 'lower', diag = FALSE))
 dev.off()
 
