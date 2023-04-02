@@ -250,10 +250,22 @@ ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
 dev.off()
 
 # Stacked + percent
+#http://rstudio-pubs-static.s3.amazonaws.com/5312_98fc1aba2d5740dd849a5ab797cc2c8d.html
 pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot.pdf"))
 ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
   geom_bar(position="fill", stat="identity")
 dev.off()
+
+ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
+  geom_bar(colour = "black", position = "stack") + scale_fill_brewer(palette = "RdBu") + 
+  labs(title = "BrBG")
+
+pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_prueba_2.pdf"))
+ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_brewer(palette = "PuOr")
+dev.off()
+
 
 ##borrar no healthy
 new <- DFtall[!grepl("cluster5", DFtall$Cluster),]
