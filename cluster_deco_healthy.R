@@ -123,9 +123,10 @@ matrix <- data.matrix(types_only, rownames.force = NA)
 M <- cor(matrix)
 
 pdf(file.path("./results/endogram/st/healthy/",filename = "healthy_cor.pdf"))
-print(corrplot(M, method = 'square', 
-               col=colorRampPalette(c("lightblue","white","red"))(100),
-               order = 'FPC', type = 'lower', diag = FALSE))
+print(corrplot(M, method = 'square', title="Cell type correlation",
+               col=colorRampPalette(c("blue","white","red"))(100),
+               order = 'original', type = 'lower', diag = FALSE,
+               mar=c(0,0,1,0)))
 dev.off()
 
 
@@ -191,7 +192,7 @@ dev.off()
 # Stacked + percent
 pdf(file.path("./results/endogram/st/healthy/",filename = "clustering_percentages_barplot_onlyhealthy.pdf"))
 ggplot(df, aes(fill=group, y=Value, x=Cluster)) + 
-  geom_bar(position="fill", stat="identity")
+  geom_bar(position="fill", stat="identity") +
 dev.off()
 
 
@@ -217,9 +218,9 @@ dev.off()
 # Stacked + percent
 pdf(file.path("./results/endogram/st/healthy/",filename = "clustering_percentages_barplot_onlyhealthy.pdf"))
 ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
-  geom_bar(position="fill", stat="identity")
+  geom_bar(position="fill", stat="identity") + 
+  scale_fill_brewer(palette = "RdBu")
 dev.off()
-
 
 ######VIOLIN PLOT 
 
