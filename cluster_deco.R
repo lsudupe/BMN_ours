@@ -277,4 +277,169 @@ ggplot(new, aes(fill=group, y=Value, x=Cluster)) +
   geom_bar(position="fill", stat="identity")
 dev.off()
 
+#########DE analysis with pseudobulk approach
+##DA.DB fb
+#lm <- lm(meta$ratio_stand ~ meta$geneSetFB, data =meta)
+#residuals <- lm$residuals
+#a@meta.data[["residualsDADB_after_FB"]] <- residuals
+library(edgeR)
+library(sva)
+library(tidyverse)
+library(DESeq2)
+library(pheatmap)
+library(RColorBrewer)
+display.brewer.all()
+color <- brewer.pal(11,"Spectral")
+color <- rev(color)
 
+###1.subset data, only cluster 4 and 6
+de <- SetIdent(se, value = se@meta.data[["clustering"]])
+de.subset <- SubsetSTData(de, idents = c("4", "5","6"))
+de.subset45 <- SubsetSTData(de, idents = c("4","5"))
+
+FeatureOverlay(de, features = "clustering", sampleids = 5:6, pt.size = 1.3)
+FeatureOverlay(de.subset, features = "clustering", sampleids = 3:4, pt.size = 1.3)
+FeatureOverlay(de.subset45, features = "clustering", sampleids = 5:6, pt.size = 1.3)
+
+
+###2.create pseudobulk
+cts <- AggregateExpression(de.subset, 
+                           group.by = c("clustering", "name"),
+                           assays = 'RNA',
+                           slot = "counts",
+                           return.seurat = FALSE)
+
+cts <- cts$RNA
+df <- as.data.frame(cts)
+df$`4_M3_F_1C` <- NULL
+df$`4_M3_fem_1C` <- NULL
+df$`4_M1_fem_1C`<- NULL
+df$`4_M9_F2_1C` <- NULL
+colnames(df)<- c("cluster4_M2_F_2B","cluster4_M8_F2_1C","cluster6_M2_F_2B","cluster6_M8_F2_1C")
+cts <- as.matrix(df)
+
+###3. pseudobulk analysis
+
+# Named vector of sample names
+sample <- c("M2_F_2B","M8_F2_1C")
+sample = as.factor(c(rep(sample,2)))
+clusters <- as.factor(c("cluster4","cluster4","cluster6","cluster6"))
+mycols = data.frame(row.names = colnames(df),sample, clusters)
+mycols
+# Our area of interest
+mycols$clusters <- relevel(mycols$clusters, "cluster4")
+# Create dsd object
+dsd = DESeqDataSetFromMatrix(countData = cts, colData = mycols, design = ~ clusters) 
+
+# Run DESeq2 differential expression analysis
+dds <- DESeq(dsd)
+dds$clusters <- relevel(dds$clusters, "cluster4")
+dataset <- counts(dds,  normalized = TRUE)
+
+## batch correction
+adjusted_counts <- ComBat_seq(dataset, batch=mycols$sample,
+                              group=mycols$clusters)
+# Normalize the counts
+normalize <- NormalizeData(adjusted_counts)
+
+## EDGER
+y <- DGEList(counts=adjusted_counts,group=mycols$clusters)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+y <- calcNormFactors(y)
+designGO <- model.matrix(~ 0+ mycols$clusters)
+
+# contrast of interest
+colnames(designGO)<-c("cluster4","cluster6")
+y <- estimateDisp(y,designGO)
+con <- makeContrasts(cluster4 - cluster6, levels=designGO)
+fit <- glmQLFit(y,designGO)
+qlf <- glmQLFTest(fit,contrast=con)
+
+# cluster4 - cluster6
+qlf.4vs6 <- glmQLFTest(fit,contrast=con[,"cluster4 - cluster6"])
+qlf.4vs6_matrix <- as.data.frame(topTags(qlf.4vs6,n=10700,sort.by = "PValue"))
+genes_of_interest_qlf.4vs6 <- row.names(qlf.4vs6_matrix[qlf.4vs6_matrix[,"FDR"]<0.006 & qlf.4vs6_matrix$logFC>1,])
+top.genes  <- unique(genes_of_interest_qlf.4vs6)
+
+## prepare data
+normalize_matrix <- as.matrix(normalize)
+matrix <- normalize_matrix[top.genes, ]
+
+matrix_genes <- data.frame(normalize_matrix) %>%
+  rownames_to_column(var = "genes") %>%
+  dplyr::filter(genes %in% top.genes)
+
+
+matrix_genes_ <- data.frame(matrix_genes[,-1], row.names = matrix_genes[,1])
+
+# Run pheatmap using the metadata data frame for the annotation
+pdf("./results/DE/st/cluster4vscluster6.pdf")
+print(pheatmap(matrix_genes_, 
+               #color = heat_colors, 
+               cluster_rows = T, 
+               cluster_cols = F,
+               show_rownames = T,
+               cutree_cols = 4,
+               annotation = mycols[, c("clusters", "sample")],
+               scale = "row", 
+               fontsize_row = 5, 
+               height = 20)) 
+dev.off()
+
+#########DE analysis with pseudobulk approach FIN
+
+
+#########clusterprofile START
+#ClusterProfiler
+library("clusterProfiler")
+library("org.Mm.eg.db")
+library("AnnotationHub")
+
+
+markers <- FindAllMarkers(de.subset, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.25)
+markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_log2FC)
+
+##################################################################
+#Subsetting top 100 markers with adjusted p values lower than .05#
+##################################################################
+top100 <- markers %>% group_by(cluster) %>% top_n(n = 100, wt = avg_log2FC)
+top100pval <- subset(top100, rowSums(top100[5] < 0.05) > 0)
+
+df <- top100pval[,7:6]
+dfsample <- split(df$gene,df$cluster)
+length(dfsample)
+
+pdf("./results/DE/st/cluster456_de.pdf")
+DoHeatmap(de.subset, features = top100pval$gene,disp.min = -2, disp.max = 2)
+dev.off()
+
+#The output of length(dfsample) returns how many clusters you have
+#Here there at 9 clusters (0, 1, 2, 3, 4, 5, 6, 7 and 8)
+#I'm sure there's a better way but you have to make a line like below for each cluster
+
+dfsample$`4` = bitr(dfsample$`4`, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+dfsample$`5` = bitr(dfsample$`5`, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+dfsample$`6` = bitr(dfsample$`6`, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+
+#do the same here, a line like below for each cluster
+genelist <- list("4" = dfsample$`4`$ENTREZID,
+                 "5" = dfsample$`5`$ENTREZID,
+                 "6" = dfsample$`6`$ENTREZID)
+
+GOclusterplot <- compareCluster(geneCluster = genelist, fun = "enrichGO", OrgDb = "org.Mm.eg.db")
+ck <- setReadable(GOclusterplot, OrgDb = org.Mm.eg.db, keyType="ENTREZID")
+
+head(ck) 
+pdf("./results/DE/st/go.456.pdf")
+print(dotplot(GOclusterplot))
+dev.off()
+
+pdf("./results/DE/st/cnetplot.456.pdf")
+cnetplot(ck)
+dev.off()
+
+KEGGclusterplot <- compareCluster(geneCluster = genelist, fun = "enrichKEGG")
+dotplot(KEGGclusterplot)
+
+#########clusterprofile FIN
