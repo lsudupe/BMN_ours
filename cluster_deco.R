@@ -217,17 +217,6 @@ for (i in 1:length(lista)){
 
 write.csv(df, "./celltypes.csv", row.names=TRUE)
 
-# Basic piechart
-df["celltype"] <- as.vector(rownames(df))
-pdf(file.path("./results/endogram/st",filename = "clustering_percentages_piechart.pdf"))
-ggplot(df, aes(x="", y=df$`sample:M1_fem_1C`, fill=df$celltype)) +
-  geom_bar(stat="identity", width=1) +
-  geom_text(aes(label = df$`sample:M1_fem_1C`),
-            position = position_stack(vjust = 0.5)) +
-  coord_polar("y", start=0)
-dev.off()
-
-
 #df <- t(df)
 df <- cbind(celltype = rownames(df), df)
 rownames(df) <- 1:nrow(df)
@@ -245,6 +234,7 @@ DF <- data.frame(group = c(df$celltype),
 DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster6)
 DFtall
 
+
 pdf(file.path("./results/endogram/st",filename = "clustering_percentages.pdf"))
 ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
 dev.off()
@@ -256,14 +246,15 @@ ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) +
   geom_bar(position="fill", stat="identity")
 dev.off()
 
-ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
-  geom_bar(colour = "black", position = "stack") + scale_fill_brewer(palette = "RdBu") + 
-  labs(title = "BrBG")
+library(RColorBrewer)
+cell_type_colors <- brewer.pal(num_cell_types, "RdBu")
+cells_order <- c("Bcell", "DC", "EC", "Erythroblasts","MM_MIC", "Monocytes","MSC","Neutrophils","NK","Tcell")
+cell_type_color_map <- setNames(cell_type_colors, cells_order)
 
 pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_prueba_2.pdf"))
 ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
   geom_bar(position="fill", stat="identity") +
-  scale_fill_brewer(palette = "PuOr")
+  scale_fill_brewer(palette = "RdBu")
 dev.off()
 
 
