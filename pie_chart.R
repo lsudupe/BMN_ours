@@ -1,13 +1,15 @@
+## SCRIPT: Piechart results BM project
 
+## 13.04.23 Laura Sudupe , git @lsudupe
 
-
+#Libraries---------------------------------
+library(Seurat)
+library(ggplot2)
+library(STutility)
 library(tidyverse)
 
-
-
+#Data---------------------------------
 se <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
-
-########cell types driving the cluster
 x <- se
 
 ###coordinates
@@ -19,7 +21,7 @@ a <- meta[,12:21]
 a["cluster"] <- as.vector(x@meta.data[["clustering"]])
 
 df <- a
-# Filter values below 10%
+# Filter values below whatever
 
 # Calculate the 75th percentile threshold for each row
 #thresholds <- apply(df[, -ncol(df)], 1, function(x) quantile(x, 0.75))
@@ -32,13 +34,9 @@ df["x_coord"] <- as.vector(coor$x)
 df["y_coord"] <- as.vector(coor$y) 
 df["sample"] <- as.vector(meta$name) 
 
-# Filter values below the 10% threshold for each row
+# Filter values below the 15% threshold for each row
 df_filtered <- df %>%
-  mutate(across(-c(cluster, x_coord, y_coord, sample), ~ifelse(. < 0.1, 0, .)))
-
-# Rescale non-zero values in each row to sum up to 100% and overwrite the original values
-#df_rescaled <- df_filtered %>%
- # mutate(across(-c(cluster, x_coord, y_coord, sample), ~ifelse(. != 0, . / sum(.[. != 0]) * 100, 0)))
+  mutate(across(-c(cluster, x_coord, y_coord, sample), ~ifelse(. < 0.15, 0, .)))
 
 # Rescale non-zero values in each row to sum up to 1 and overwrite the original values
 df_rescaled <- df_filtered %>%
@@ -46,7 +44,6 @@ df_rescaled <- df_filtered %>%
   mutate(across(-c(cluster, x_coord, y_coord, sample), 
                 ~ifelse(. != 0, . / sum(c_across(-c(cluster, x_coord, y_coord, sample))[c_across(-c(cluster, x_coord, y_coord, sample)) != 0]), 0))) %>%
   ungroup()
-
 
 # Separate the dataframe by sample
 df_list <- split(df_rescaled, df_rescaled$sample)
@@ -61,7 +58,7 @@ df_M9_F2_1C <- df_list[["M9_F2_1C"]]
 
 ########################
 # Reshape the data frame to a long format for plotting
-data <- df_M8_F2_1C
+data <- df_M9_F2_1C
 data$sample <- NULL
 data$cluster <- NULL
 colnames(data)[which(names(data) == "x_coord")] <- "x"
@@ -84,7 +81,7 @@ data_polar <- data_polar %>%
   filter(percentage > 0)
 
 num_points <- 100
-radius <- 0.73  # Adjust this value to control the size of the pie charts
+radius <- 0.73 
 
 data_pie <- tidyr::expand_grid(x = unique(data_polar$x),
                                y = unique(data_polar$y),
@@ -94,29 +91,30 @@ data_pie <- tidyr::expand_grid(x = unique(data_polar$x),
          x_plot = x + radius * cos(angle) * (point != 1),
          y_plot = y + radius * sin(angle) * (point != 1))
 
+#library(RColorBrewer)
+cell_type_colors <- brewer.pal(num_cell_types, "RdBu")
+cells_order <- c("Bcell", "DC", "EC", "Erythroblasts","MM_MIC", "Monocytes","MSC","Neutrophils","NK","Tcell")
+cell_type_color_map <- setNames(cell_type_colors, cells_order)
+
 pie_chart_plot <- ggplot(data_pie, aes(x = x_plot, y = y_plot, group = interaction(x, y, cell_type))) +
   geom_polygon(aes(fill = cell_type), color = "white") +
   coord_fixed() +
   theme_void() +
   theme(legend.position = "right") +
-  labs(fill = "Cell Type")
+  labs(fill = "Cell Type") +
+  scale_fill_manual(values = cell_type_color_map)
 
+pdf(file.path("./results/piechart/M9_piechart_15percent.pdf"))
 print(pie_chart_plot)
+dev.off()
+
 ########################
 
 
-
-##Ali approach
-df_M1_fem_1C$sample <- NULL
-plotting.data = cbind(df_M1_fem_1C, df_M1_fem_1C[12:13])
-ggplot(plotting.data, aes(y=y_coord, x=x_coord, col=cluster))+
-  geom_point()+
-  theme_classic()
-
-##Ali approach
-plotting.data = cbind(B1@meta.data, B1@images$V11B18_363_B1@coordinates)
-ggplot(plotting.data, aes(y=imagerow, x=imagecol, col=seurat_clusters))+
-  geom_point()+
-  theme_classic()
+pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_prueba_2.pdf"))
+ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_brewer(palette = "PuOr")
+dev.off()
 
 
