@@ -57,64 +57,62 @@ df_M8_F2_1C <- df_list[["M8_F2_1C"]]
 df_M9_F2_1C <- df_list[["M9_F2_1C"]]
 
 ########################
-# Reshape the data frame to a long format for plotting
-data <- df_M9_F2_1C
-data$sample <- NULL
-data$cluster <- NULL
-colnames(data)[which(names(data) == "x_coord")] <- "x"
-colnames(data)[which(names(data) == "y_coord")] <- "y"
+for (i in 1:length(df_list)){
+  data <- df_list[[i]]
 
-num_cell_types <- ncol(data) - 2
-#data[, 1:num_cell_types] <- data[, 1:num_cell_types] / rowSums(data[, 1:num_cell_types])
+  # Reshape the data frame to a long format for plotting
+  
+  data$sample <- NULL
+  data$cluster <- NULL
+  colnames(data)[which(names(data) == "x_coord")] <- "x"
+  colnames(data)[which(names(data) == "y_coord")] <- "y"
 
-data_long <- data %>% 
-  tidyr::pivot_longer(cols = 1:num_cell_types, names_to = "cell_type", values_to = "percentage")
+  num_cell_types <- ncol(data) - 2
 
-data_polar <- data_long %>%
-  group_by(x, y) %>%
-  mutate(end = cumsum(2 * pi * percentage),
-         start = lag(end, default = 0)) %>%
-  ungroup()
+  data_long <- data %>% 
+    tidyr::pivot_longer(cols = 1:num_cell_types, names_to = "cell_type", values_to = "percentage")
 
-# Filter out values equal to or below 0
-data_polar <- data_polar %>%
-  filter(percentage > 0)
+  data_polar <- data_long %>%
+    group_by(x, y) %>%
+    mutate(end = cumsum(2 * pi * percentage),
+          start = lag(end, default = 0)) %>%
+    ungroup()
 
-num_points <- 100
-radius <- 0.73 
+  # Filter out values equal to or below 0
+  data_polar <- data_polar %>%
+    filter(percentage > 0)
 
-data_pie <- tidyr::expand_grid(x = unique(data_polar$x),
-                               y = unique(data_polar$y),
-                               point = seq_len(num_points + 1)) %>%
-  left_join(data_polar, by = c("x", "y")) %>%
-  mutate(angle = ifelse(point == 1, 0, start + (end - start) * (point - 2) / (num_points - 1)),
-         x_plot = x + radius * cos(angle) * (point != 1),
-         y_plot = y + radius * sin(angle) * (point != 1))
+  num_points <- 100
+  radius <- 0.73 
 
-#library(RColorBrewer)
-cell_type_colors <- brewer.pal(num_cell_types, "RdBu")
-cells_order <- c("Bcell", "DC", "EC", "Erythroblasts","MM_MIC", "Monocytes","MSC","Neutrophils","NK","Tcell")
-cell_type_color_map <- setNames(cell_type_colors, cells_order)
+  data_pie <- tidyr::expand_grid(x = unique(data_polar$x),
+                                y = unique(data_polar$y),
+                                 point = seq_len(num_points + 1)) %>%
+   left_join(data_polar, by = c("x", "y")) %>%
+   mutate(angle = ifelse(point == 1, 0, start + (end - start) * (point - 2) / (num_points - 1)),
+          x_plot = x + radius * cos(angle) * (point != 1),
+           y_plot = y + radius * sin(angle) * (point != 1))
 
-pie_chart_plot <- ggplot(data_pie, aes(x = x_plot, y = y_plot, group = interaction(x, y, cell_type))) +
-  geom_polygon(aes(fill = cell_type), color = "white") +
-  coord_fixed() +
-  theme_void() +
-  theme(legend.position = "right") +
-  labs(fill = "Cell Type") +
-  scale_fill_manual(values = cell_type_color_map)
+  #library(RColorBrewer)
+  cell_type_colors <- brewer.pal(num_cell_types, "RdBu")
+  cells_order <- c("Bcell", "DC", "EC", "Erythroblasts","MM_MIC", "Monocytes","MSC","Neutrophils","NK","Tcell")
+  cell_type_color_map <- setNames(cell_type_colors, cells_order)
 
-pdf(file.path("./results/piechart/M9_piechart_15percent.pdf"))
-print(pie_chart_plot)
-dev.off()
+  pie_chart_plot <- ggplot(data_pie, aes(x = x_plot, y = y_plot, group = interaction(x, y, cell_type))) +
+    geom_polygon(aes(fill = cell_type), color = "white") +
+    coord_fixed() +
+    theme_void() +
+    theme(legend.position = "right") +
+    labs(fill = "Cell Type") +
+    scale_fill_manual(values = cell_type_color_map)
 
+  pdf(paste("./results/piechart/", names(df_list[i]),"_piechart_15percent.pdf",sep=""))
+  print(pie_chart_plot)
+  dev.off()
+
+}
 ########################
 
 
-pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_prueba_2.pdf"))
-ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
-  geom_bar(position="fill", stat="identity") +
-  scale_fill_brewer(palette = "PuOr")
-dev.off()
 
 
