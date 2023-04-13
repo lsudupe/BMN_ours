@@ -45,6 +45,38 @@ df_rescaled <- df_filtered %>%
                 ~ifelse(. != 0, . / sum(c_across(-c(cluster, x_coord, y_coord, sample))[c_across(-c(cluster, x_coord, y_coord, sample)) != 0]), 0))) %>%
   ungroup()
 
+# Reshape the data frame to a long format for plotting
+df_new <- df_rescaled
+df_new$x_coord <- NULL
+df_new$y_coord <- NULL
+df_new$sample <- NULL
+
+df_long <- df_new %>%
+  pivot_longer(cols = -cluster,
+               names_to = "cell_type",
+               values_to = "percentage") %>%
+  filter(percentage > 0)
+
+##color
+cells_order <- c("Bcell", "DC", "EC", "Erythroblasts","MM_MIC", "Monocytes","MSC","Neutrophils","NK","Tcell")
+cell_type_colors <- brewer.pal(length(cells_order), "RdBu")
+cell_type_color_map <- setNames(cell_type_colors, cells_order)
+
+# Create a plot to visualize the number of major cell types driving each cluster
+plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
+  geom_count(aes(size = ..n..)) +
+  labs(title = "Major Cell Types Driving Each Cluster",
+       x = "Cluster",
+       y = "Cell Type",
+       size = "Count") +
+  theme_minimal() +
+  scale_color_manual(name = "Cell Type", values = cell_type_color_map)
+
+# Print the plot
+pdf(file.path("./results/ST/gradient/cell_types_per_cluster_15percent_color.pdf"))
+print(plot)
+dev.off()
+
 # Separate the dataframe by sample
 df_list <- split(df_rescaled, df_rescaled$sample)
 
