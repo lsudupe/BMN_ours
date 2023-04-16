@@ -21,6 +21,7 @@ source(file = "./card.plot2.R")
 spatial <- readRDS("./objects/sp/integrated/integrated.harmony.rds")
 se <- readRDS("./objects/sp/integrated/se.rds")
 single_cell_bonemarrow <- readRDS("./objects/sc/integrated/integrated_sc_harmony.rds")
+single_cell_bonemarrow <- readRDS("./objects/sc/integrated/single_cell_bonemarrow_all_groups_harmony.rds")
 
 ######Prepare data
 #single cell
@@ -67,17 +68,18 @@ for (i in 1:length(objects)){
     sample.varname = "orig.ident",
     minCountGene = 100,
     minCountSpot = 5)
-  v<- ("jijoj")
+  
   ###################Deco
   CARD_a = CARD_deconvolution(CARD_object = CARD_obj_a)
   CARD_a_proportions <- CARD_a@Proportion_CARD
-  
+  v<- ("jojoj")
   ###################Plots
-  p1 <- CARD.visualize.pie(proportion = CARD_a@Proportion_CARD,
-                           spatial_location = CARD_a@spatial_location)
-  pdf(paste("./results/ST/card/", names(objects[i]),"_1.pdf",sep=""))
-  print(p1)
-  dev.off()
+  #p1 <- CARD.visualize.pie(proportion = CARD_a@Proportion_CARD,
+                           #spatial_location = CARD_a@spatial_location)
+  #pdf(paste("./results/ST/card/all/", names(objects[i]),"_1.pdf",sep=""))
+  #print(p1)
+  #dev.off()
+  
   ## select the cell type that we are interested
   ct.visualize = sub_list
   ## visualize the spatial distribution of the cell type proportion
@@ -88,24 +90,24 @@ for (i in 1:length(objects)){
     colors = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
     NumCols = 4)                                 ### number of columns in the figure panel
   
-  pdf(paste("./results/ST/card/", names(objects[i]),"_2.pdf",sep=""))
+  pdf(paste("./results/ST/card/all/", names(objects[i]),"_2.pdf",sep=""))
   print(p2)
   dev.off()
   ## correlation
   p3 <- CARD.visualize.Cor(CARD_a@Proportion_CARD,colors = NULL) # if not provide, we will use the default colors
-  pdf(paste("./results/ST/card/", names(objects[i]),"_3.pdf",sep=""))
+  pdf(paste("./results/ST/card/all/", names(objects[i]),"_3.pdf",sep=""))
   print(p3)
   dev.off()
   ## save object
-  saveRDS(a,file = paste0("./objects/card/last/",names(objects[i]),"_subgroup_ST.rds"))
+  saveRDS(a,file = paste0("./objects/card/last/all/",names(objects[i]),"_subgroup_ST.rds"))
   ## save card results
-  saveRDS(CARD_a,file = paste0("./objects/card/last/",names(objects[i]),"_CARD_obj_subgroup_ST.rds"))
+  saveRDS(CARD_a,file = paste0("./objects/card/last/all/",names(objects[i]),"_CARD_obj_subgroup_ST.rds"))
 }
 
 ## read card objects
 card <- c()
 DIR_ROOT <- file.path(getwd())  
-DIR_DATA <- file.path(DIR_ROOT, "/objects/card/last/")
+DIR_DATA <- file.path(DIR_ROOT, "/objects/card/last/all/")
 o <- c()
 
 
@@ -113,13 +115,13 @@ for (i in 1:length(objects)){
   a <- objects[[i]]
   b <- names(objects[i])
   # read data
-  c <- readRDS(paste0("./objects/card/last/",names(objects[i]), "_CARD_obj_subgroup_ST.rds"))
+  c <- readRDS(paste0("./objects/card/last/all/",names(objects[i]), "_CARD_obj_subgroup_ST.rds"))
   pro <- as.data.frame(c@Proportion_CARD)
   mm_ic <- pro$MM_MIC
   a@meta.data[["mm_ic"]] <- mm_ic
   o[[length(o) + 1]] <- a
   
-  pdf(paste0("./results/ST/card/enrich/",names(objects[i]),"_enrich_mm.pdf"))
+  pdf(paste0("./results/ST/card/enrich/all/",names(objects[i]),"_enrich_mm.pdf"))
   print(FeatureOverlay(a, features = "mm_ic",
                  cols = c("lightgray", "mistyrose", "red", "dark red", "black"), ncol = 1, pt.size = 1.4))
   dev.off()
@@ -134,7 +136,7 @@ for (i in 1:length(objects)){
   a <- objects[[i]]
   b <- names(objects[i])
   ## read data
-  c <- readRDS(paste0("./objects/card/last/",names(objects[i]), "_CARD_obj_subgroup_ST.rds"))
+  c <- readRDS(paste0("./objects/card/last/all/",names(objects[i]), "_CARD_obj_subgroup_ST.rds"))
   pro <- as.data.frame(c@Proportion_CARD)
   ## plot to add proportions
     for (i in 1:length(cell.types)){
@@ -157,6 +159,26 @@ list2env(o,envir=.GlobalEnv)
 
 se_merge <- MergeSTData(M1_fem_1C, y = c(M2_F_2B, M3_F_1C,M3_fem_1C ,M8_F2_1C , M9_F2_1C), 
                          add.spot.ids = c("M1_fem_1C", "M2_F_2B", "M3_F_1C", "M3_fem_1C", "M8_F2_1C", "M9_F2_1C"), project = "BM")
+
+####Proportion analysis
+pro_meta <- se_merge@meta.data
+pro_meta_ <- pro_meta[12:44]
+
+library(tidyverse)
+df_long <- pro_meta_ %>%
+  gather(key = "cell_type", value = "value")
+
+pdf(file.path("./results/ST/card/all/",filename = "violin_cell_types_all_onlyMM.pdf"))
+ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
+  geom_violin(scale = "width", trim = FALSE, show.legend = FALSE) +
+  coord_flip() +
+  stat_summary(fun.data = mean_sdl, color = "red", geom = "pointrange", position = position_dodge(0.9)) +
+  stat_summary(fun = median, color = "blue", geom = "point", position = position_dodge(0.9)) +
+  geom_boxplot(width = 0.1, outlier.color = "black", outlier.shape = 16, outlier.size = 1) +
+  theme_minimal() +
+  labs(y = "Cell Type", x = "Value", title = "Violin Plot of Cell Types")
+dev.off()
+
 
 ###porcentage plots
 mm_porcentge <- (sum(pro$MM_MIC))*100/nrow(pro)
@@ -216,21 +238,9 @@ se@meta.data[["DC"]] <- se_merge@meta.data[["DC"]]
 se@meta.data[["NK"]] <- se_merge@meta.data[["NK"]]
 
 
+se <- readRDS("./objects/sc/integrated/se_deco.rds")
+saveRDS(se, "./objects/sc/integrated/se_deco.rds")
 
-### plot two proportions together
-pdf(file.path("./results/ST/b_t.pdf"))
-FeatureOverlay(se, features = c("Tcell","Bcell"),
-               channels.use= c("red", "blue"),
-               #cols = c("lightgray", "mistyrose", "red", "dark red", "black"), 
-               sampleids = 1:2, ncols = 2,pt.size = 0.7)
-dev.off()
-
-pdf(file.path("./results/ST/b_t.pdf"))
-FeatureOverlay(se, features = c("MM_MIC", "Neutrophils"), pt.size = 0.7, 
-               blend = TRUE,
-               sampleids = 1:6,
-               ncols = 3, cols = c("darkblue", "cyan", "yellow", "red", "darkred"))
-dev.off()
 
 
 pdf(file.path("./results/ST/mm_ic_merge.pdf"))
@@ -303,6 +313,24 @@ dev.off()
 
 pdf(file.path("./results/ST/Bpgm.pdf"))
 FeatureOverlay(se.subset, features = c("Bpgm", "Retnlg", "Cd177", "Csf3r"), pt.size = 0.7,  
-               sampleids = 1:3,
+               sampleids = 1:2,
                ncols = 3, cols = c("darkblue", "cyan", "yellow", "red", "darkred"))
 dev.off()
+
+## with pseudobulk approach
+Seurat::Idents(object = se) <- se@meta.data[["neigh_2"]]
+
+a <- AggregateExpression(se, 
+                         group.by = c("neigh_2", "name" ),
+                         assays = 'SCT',
+                         slot = "data",
+                         return.seurat = FALSE)
+
+cts <- a$SCT
+cts <- as.data.frame(cts)
+
+
+
+
+
+
