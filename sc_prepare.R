@@ -67,7 +67,13 @@ single_cell_bonemarrow@meta.data[["ident"]] <- single_cell_bonemarrow@active.ide
 
 
 saveRDS(single_cell_bonemarrow, "./objects/heterogeneity/single_cell_bonemarrow.rds")
+saveRDS(single_cell_bonemarrow, "./objects/heterogeneity/single_cell_bonemarrow_all_groups.rds")
 single_cell_bonemarrow <- readRDS("./objects/heterogeneity/single_cell_bonemarrow.rds")
+
+pdf(file.path("./results/clusters/single_cell/",filename = "subgroups_sc.pdf"))
+#print(DimPlot(single_cell_bonemarrow, reduction = "tsne", label = TRUE))
+print(DimPlot(single_cell_bonemarrow, group.by = c("ident"), label = TRUE, repel=TRUE))
+dev.off()
 
 
 
