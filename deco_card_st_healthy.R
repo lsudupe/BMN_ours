@@ -19,14 +19,19 @@ source(file = "./card.plot2.R")
 #Data---------------------------------
 se <- readRDS("./objects/sp/integrated/se.rds")
 single_cell_bonemarrow <- readRDS("./objects/heterogeneity/single_cell_bonemarrow.rds")
+single_cell_bonemarrow_all <- readRDS("./objects/heterogeneity/single_cell_bonemarrow_all_groups.rds")
+single_cell_bonemarrow_all@meta.data[["orig.ident"]] <- "ref"
+
 
 
 ######Prepare data
 #single cell
 sub_list <- levels(single_cell_bonemarrow@meta.data[["ident"]])
+sub_list <- levels(single_cell_bonemarrow_all@meta.data[["cell"]])
 
-single_cell_bonemarrow_counts <- single_cell_bonemarrow@assays[["RNA"]]@counts
-single_cell_bonemarrow_meta <- single_cell_bonemarrow@meta.data
+
+single_cell_bonemarrow_counts <- single_cell_bonemarrow_all@assays[["RNA"]]@counts
+single_cell_bonemarrow_meta <- single_cell_bonemarrow_all@meta.data
 #single_cell_bonemarrow_meta <- single_cell_bonemarrow_meta[, 6:7]
 
 
@@ -60,8 +65,8 @@ for (i in 1:length(objects)){
     sc_meta = single_cell_bonemarrow_meta,
     spatial_count = a_count,
     spatial_location = a_location,
-    ct.varname = "ident",
-    ct.select = unique(single_cell_bonemarrow_meta$ident),
+    ct.varname = "cell",
+    ct.select = unique(single_cell_bonemarrow_meta$cell),
     sample.varname = "metadata....experiment..",
     minCountGene = 100,
     minCountSpot = 5)
@@ -74,7 +79,7 @@ for (i in 1:length(objects)){
   ###################Plots
   p1 <- CARD.visualize.pie(proportion = CARD_a@Proportion_CARD,
                            spatial_location = CARD_a@spatial_location)
-  pdf(paste("./results/ST/card/healthy/", names(objects[i]),"_1.pdf",sep=""))
+  pdf(paste("./results/ST/card/healthy/all/", names(objects[i]),"_1.pdf",sep=""))
   print(p1)
   dev.off()
   ## select the cell type that we are interested
@@ -87,24 +92,24 @@ for (i in 1:length(objects)){
     colors = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
     NumCols = 4)                                 ### number of columns in the figure panel
   
-  pdf(paste("./results/ST/card/healthy/", names(objects[i]),"_2.pdf",sep=""))
+  pdf(paste("./results/ST/card/healthy/all/", names(objects[i]),"_2.pdf",sep=""))
   print(p2)
   dev.off()
   ## correlation
   p3 <- CARD.visualize.Cor(CARD_a@Proportion_CARD,colors = NULL) # if not provide, we will use the default colors
-  pdf(paste("./results/ST/card/healthy/", names(objects[i]),"_3.pdf",sep=""))
+  pdf(paste("./results/ST/card/healthy/all/", names(objects[i]),"_3.pdf",sep=""))
   print(p3)
   dev.off()
   ## save object
-  saveRDS(a,file = paste0("./objects/card/last/healthy/",names(objects[i]),"_subgroup_ST.rds"))
+  saveRDS(a,file = paste0("./objects/card/last/healthy/all/",names(objects[i]),"_subgroup_ST.rds"))
   ## save card results
-  saveRDS(CARD_a,file = paste0("./objects/card/last/healthy/",names(objects[i]),"_CARD_obj_subgroup_ST.rds"))
+  saveRDS(CARD_a,file = paste0("./objects/card/last/healthy/all/",names(objects[i]),"_CARD_obj_subgroup_ST.rds"))
 }
 
 ## read card objects
 card <- c()
 DIR_ROOT <- file.path(getwd())  
-DIR_DATA <- file.path(DIR_ROOT, "/objects/card/last/healthy/")
+DIR_DATA <- file.path(DIR_ROOT, "/objects/card/last/healthy/all/")
 o <- c()
 
 ########ENRICHMENT PLOT IF INTERESTED
@@ -112,13 +117,13 @@ for (i in 1:length(objects)){
   a <- objects[[i]]
   b <- names(objects[i])
   # read data
-  c <- readRDS(paste0("./objects/card/last/healthy/",names(objects[i]), "_CARD_obj_subgroup_ST.rds"))
+  c <- readRDS(paste0("./objects/card/last/healthy/all/",names(objects[i]), "_CARD_obj_subgroup_ST.rds"))
   pro <- as.data.frame(c@Proportion_CARD)
   mm_ic <- pro$MM_MIC
   a@meta.data[["mm_ic"]] <- mm_ic
   o[[length(o) + 1]] <- a
   
-  pdf(paste0("./results/ST/card/enrich/healthy/",names(objects[i]),"_enrich_mm.pdf"))
+  pdf(paste0("./results/ST/card/enrich/healthy/ll/",names(objects[i]),"_enrich_mm.pdf"))
   print(FeatureOverlay(a, features = "mm_ic",
                  cols = c("lightgray", "mistyrose", "red", "dark red", "black"), ncol = 1, pt.size = 1.4))
   dev.off()
@@ -132,7 +137,7 @@ for (i in 1:length(objects)){
   a <- objects[[i]]
   b <- names(objects[i])
   ## read data
-  c <- readRDS(paste0("./objects/card/last/healthy/",names(objects[i]), "_CARD_obj_subgroup_ST.rds"))
+  c <- readRDS(paste0("./objects/card/last/healthy/all/",names(objects[i]), "_CARD_obj_subgroup_ST.rds"))
   pro <- as.data.frame(c@Proportion_CARD)
   cell.types <- colnames(pro)
   ## plot to add proportions
@@ -157,6 +162,46 @@ list2env(o,envir=.GlobalEnv)
 
 se_merge <- MergeSTData(M3_F_1C, y = c(M3_fem_1C), 
                          add.spot.ids = c("M3_F_1C", "M3_fem_1C"), project = "BM")
+
+####Proportion analysis
+pro_meta <- se_merge@meta.data
+pro_meta_ <- pro_meta[12:30]
+
+library(tidyverse)
+df_long <- pro_meta_ %>%
+  gather(key = "cell_type", value = "value")
+
+pdf(file.path("./results/ST/card/healthy/all/",filename = "violin_cell_types_all_onlyhealthy.pdf"))
+ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
+  geom_violin(scale = "width", trim = FALSE, show.legend = FALSE) +
+  stat_summary(fun.data = mean_sdl, color = "red", geom = "pointrange", position = position_dodge(0.9)) +
+  stat_summary(fun = median, color = "blue", geom = "point", position = position_dodge(0.9)) +
+  geom_boxplot(width = 0.1, outlier.color = "black", outlier.shape = 16, outlier.size = 1) +
+  theme_minimal() +
+  labs(x = "Cell Type", y = "Value", title = "Violin Plot of Cell Types")
+dev.off()
+
+ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
+  geom_violin(scale = "width", trim = FALSE, show.legend = FALSE) +
+  coord_flip() +
+  stat_summary(fun.data = mean_sdl, color = "red", geom = "pointrange", position = position_dodge(0.9)) +
+  stat_summary(fun = median, color = "blue", geom = "point", position = position_dodge(0.9)) +
+  geom_boxplot(width = 0.1, outlier.color = "black", outlier.shape = 16, outlier.size = 1) +
+  theme_minimal() +
+  labs(y = "Cell Type", x = "Value", title = "Violin Plot of Cell Types")
+
+
+pro_meta_["names"] <- pro_meta$name
+
+df_long <- pro_meta_ %>%
+  gather(key = "cell_type", value = "value", -names)
+
+ggplot(df_long, aes(fill=cell_type, y=value, x=names)) + 
+  geom_bar(position="fill", stat="identity") 
+
+
+
+####Proportion analysis FIN
 
 ###porcentage plots
 se_subset <- SubsetSTData(se, idents = c("M3_F_1C","M3_fem_1C"))
