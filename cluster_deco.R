@@ -116,6 +116,15 @@ meta_b <- b@meta.data
 types_b <- meta_b[,12:21]
 types_b["clustering"] <- as.vector(b@meta.data[["clustering"]])
 
+###violin plot
+ggplot(types_b, aes(x = clustering, y = EC)) +
+  geom_violin(scale = "width", trim = FALSE, show.legend = FALSE) +
+  stat_summary(fun.data = mean_sdl, color = "red", geom = "pointrange", position = position_dodge(0.9)) +
+  stat_summary(fun = median, color = "blue", geom = "point", position = position_dodge(0.9)) +
+  geom_boxplot(width = 0.1, outlier.color = "black", outlier.shape = 16, outlier.size = 1) +
+  theme_minimal() +
+  labs(x = "Clustering", y = "Cell Type", title = "Violin Plot of EC by Clustering")
+
 ##distribution plot
 pdf(file.path("./results/endogram/st",filename = "clustering_distribution.pdf"))
 types_b %>%
