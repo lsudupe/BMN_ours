@@ -179,53 +179,7 @@ ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
   labs(y = "Cell Type", x = "Value", title = "Violin Plot of Cell Types")
 dev.off()
 
-
-###porcentage plots
-mm_porcentge <- (sum(pro$MM_MIC))*100/nrow(pro)
-neutro_porcentge <- (sum(pro$Neutrophils))*100/nrow(pro)
-
-meta_pro <- se_merge@meta.data
-
-# Change violin plot line colors by groups
-p1<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$MM_MIC, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="plasma cells % in different samples",x="samples", y = "porcentage")
-
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$MM_MIC, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="MM_MIC % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$Bcell, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="Bcell % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$Erythroblasts, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="Erythroblasts % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$Monocytes, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="Monocytes % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$Tcell, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="Tcell % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$Neutrophils, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="Neutrophils % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$MSC, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="MSC % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$EC, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="EC % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$DC, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="DC % in different clusters",x="clusters", y = "porcentage")
-p2<-ggplot(meta_pro, aes(x=meta_pro$name, y=meta_pro$NK, color=meta_pro$condition)) +
-  geom_violin(trim=FALSE) +
-  labs(title="NK % in different clusters",x="clusters", y = "porcentage")
-p2
-
-##
-
-
+######
 se@meta.data[["Tcell"]] <- se_merge@meta.data[["Tcell"]]
 se@meta.data[["Bcell"]] <- se_merge@meta.data[["Bcell"]]
 se@meta.data[["MM_MIC"]] <- se_merge@meta.data[["MM_MIC"]]
@@ -243,7 +197,7 @@ saveRDS(se, "./objects/sc/integrated/se_deco.rds")
 
 
 
-pdf(file.path("./results/ST/mm_ic_merge.pdf"))
+pdf(file.path("./results/ST/all/mm_ic_merge.pdf"))
 FeatureOverlay(se, features = "MM_MIC",
                cols = c("lightgray", "mistyrose", "red", "dark red", "black"), 
                sampleids = 1:6, ncols = 2,pt.size = 0.7)
