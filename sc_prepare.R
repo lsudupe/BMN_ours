@@ -125,6 +125,8 @@ harmony_i <- harmony %>%
     RunUMAP(reduction = "harmony", dims = 1:20, n.epochs = 1e3) 
 
 saveRDS(harmony_i, "./objects/sc/integrated/integrated_sc_harmony.rds")
+saveRDS(harmony_i, "./objects/sc/integrated/single_cell_bonemarrow_all_groups_harmony.rds")
+
 harmony <- readRDS("./objects/sc/integrated/integrated_sc_harmony.rds")
 
 Seurat::Idents(object = harmony) <- harmony@meta.data[["ident"]]
