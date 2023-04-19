@@ -181,6 +181,89 @@ top50 <- cluster_6_f %>%
 
 write.csv(genes, "./data/single-cell/PC/MM_MIC_genes.csv", row.names = FALSE)
 
+#########CELL SCORE CHECK########
+PC_MM_S <- readRDS("./data/single-cell/PC/scRNA_MM_PC.rds")
+DefaultAssay(PC_MM_S) <- "RNA"
+
+PC_MM_S <- PC_MM_S %>%
+  NormalizeData() %>%
+  ScaleData() %>%
+  FindVariableFeatures() %>%
+  RunPCA(npcs = 20) %>%
+  FindNeighbors(reduction = "pca", dims = 1:20) %>%
+  FindClusters(resolution=0.7) %>%
+  RunUMAP(reduction = "pca", dims = 1:20, n.epochs = 1e3) 
+
+
+###cell score plots##
+PC_MM@meta.data[["Phase"]]
+DimPlot(PC_MM_S, group.by = c("Phase"), label = TRUE, repel=TRUE)
+
+####marker genes for MM
+# Determine differentiating markers for PC_MM
+Seurat::Idents(object = PC_MM_S) <- PC_MM_S@meta.data[["Phase"]]
+#PC_MM_S <- PrepSCTFindMarkers(PC_MM_S, assay = "SCT", verbose = TRUE)
+MM_genes <- Seurat::FindAllMarkers(object = PC_MM_S, 
+                                   assay = "RNA",
+                                   verbose = TRUE, 
+                                   only.pos = TRUE)
+cluster <- subset(MM_genes, p_val_adj < 0.05 & 0.05 < avg_log2FC)
+genes_G2M <- cluster[grepl("G2M", cluster[,6]),]
+
+
+genes_G1 <- cluster[grepl("G1", cluster[,6]),]
+genes_G1 <- cluster$gene
+
+genes_S <- cluster[grepl("S", cluster[,6]),]
+genes_S <- cluster$gene
+
+#Top5
+top50_G2M <- genes_G2M %>%
+  top_n(n = 50,
+        wt = avg_log2FC)
+genes_G2M <- top50_G2M$gene
+
+top50_G1 <- genes_G1 %>%
+  top_n(n = 50,
+        wt = avg_log2FC)
+genes_G1 <- top50_G1$gene
+
+top50_S <- genes_S %>%
+  top_n(n = 50,
+        wt = avg_log2FC)
+genes_S <- top50_S$gene
+
+intersect <- intersect(genes_G2M,genes_G1)
+
+###Add module score
+se <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
+se <- AddModuleScore(se,
+                       features = list(genes_G1),
+                       name="G1")
+
+se <- AddModuleScore(se,
+                     features = list(genes_G2M),
+                     name="G2M")
+
+se <- AddModuleScore(se,
+                     features = list(genes_G2M),
+                     name="S")
+
+library(RColorBrewer)
+display.brewer.all()
+color <- brewer.pal(11,"Spectral")
+color <- rev(color)
+
+FeatureOverlay(se, features = c("G11"), sampleids = 1:6,pt.size = 0.7,ncol = 2 , 
+                   value.scale = "all" ,cols = color)
+FeatureOverlay(se, features = c("G2M1"), sampleids = 1:6,pt.size = 0.7,ncol = 2 , 
+               value.scale = "all" ,cols = color)
+FeatureOverlay(se, features = c("S1"), sampleids = 1:6,pt.size = 0.7,ncol = 2 , 
+               value.scale = "all" ,cols = color)
+
+###Add module score FIN
+
+
 
 
 
