@@ -244,21 +244,16 @@ for (i in 1:length(objects)){
   print(p)
   dev.off()
   ## PLOTS FIN
+
+  saveRDS(a,file = paste0("./objects/sp/regress_out/",b,"_regressout_ST.rds"))
   
   ## add object to list
- # objects_new[[length(objects_new) + 1]] <- a
+  objects_new[[length(objects_new) + 1]] <- a
   
 }
 names(objects_new) <- name
 
-
-####DE analysis and plots 
-markers_new <- c()
-for (i in 1:length(objects_new)){
-  a <- objects_new[[i]]
-  
-
-}
+saveRDS(objects_new,file = "./objects/sp/regress_out/list_regressout_ST.rds")
 
 ####integrated object DE
 DefaultAssay(b) <- "SCT"
