@@ -17,7 +17,6 @@ library(STutility)
 library(clusterProfiler)
 library(org.Mm.eg.db)
 library(RColorBrewer)
-display.brewer.all()
 color <- brewer.pal(11,"Spectral")
 color <- rev(color)
 
@@ -306,7 +305,7 @@ cnetplot(ck)
 dev.off()
 ####se object DE FIN
 
-
+####ENRICHMENT ANALYSIS DORMANT
 
 
 
