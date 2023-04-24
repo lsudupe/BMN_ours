@@ -38,22 +38,35 @@ for (i in 1:length(objects)){
 
 names(new) <- names
 
-FeatureOverlay(new[["M1_fem_1C"]], features = c("dormant1"), pt.size = 1.2,ncol = 2 , 
-               value.scale = "all" ,cols = color)
+pdf(file.path("./results/ST/dormant/M1_fem_1C.pdf"))
+print(FeatureOverlay(new[["M1_fem_1C"]], features = c("dormant1"), pt.size = 1.8,
+               value.scale = "all" ,cols = color))
+dev.off()
 
-FeatureOverlay(new[["M2_F_2B"]], features = c("dormant1"), pt.size = 1.2,ncol = 2 , 
-               value.scale = "all" ,cols = color)
+pdf(file.path("./results/ST/dormant/M2_F_2B.pdf"))
+print(FeatureOverlay(new[["M2_F_2B"]], features = c("dormant1"), pt.size = 1.8,
+               value.scale = "all" ,cols = color))
+dev.off()
 
-FeatureOverlay(new[["M3_F_1C"]], features = c("dormant1"), pt.size = 1.2,ncol = 2 , 
-               value.scale = "all" ,cols = color)
+pdf(file.path("./results/ST/dormant/M3_F_1C.pdf"))
+print(FeatureOverlay(new[["M3_F_1C"]], features = c("dormant1"), pt.size = 1.8,
+               value.scale = "all" ,cols = color))
+dev.off()
 
-FeatureOverlay(new[["M8_F2_1C"]], features = c("dormant1"), pt.size = 1.2,ncol = 2 , 
-               value.scale = "all" ,cols = color)
+pdf(file.path("./results/ST/dormant/M3_fem_1C.pdf"))
+print(FeatureOverlay(new[["M3_fem_1C"]], features = c("dormant1"), pt.size = 1.8,
+                     value.scale = "all" ,cols = color))
+dev.off()
 
-FeatureOverlay(new[["M9_F2_1C"]], features = c("dormant1"), pt.size = 1.2,ncol = 2 , 
-               value.scale = "all" ,cols = color)
+pdf(file.path("./results/ST/dormant/M8_F2_1C.pdf"))
+print(FeatureOverlay(new[["M8_F2_1C"]], features = c("dormant1"), pt.size = 1.8, 
+               value.scale = "all" ,cols = color))
+dev.off()
 
-
+pdf(file.path("./results/ST/dormant/M9_F2_1C.pdf"))
+print(FeatureOverlay(new[["M9_F2_1C"]], features = c("dormant1"), pt.size = 1.8, 
+               value.scale = "all" ,cols = color))
+dev.off()
 
 
 
