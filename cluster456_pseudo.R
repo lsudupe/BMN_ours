@@ -88,18 +88,55 @@ y <- estimateDisp(y,designGO)
 con <- makeContrasts(cluster4 - cluster5, cluster4 - cluster6, cluster5 - cluster6,levels=designGO)
 fit <- glmQLFit(y,designGO)
 qlf <- glmQLFTest(fit,contrast=con)
-
 # 4-5
 qlf.4vs5 <- glmQLFTest(fit,contrast=con[,"cluster4 - cluster5"])
 qlf.4vs5_matrix <- as.data.frame(topTags(qlf.4vs5,n=11336,sort.by = "PValue"))
-genes_of_interest_4vs5 <- row.names(qlf.4vs5_matrix[qlf.4vs5_matrix[,"PValue"]<0.005 & qlf.4vs5_matrix$logFC>1,])
+genes_of_interest_4vs5 <- row.names(qlf.4vs5_matrix[qlf.4vs5_matrix[,"PValue"]<0.0005 & qlf.4vs5_matrix$logFC>1,])
 # 4-6
 qlf.4vs6 <- glmQLFTest(fit,contrast=con[,"cluster4 - cluster6"])
 qlf.4vs6_matrix <- as.data.frame(topTags(qlf.4vs6,n=11336,sort.by = "PValue"))
-genes_of_interest_4vs6 <- row.names(qlf.4vs6_matrix[qlf.4vs6_matrix[,"PValue"]<0.005 & qlf.4vs6_matrix$logFC>1,])
+genes_of_interest_4vs6 <- row.names(qlf.4vs6_matrix[qlf.4vs6_matrix[,"PValue"]<0.0005 & qlf.4vs6_matrix$logFC>1,])
 #
 top.genes  <- c(genes_of_interest_4vs5, genes_of_interest_4vs6)
 top.genes  <- unique(top.genes)
+#######cluster4###### FIN
+
+#######cluster5######
+# contrast of interest
+con <- makeContrasts(cluster5 - cluster4, cluster5 - cluster6, cluster4 - cluster6,levels=designGO)
+fit <- glmQLFit(y,designGO)
+qlf <- glmQLFTest(fit,contrast=con)
+# 5-4
+qlf.5vs4 <- glmQLFTest(fit,contrast=con[,"cluster5 - cluster4"])
+qlf.5vs4_matrix <- as.data.frame(topTags(qlf.5vs4,n=11336,sort.by = "PValue"))
+genes_of_interest_5vs4 <- row.names(qlf.5vs4_matrix[qlf.5vs4_matrix[,"PValue"]<0.0005 & qlf.5vs4_matrix$logFC>1,])
+# 5-6
+qlf.5vs6 <- glmQLFTest(fit,contrast=con[,"cluster5 - cluster6"])
+qlf.5vs6_matrix <- as.data.frame(topTags(qlf.5vs6,n=11336,sort.by = "PValue"))
+genes_of_interest_5vs6 <- row.names(qlf.5vs6_matrix[qlf.5vs6_matrix[,"PValue"]<0.0005 & qlf.5vs6_matrix$logFC>1,])
+#
+top.genes  <- c(genes_of_interest_5vs4, genes_of_interest_5vs6)
+top.genes  <- unique(top.genes)
+#######cluster5###### FIN
+
+#######cluster6######
+# contrast of interest
+con <- makeContrasts(cluster6 - cluster5, cluster6 - cluster4, cluster5 - cluster4,levels=designGO)
+fit <- glmQLFit(y,designGO)
+qlf <- glmQLFTest(fit,contrast=con)
+# 6-5
+qlf.6vs5 <- glmQLFTest(fit,contrast=con[,"cluster6 - cluster5"])
+qlf.6vs5_matrix <- as.data.frame(topTags(qlf.6vs5,n=11336,sort.by = "PValue"))
+genes_of_interest_6vs5 <- row.names(qlf.6vs5_matrix[qlf.6vs5_matrix[,"PValue"]<0.0005 & qlf.6vs5_matrix$logFC>1,])
+# 6-4
+qlf.6vs4 <- glmQLFTest(fit,contrast=con[,"cluster6 - cluster4"])
+qlf.6vs4_matrix <- as.data.frame(topTags(qlf.6vs4,n=11336,sort.by = "PValue"))
+genes_of_interest_6vs4 <- row.names(qlf.6vs4_matrix[qlf.6vs4_matrix[,"PValue"]<0.0005 & qlf.6vs4_matrix$logFC>1,])
+#
+top.genes  <- c(genes_of_interest_6vs5, genes_of_interest_6vs4)
+top.genes  <- unique(top.genes)
+#######cluster6###### FIN
+
 
 ## prepare data
 normalize_matrix <- as.matrix(normalize)
@@ -123,7 +160,7 @@ my_col_order <- c("M2_F_2B_cluster4","M8_F2_1C_cluster4", "M2_F_2B_cluster5","M8
                   "M2_F_2B_cluster6","M8_F2_1C_cluster6")
 
 # Run pheatmap using the metadata data frame for the annotation
-pdf("./prueba.pdf")
+pdf("./prueba_6.pdf")
 print(pheatmap(matrix_genes_[my_col_order], 
                #color = heat_colors, 
                cluster_rows = T, 
