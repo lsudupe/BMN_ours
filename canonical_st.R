@@ -7,6 +7,7 @@ library(Seurat)
 library(ggplot2)
 library(STutility)
 library(dplyr)
+library(UCell)
 
 #Data---------------------------------
 objects <- readRDS("./objects/sp/regress_out/list_regressout_ST.rds")
@@ -16,7 +17,6 @@ names <- names(objects)
 #Check dormant enrichment score
 ###Add module score
 library(RColorBrewer)
-display.brewer.all()
 color <- brewer.pal(11,"Spectral")
 color <- rev(color)
 
@@ -41,15 +41,27 @@ new <- c()
 for (i in 1:length(objects)){
   a <- objects[[i]]
   b <- names(objects[i])
+  
   a <- AddModuleScore(a,
                       genes.pool = a@assays[["regress"]]@data,
                       features = list(dormant),
                       name="dormant")
+  ## Add UCellScore
+  vector<- ScoreSignatures_UCell(a@assays[["regress"]]@data, features = list(dormant))
+  a@meta.data[["signature_1_dormant"]] <- as.vector(vector)
+  
   #Plots
   p <- FeatureOverlay(a, features = c("dormant1"), pt.size = 1.8, 
                        value.scale = "all" ,cols = color)
   
-  pdf(paste("./results/ST/dormant/", b,"_spatial.pdf",sep=""))
+  pdf(paste("./results/ST/dormant/", b,"_spatial_modulescore.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  p <- FeatureOverlay(a, features = c("signature_1_dormant"), pt.size = 1.8, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/ST/dormant/", b,"_spatial_Ucell.pdf",sep=""))
   print(p)
   dev.off()
   
@@ -62,7 +74,20 @@ for (i in 1:length(objects)){
     #xlim(-0.5, 0.5) +
     theme(plot.title = element_text(hjust=0.5, face="bold")) 
   
-  pdf(paste("./results/ST/dormant/", b,"_boxplot.pdf",sep=""))
+  pdf(paste("./results/ST/dormant/", b,"_boxplot_modulescore.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  p <- a@meta.data%>% 
+    ggplot(aes(x=signature_1_dormant, y= clustering, fill=clustering)) + 
+    geom_boxplot(aes(fill=clustering)) +  
+    scale_fill_manual(values =cluster_color_map ) +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    #xlim(-0.5, 0.5) +
+    theme(plot.title = element_text(hjust=0.5, face="bold")) 
+  
+  pdf(paste("./results/ST/dormant/", b,"_boxplot_Ucell.pdf",sep=""))
   print(p)
   dev.off()
   
@@ -72,6 +97,18 @@ for (i in 1:length(objects)){
 }
 
 names(new) <- names
+
+
+library(reshape2)
+library(ggplot2)
+melted <- reshape2::melt(u.scores)
+colnames(melted) <- c("Cell","Signature","UCell_score")
+p <- ggplot(melted, aes(x=Signature, y=UCell_score)) + 
+  geom_violin(aes(fill=Signature), scale = "width") +
+  geom_boxplot(width=0.1, outlier.size=0) +
+  theme_bw() + theme(axis.text.x=element_blank())
+p
+
 
 ##Plots
 custom_theme <- theme(legend.position = c(0.45, 0.8), # Move color legend to top
