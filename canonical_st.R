@@ -43,25 +43,21 @@ for (i in 1:length(objects)){
   b <- names(objects[i])
   
   a <- AddModuleScore(a,
-                      genes.pool = a@assays[["regress"]]@data,
+                      genes.pool = a@assays[["RNA"]]@data,
                       features = list(dormant),
                       name="dormant")
-  ## Add UCellScore
-  vector<- ScoreSignatures_UCell(a@assays[["regress"]]@data, features = list(dormant))
-  a@meta.data[["signature_1_dormant"]] <- as.vector(vector)
+
+  meta <- a@meta.data
   
-  #Plots
+  lm <- lm(meta$dormant1 ~ meta$MM_MIC, data =meta)
+  residuals <- lm$residuals
+  a@meta.data[["residuals_dormant_addmodulescore"]] <- residuals
+  
+  ##plots
   p <- FeatureOverlay(a, features = c("dormant1"), pt.size = 1.8, 
-                       value.scale = "all" ,cols = color)
-  
-  pdf(paste("./results/ST/dormant/", b,"_spatial_modulescore.pdf",sep=""))
-  print(p)
-  dev.off()
-  
-  p <- FeatureOverlay(a, features = c("signature_1_dormant"), pt.size = 1.8, 
                       value.scale = "all" ,cols = color)
   
-  pdf(paste("./results/ST/dormant/", b,"_spatial_Ucell.pdf",sep=""))
+  pdf(paste("./results/ST/dormant/", b,"_spatial_modulescore.pdf",sep=""))
   print(p)
   dev.off()
   
@@ -78,6 +74,52 @@ for (i in 1:length(objects)){
   print(p)
   dev.off()
   
+  p <- FeatureOverlay(a, features = c("residuals_dormant_addmodulescore"), pt.size = 1.8, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/ST/dormant/", b,"_spatial_modulescore_residuals.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  p <- a@meta.data%>% 
+    ggplot(aes(x=residuals_dormant_addmodulescore, y= clustering, fill=clustering)) + 
+    geom_boxplot(aes(fill=clustering)) +  
+    scale_fill_manual(values =cluster_color_map ) +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    #xlim(-0.5, 0.5) +
+    theme(plot.title = element_text(hjust=0.5, face="bold")) 
+  
+  pdf(paste("./results/ST/dormant/", b,"_boxplot_modulescore_residuals.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  ## Add UCellScore
+  
+  vector<- ScoreSignatures_UCell(a@assays[["RNA"]]@data, features = list(dormant))
+  a@meta.data[["signature_1_dormant"]] <- as.vector(vector)
+  
+  meta <- a@meta.data
+  
+  lm <- lm(meta$signature_1_dormant ~ meta$MM_MIC, data =meta)
+  residuals <- lm$residuals
+  a@meta.data[["residuals_dormant_ucellscore"]] <- residuals
+  
+  ##plots
+  p <- FeatureOverlay(a, features = c("signature_1_dormant"), pt.size = 1.8, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/ST/dormant/", b,"_spatial_Ucell.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  p <- FeatureOverlay(a, features = c("residuals_dormant_ucellscore"), pt.size = 1.8, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/ST/dormant/", b,"_spatial_Ucell_residuals.pdf",sep=""))
+  print(p)
+  dev.off()
+  
   p <- a@meta.data%>% 
     ggplot(aes(x=signature_1_dormant, y= clustering, fill=clustering)) + 
     geom_boxplot(aes(fill=clustering)) +  
@@ -88,6 +130,19 @@ for (i in 1:length(objects)){
     theme(plot.title = element_text(hjust=0.5, face="bold")) 
   
   pdf(paste("./results/ST/dormant/", b,"_boxplot_Ucell.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  p <- a@meta.data%>% 
+    ggplot(aes(x=residuals_dormant_ucellscore, y= clustering, fill=clustering)) + 
+    geom_boxplot(aes(fill=clustering)) +  
+    scale_fill_manual(values =cluster_color_map ) +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    #xlim(-0.5, 0.5) +
+    theme(plot.title = element_text(hjust=0.5, face="bold")) 
+  
+  pdf(paste("./results/ST/dormant/", b,"_boxplot_Ucell_residuals.pdf",sep=""))
   print(p)
   dev.off()
   
