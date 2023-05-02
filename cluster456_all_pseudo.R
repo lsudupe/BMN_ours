@@ -284,7 +284,7 @@ res_tbl
 # Set thresholds
 padj_cutoff <- 0.05
 # Subset the significant results
-sig_res <- dplyr::filter(res_tbl, padj < padj_cutoff) %>%
+sig_res <- dplyr::filter(res_tbl, pvalue < padj_cutoff) %>%
   dplyr::arrange(padj)
 # Check significant genes output
 sig_res
@@ -299,10 +299,10 @@ sig_counts <- normalized_counts[rownames(normalized_counts) %in% sig_res$gene, ]
 ## Set a color-blind friendly palette
 heat_colors <- rev(brewer.pal(11, "PuOr"))
 
-
 my_col_order <- c("4_M1", "4_M2", "4_M8" ,"4_M9" ,"5_M1" ,"5_M2" ,"5_M8", "5_M9", "6_M2", "6_M8")
 
 ## Run pheatmap using the metadata data frame for the annotation
+pdf("./results/DE/st/pseudo/pseudo_normal.pdf")
 pheatmap(sig_counts, 
          color = heat_colors, 
          cluster_rows = TRUE, 
@@ -313,6 +313,8 @@ pheatmap(sig_counts,
          scale = "row", 
          fontsize_row = 10, 
          height = 20)  
+dev.off()
+
 
 
 
