@@ -19,19 +19,20 @@ source(file = "./card.plot2.R")
 #Data---------------------------------
 se <- readRDS("./objects/sp/integrated/se.rds")
 single_cell_bonemarrow <- readRDS("./objects/heterogeneity/single_cell_bonemarrow.rds")
-single_cell_bonemarrow_all <- readRDS("./objects/heterogeneity/single_cell_bonemarrow_all_groups.rds")
-single_cell_bonemarrow_all@meta.data[["orig.ident"]] <- "ref"
+single_cell_bonemarrow@meta.data[["orig.ident"]] <- "ref"
+#single_cell_bonemarrow_all <- readRDS("./objects/heterogeneity/single_cell_bonemarrow_all_groups.rds")
+#single_cell_bonemarrow_all@meta.data[["orig.ident"]] <- "ref"
 
 
 
 ######Prepare data
 #single cell
 sub_list <- levels(single_cell_bonemarrow@meta.data[["ident"]])
-sub_list <- levels(single_cell_bonemarrow_all@meta.data[["cell"]])
+#sub_list <- levels(single_cell_bonemarrow_all@meta.data[["cell"]])
 
 
-single_cell_bonemarrow_counts <- single_cell_bonemarrow_all@assays[["RNA"]]@counts
-single_cell_bonemarrow_meta <- single_cell_bonemarrow_all@meta.data
+single_cell_bonemarrow_counts <- single_cell_bonemarrow@assays[["RNA"]]@counts
+single_cell_bonemarrow_meta <- single_cell_bonemarrow@meta.data
 #single_cell_bonemarrow_meta <- single_cell_bonemarrow_meta[, 6:7]
 
 
@@ -65,8 +66,8 @@ for (i in 1:length(objects)){
     sc_meta = single_cell_bonemarrow_meta,
     spatial_count = a_count,
     spatial_location = a_location,
-    ct.varname = "cell",
-    ct.select = unique(single_cell_bonemarrow_meta$cell),
+    ct.varname = "ident",
+    ct.select = unique(single_cell_bonemarrow_meta$ident),
     sample.varname = "metadata....experiment..",
     minCountGene = 100,
     minCountSpot = 5)
@@ -165,13 +166,13 @@ se_merge <- MergeSTData(M3_F_1C, y = c(M3_fem_1C),
 
 ####Proportion analysis
 pro_meta <- se_merge@meta.data
-pro_meta_ <- pro_meta[12:30]
+pro_meta_ <- pro_meta[12:17]
 
 library(tidyverse)
 df_long <- pro_meta_ %>%
   gather(key = "cell_type", value = "value")
 
-pdf(file.path("./results/ST/card/healthy/all/",filename = "violin_cell_types_all_onlyhealthy.pdf"))
+pdf(file.path("./results/ST/card/healthy/all/",filename = "violin_cell_types_all_onlyhealthy_horizontal.pdf"))
 ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
   geom_violin(scale = "width", trim = FALSE, show.legend = FALSE) +
   stat_summary(fun.data = mean_sdl, color = "red", geom = "pointrange", position = position_dodge(0.9)) +
@@ -181,6 +182,7 @@ ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
   labs(x = "Cell Type", y = "Value", title = "Violin Plot of Cell Types")
 dev.off()
 
+pdf(file.path("./results/ST/card/healthy/all/",filename = "violin_cell_types_all_onlyhealthy.pdf"))
 ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
   geom_violin(scale = "width", trim = FALSE, show.legend = FALSE) +
   coord_flip() +
@@ -189,17 +191,7 @@ ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
   geom_boxplot(width = 0.1, outlier.color = "black", outlier.shape = 16, outlier.size = 1) +
   theme_minimal() +
   labs(y = "Cell Type", x = "Value", title = "Violin Plot of Cell Types")
-
-
-pro_meta_["names"] <- pro_meta$name
-
-df_long <- pro_meta_ %>%
-  gather(key = "cell_type", value = "value", -names)
-
-ggplot(df_long, aes(fill=cell_type, y=value, x=names)) + 
-  geom_bar(position="fill", stat="identity") 
-
-
+dev.off()
 
 ####Proportion analysis FIN
 
@@ -212,16 +204,13 @@ se_subset@meta.data[["Bcell"]] <- se_merge@meta.data[["Bcell"]]
 se_subset@meta.data[["Erythroblasts"]] <- se_merge@meta.data[["Erythroblasts"]]
 se_subset@meta.data[["Monocytes"]] <- se_merge@meta.data[["Monocytes"]]
 se_subset@meta.data[["Neutrophils"]] <- se_merge@meta.data[["Neutrophils"]]
-se_subset@meta.data[["MSC"]] <- se_merge@meta.data[["MSC"]]
-se_subset@meta.data[["EC"]] <- se_merge@meta.data[["EC"]]
+#se_subset@meta.data[["MSC"]] <- se_merge@meta.data[["MSC"]]
+#se_subset@meta.data[["EC"]] <- se_merge@meta.data[["EC"]]
 se_subset@meta.data[["DC"]] <- se_merge@meta.data[["DC"]]
-se_subset@meta.data[["NK"]] <- se_merge@meta.data[["NK"]]
+#se_subset@meta.data[["NK"]] <- se_merge@meta.data[["NK"]]
 
 saveRDS(se_subset, "./objects/sc/integrated/se_deco_healthy.rds")
 se_subset <- readRDS("./objects/sc/integrated/se_deco_healthy.rds")
-
-
-
 
 ###pruebas plots
 
