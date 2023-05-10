@@ -62,7 +62,7 @@ levels(a) <- list(PSC  = "Ery/Mk prog.",
 single_cell_bonemarrow@meta.data[["ident"]] <- a
 Seurat::Idents(object = single_cell_bonemarrow) <- single_cell_bonemarrow@meta.data[["ident"]]
 
-single_cell_bonemarrow <- subset(x = single_cell_bonemarrow, idents = c("NC", "PSC", "Fibro"), invert = TRUE)
+single_cell_bonemarrow <- subset(x = single_cell_bonemarrow, idents = c("NC", "PSC", "Fibro", "MSC", "EC", "NK"), invert = TRUE)
 single_cell_bonemarrow@meta.data[["ident"]] <- single_cell_bonemarrow@active.ident
 
 
