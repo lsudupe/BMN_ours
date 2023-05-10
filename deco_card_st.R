@@ -18,10 +18,10 @@ source(file = "./card.plot2.R")
 
 
 #Data---------------------------------
-spatial <- readRDS("./objects/sp/integrated/integrated.harmony.rds")
+#spatial <- readRDS("./objects/sp/integrated/integrated.harmony.rds")
 se <- readRDS("./objects/sp/integrated/se.rds")
 single_cell_bonemarrow <- readRDS("./objects/sc/integrated/integrated_sc_harmony.rds")
-single_cell_bonemarrow <- readRDS("./objects/sc/integrated/single_cell_bonemarrow_all_groups_harmony.rds")
+#single_cell_bonemarrow <- readRDS("./objects/sc/integrated/single_cell_bonemarrow_all_groups_harmony.rds")
 
 ######Prepare data
 #single cell
@@ -162,11 +162,21 @@ se_merge <- MergeSTData(M1_fem_1C, y = c(M2_F_2B, M3_F_1C,M3_fem_1C ,M8_F2_1C , 
 
 ####Proportion analysis
 pro_meta <- se_merge@meta.data
-pro_meta_ <- pro_meta[12:44]
+pro_meta_ <- pro_meta[12:18]
 
 library(tidyverse)
 df_long <- pro_meta_ %>%
   gather(key = "cell_type", value = "value")
+
+pdf(file.path("./results/ST/card/all/",filename = "violin_cell_types_all_onlyMM_horizontal.pdf"))
+ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
+  geom_violin(scale = "width", trim = FALSE, show.legend = FALSE) +
+  stat_summary(fun.data = mean_sdl, color = "red", geom = "pointrange", position = position_dodge(0.9)) +
+  stat_summary(fun = median, color = "blue", geom = "point", position = position_dodge(0.9)) +
+  geom_boxplot(width = 0.1, outlier.color = "black", outlier.shape = 16, outlier.size = 1) +
+  theme_minimal() +
+  labs(x = "Cell Type", y = "Value", title = "Violin Plot of Cell Types")
+dev.off()
 
 pdf(file.path("./results/ST/card/all/",filename = "violin_cell_types_all_onlyMM.pdf"))
 ggplot(df_long, aes(x = cell_type, y = value, fill = cell_type)) +
@@ -186,10 +196,10 @@ se@meta.data[["MM_MIC"]] <- se_merge@meta.data[["MM_MIC"]]
 se@meta.data[["Erythroblasts"]] <- se_merge@meta.data[["Erythroblasts"]]
 se@meta.data[["Monocytes"]] <- se_merge@meta.data[["Monocytes"]]
 se@meta.data[["Neutrophils"]] <- se_merge@meta.data[["Neutrophils"]]
-se@meta.data[["MSC"]] <- se_merge@meta.data[["MSC"]]
-se@meta.data[["EC"]] <- se_merge@meta.data[["EC"]]
+#se@meta.data[["MSC"]] <- se_merge@meta.data[["MSC"]]
+#se@meta.data[["EC"]] <- se_merge@meta.data[["EC"]]
 se@meta.data[["DC"]] <- se_merge@meta.data[["DC"]]
-se@meta.data[["NK"]] <- se_merge@meta.data[["NK"]]
+#se@meta.data[["NK"]] <- se_merge@meta.data[["NK"]]
 
 
 se <- readRDS("./objects/sc/integrated/se_deco.rds")
