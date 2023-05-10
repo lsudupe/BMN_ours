@@ -202,9 +202,9 @@ se@meta.data[["DC"]] <- se_merge@meta.data[["DC"]]
 #se@meta.data[["NK"]] <- se_merge@meta.data[["NK"]]
 
 
-se <- readRDS("./objects/sc/integrated/se_deco.rds")
-saveRDS(se, "./objects/sc/integrated/se_deco.rds")
 
+saveRDS(se, "./objects/sc/integrated/se_deco.rds")
+se <- readRDS("./objects/sc/integrated/se_deco.rds")
 
 
 pdf(file.path("./results/ST/all/mm_ic_merge.pdf"))
