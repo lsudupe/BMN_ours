@@ -21,11 +21,9 @@ se <- readRDS("./objects/sc/integrated/se_deco.rds")
 
 #Analysis--------------------------------
 set.seed(20000)
-meta <- femur@meta.data
-types <- meta[,10:19]
 
 meta <- se@meta.data
-types <- meta[,12:21]
+types <- meta[,12:18]
 
 matrix <- data.matrix(types, rownames.force = NA)
 M <- cor(matrix)
@@ -72,7 +70,7 @@ print(grid.arrange(a, b, c, d, ncol=2))
 dev.off()
 
 ###hierarchical clustering
-hc3 <- eclust(types, k=6, FUNcluster="hclust", hc_metric="euclidean", hc_method = "ward.D2")
+hc3 <- eclust(types, k=7, FUNcluster="hclust", hc_metric="euclidean", hc_method = "ward.D2")
 hc3 %>% 
 as.dendrogram()  -> dend
 
@@ -113,17 +111,17 @@ dev.off()
 
 ###subset the data in hierarchical clustering
 meta_b <- b@meta.data
-types_b <- meta_b[,12:21]
+types_b <- meta_b[,12:18]
 types_b["clustering"] <- as.vector(b@meta.data[["clustering"]])
 
 ###violin plot
-ggplot(types_b, aes(x = clustering, y = EC)) +
+ggplot(types_b, aes(x = clustering, y = MM_MIC)) +
   geom_violin(scale = "width", trim = FALSE, show.legend = FALSE) +
   stat_summary(fun.data = mean_sdl, color = "red", geom = "pointrange", position = position_dodge(0.9)) +
   stat_summary(fun = median, color = "blue", geom = "point", position = position_dodge(0.9)) +
   geom_boxplot(width = 0.1, outlier.color = "black", outlier.shape = 16, outlier.size = 1) +
   theme_minimal() +
-  labs(x = "Clustering", y = "Cell Type", title = "Violin Plot of EC by Clustering")
+  labs(x = "Clustering", y = "Cell Type", title = "Violin Plot of Plasma by Clustering")
 
 ##distribution plot
 pdf(file.path("./results/endogram/st",filename = "clustering_distribution.pdf"))
@@ -135,6 +133,19 @@ dev.off()
 
 #######CORRELATION 
 types_b
+
+##cor cluster7
+clust_7 <- types_b[grepl("7", types_b$clustering),]
+clust_7$clustering <- NULL
+matrix <- data.matrix(clust_7, rownames.force = NA)
+M <- cor(matrix)
+
+pdf(file.path("./results/endogram/st/",filename = "cor_cluster7_square.pdf"))
+print(corrplot(M, method = 'square', title="Cluster 7 cell type correlation",
+               col=colorRampPalette(c("blue","white","red"))(100),
+               order = 'original', type = 'lower', diag = FALSE,
+               mar=c(0,0,1,0)))
+dev.off()
 
 ##cor cluster6
 clust_6 <- types_b[grepl("6", types_b$clustering),]
@@ -176,6 +187,19 @@ print(corrplot(M, method = 'square', title="Cluster 4 cell type correlation",
                mar=c(0,0,1,0)))
 dev.off()
 
+##cor cluster3
+clust_3 <- types_b[grepl("3", types_b$clustering),]
+clust_3$clustering <- NULL
+matrix <- data.matrix(clust_3, rownames.force = NA)
+M <- cor(matrix)
+
+pdf(file.path("./results/endogram/st/",filename = "cor_cluster3_square.pdf"))
+print(corrplot(M, method = 'square', title="Cluster 3 cell type correlation",
+               col=colorRampPalette(c("blue","white","red"))(100),
+               order = 'original', type = 'lower', diag = FALSE,
+               mar=c(0,0,1,0)))
+dev.off()
+
 types_b$clustering <- NULL
 
 matrix <- data.matrix(types_b, rownames.force = NA)
@@ -192,6 +216,7 @@ dev.off()
 
 ####Extract hierarchycal clustering porcentages
 #######proportions loop
+types_b["clustering"] <- as.vector(b@meta.data[["clustering"]])
 value <- as.vector(unique(types_b$clustering))
 #value <- as.vector(unique(types_b$sample))
 
@@ -238,9 +263,10 @@ DF <- data.frame(group = c(df$celltype),
                  cluster3 = c(df$`cluster:3`),
                  cluster4 = c(df$`cluster:4`),
                  cluster5 = c(df$`cluster:5`),
-                 cluster6 = c(df$`cluster:6`)
+                 cluster6 = c(df$`cluster:6`),
+                 cluster7 = c(df$`cluster:7`)
                  )
-DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster6)
+DFtall <- DF %>% gather(key = Cluster, value = Value, cluster1:cluster7)
 DFtall
 
 
@@ -256,11 +282,11 @@ ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) +
 dev.off()
 
 library(RColorBrewer)
-cell_type_colors <- brewer.pal(num_cell_types, "RdBu")
-cells_order <- c("Bcell", "DC", "EC", "Erythroblasts","MM_MIC", "Monocytes","MSC","Neutrophils","NK","Tcell")
+cell_type_colors <- brewer.pal(length(rows), "RdBu")
+cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
 cell_type_color_map <- setNames(cell_type_colors, cells_order)
 
-pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_prueba_2.pdf"))
+pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_colors.pdf"))
 ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
   geom_bar(position="fill", stat="identity") +
   scale_fill_brewer(palette = "RdBu")
@@ -270,6 +296,9 @@ dev.off()
 ##borrar no healthy
 new <- DFtall[!grepl("cluster5", DFtall$Cluster),]
 new <- new[!grepl("cluster6", new$Cluster),]
+new <- new[!grepl("cluster7", new$Cluster),]
+new <- new[!grepl("cluster3", new$Cluster),]
+
 
 # Stacked + percent
 pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_onlyhealthy.pdf"))
