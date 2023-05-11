@@ -136,6 +136,7 @@ for (i in 1:length(df_list)){
   pie_chart_plot <- ggplot(data_pie, aes(x = x_plot, y = y_plot, group = interaction(x, y, cell_type))) +
     geom_polygon(aes(fill = cell_type), color = "white") +
     coord_fixed() +
+    scale_y_reverse() +
     theme_void() +
     theme(legend.position = "right") +
     labs(fill = "Cell Type") +
