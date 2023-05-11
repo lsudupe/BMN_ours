@@ -289,7 +289,7 @@ cell_type_color_map <- setNames(cell_type_colors, cells_order)
 pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot_colors.pdf"))
 ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
   geom_bar(position="fill", stat="identity") +
-  scale_fill_brewer(palette = "RdBu")
+  scale_fill_manual(values = cell_type_color_map)
 dev.off()
 
 
@@ -305,6 +305,27 @@ pdf(file.path("./results/endogram/st",filename = "clustering_percentages_barplot
 ggplot(new, aes(fill=group, y=Value, x=Cluster)) + 
   geom_bar(position="fill", stat="identity")
 dev.off()
+
+#########Each cluster plots
+p1 <- ST.FeaturePlot(se, features = "clustering", indices = 1, 
+                     split.labels = T, pt.size = 0.3) & theme(plot.title = element_blank(), strip.text = element_blank())
+p2 <- ST.FeaturePlot(se, features = "clustering", indices = 2, 
+                     split.labels = T, pt.size = 0.3) & theme(plot.title = element_blank(), strip.text = element_blank())
+
+p3 <- ST.FeaturePlot(se, features = "clustering", indices = 5, 
+                     split.labels = T, pt.size = 0.3) & theme(plot.title = element_blank(), strip.text = element_blank())
+
+p4 <- ST.FeaturePlot(se, features = "clustering", indices = 6, 
+                     split.labels = T, pt.size = 0.3) & theme(plot.title = element_blank(), strip.text = element_blank())
+
+p5 <- ST.FeaturePlot(se, features = "clustering", indices = 3, 
+                     split.labels = T, pt.size = 0.3) & theme(plot.title = element_blank(), strip.text = element_blank())
+
+pdf(file.path("./results/endogram/st",filename = "each_cluster.pdf"))
+cowplot::plot_grid(p1, p2, p3, p4,p5, ncol = 5)
+dev.off()
+
+#########Each cluster plots FIN
 
 #########DE analysis with pseudobulk approach
 ##DA.DB fb
