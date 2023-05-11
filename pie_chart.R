@@ -17,12 +17,12 @@ coor <- se@tools[["Staffli"]]@meta.data
 
 ##replace all values below 10% with 0
 meta <- x@meta.data
-a <- meta[,12:21]
+a <- meta[,12:18]
 a["cluster"] <- as.vector(x@meta.data[["clustering"]])
 
 df <- a
-# Filter values below whatever
 
+############ Filter values below whatever
 # Calculate the 75th percentile threshold for each row
 #thresholds <- apply(df[, -ncol(df)], 1, function(x) quantile(x, 0.75))
 
@@ -36,7 +36,7 @@ df["sample"] <- as.vector(meta$name)
 
 # Filter values below the 15% threshold for each row
 df_filtered <- df %>%
-  mutate(across(-c(cluster, x_coord, y_coord, sample), ~ifelse(. < 0.15, 0, .)))
+  mutate(across(-c(cluster, x_coord, y_coord, sample), ~ifelse(. < 0.20, 0, .)))
 
 # Rescale non-zero values in each row to sum up to 1 and overwrite the original values
 df_rescaled <- df_filtered %>%
@@ -58,8 +58,9 @@ df_long <- df_new %>%
   filter(percentage > 0)
 
 ##color
-cells_order <- c("Bcell", "DC", "EC", "Erythroblasts","MM_MIC", "Monocytes","MSC","Neutrophils","NK","Tcell")
+cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
 cell_type_colors <- brewer.pal(length(cells_order), "RdBu")
+cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#b2182b" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
 cell_type_color_map <- setNames(cell_type_colors, cells_order)
 
 # Create a plot to visualize the number of major cell types driving each cluster
@@ -73,7 +74,7 @@ plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
   scale_color_manual(name = "Cell Type", values = cell_type_color_map)
 
 # Print the plot
-pdf(file.path("./results/ST/gradient/cell_types_per_cluster_15percent_color.pdf"))
+pdf(file.path("./results/ST/gradient/cell_types_per_cluster_20percent_color.pdf"))
 print(plot)
 dev.off()
 
@@ -126,8 +127,10 @@ for (i in 1:length(df_list)){
            y_plot = y + radius * sin(angle) * (point != 1))
 
   #library(RColorBrewer)
-  cell_type_colors <- brewer.pal(num_cell_types, "RdBu")
-  cells_order <- c("Bcell", "DC", "EC", "Erythroblasts","MM_MIC", "Monocytes","MSC","Neutrophils","NK","Tcell")
+  #cell_type_colors <- brewer.pal(num_cell_types, "RdBu")
+  cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
+  #cell_type_color_map <- setNames(cell_type_colors, cells_order)
+  cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#b2182b" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
   cell_type_color_map <- setNames(cell_type_colors, cells_order)
 
   pie_chart_plot <- ggplot(data_pie, aes(x = x_plot, y = y_plot, group = interaction(x, y, cell_type))) +
@@ -138,13 +141,40 @@ for (i in 1:length(df_list)){
     labs(fill = "Cell Type") +
     scale_fill_manual(values = cell_type_color_map)
 
-  pdf(paste("./results/piechart/", names(df_list[i]),"_piechart_15percent.pdf",sep=""))
+  pdf(paste("./results/piechart/", names(df_list[i]),"_piechart_20percent.pdf",sep=""))
   print(pie_chart_plot)
   dev.off()
 
 }
 ########################
 
+##check heterogeneity
+heterogeneity <- df_rescaled
+heterogeneity$cluster <- NULL
+heterogeneity$x_coord <- NULL
+heterogeneity$y_coord <- NULL
+heterogeneity$sample <- NULL
+
+# Create a function to count non-zero values in a row
+count_non_zero <- function(row) {
+  return(sum(row > 0))
+}
+
+heterogeneity$number_cells <- apply(heterogeneity, 1, count_non_zero)
+
+print(heterogeneity)
+
+y <- se
+y@meta.data[["heterogeneity"]] <- as.vector(heterogeneity$number_cells)
+
+library(RColorBrewer)
+color <- brewer.pal(4,"Spectral")
+color <- rev(color)
+
+pdf(file.path("./results/ST/gradient/heterogeneity_celltypes.pdf"))
+print(FeatureOverlay(y, features = c("heterogeneity"), sampleids = 1:6,pt.size = 0.7,ncol = 2 , 
+                   value.scale = "all" ,cols = color))
+dev.off()
 
 
 
