@@ -23,7 +23,7 @@ se <- readRDS("./objects/sc/integrated/se_deco_healthy.rds")
 set.seed(20000)
 
 meta <- se@meta.data
-types <- meta[,12:20]
+types <- meta[,12:17]
 
 matrix <- data.matrix(types, rownames.force = NA)
 M <- cor(matrix)
@@ -88,7 +88,6 @@ se@meta.data[["clustering"]] <- a
 saveRDS(se, "./objects/heterogeneity/healthy/se_hierarchical.rds")
 se <- readRDS("./objects/heterogeneity/healthy/se_hierarchical.rds")
 
-FeatureOverlay(se, features = c("Ighm"), ncol = 2,pt.size = 0.7)
 ###plot
 b <- SetIdent(se, value = se@meta.data[["clustering"]])
 pdf(file.path("./results/endogram/st/healthy/",filename = "both_spatial_hierarchical.pdf"))
@@ -96,16 +95,15 @@ print(FeatureOverlay(b, features = "clustering", sampleids = 1:2, pt.size = 1.3)
 dev.off()
 
 b <- SetIdent(se, value = se@meta.data[["seurat_clusters"]])
-pdf.options(encoding = )
-pdf(file.path("./results/endogram/st",filename = "both_spatial_seurat.pdf"))
-print(FeatureOverlay(b, features = "seurat_clusters", sampleids = 1:6, ncols = 2,pt.size = 0.7))
+pdf(file.path("./results/endogram/st/healthy/",filename = "both_spatial_seurat.pdf"))
+print(FeatureOverlay(b, features = "seurat_clusters", sampleids = 1:2, pt.size = 1.3))
 dev.off()
 
 ###subset the data in hierarchical clustering
 meta_b <- b@meta.data
-types_b <- meta_b[,12:20]
-types_b["clustering"] <- as.vector(b@meta.data[["clustering"]])
-types_b["sample"] <- as.vector(b@meta.data[["name"]])
+types_b <- meta_b[,12:18]
+#types_b["clustering"] <- as.vector(b@meta.data[["clustering"]])
+#types_b["sample"] <- as.vector(b@meta.data[["name"]])
 
 
 ##distribution plot
@@ -165,6 +163,7 @@ lista[[name]] <- proportions
 }
 
 ######create a df 
+rows = colnames(value_1)
 df = data.frame(matrix(nrow = length(colnames(value_1)), ncol = 0)) 
 rownames(df) = colnames(value_1)
 
@@ -176,24 +175,6 @@ for (i in 1:length(lista)){
 }
 
 write.csv(df, "./celltypes.csv", row.names=TRUE)
-
-#df["celltype"] <- as.vector(rownames(df))
-
-# Basic piechart
-pdf(file.path("./results/endogram/st/healthy/",filename = "clustering_percentages_piechart_cluster1.pdf"))
-ggplot(df, aes(x="", y=df$`cluster:1`, fill=df$celltype)) +
-  geom_bar(stat="identity", width=1) +
-  geom_text(aes(label = df$`cluster:1`),
-            position = position_stack(vjust = 0.5)) +
-  coord_polar("y", start=0)
-dev.off()
-
-
-# Stacked + percent
-pdf(file.path("./results/endogram/st/healthy/",filename = "clustering_percentages_barplot_onlyhealthy.pdf"))
-ggplot(df, aes(fill=group, y=Value, x=Cluster)) + 
-  geom_bar(position="fill", stat="identity") +
-dev.off()
 
 
 #df <- t(df)
@@ -215,11 +196,16 @@ pdf(file.path("./results/endogram/st/healthy/",filename = "clustering_percentage
 ggplot(DFtall, aes(Cluster, Value, fill = group)) + geom_col(position = "dodge")
 dev.off()
 
+library(RColorBrewer)
+cell_type_colors <- brewer.pal(length(rows), "RdBu")
+cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
+cell_type_color_map <- setNames(cell_type_colors, cells_order)
+
 # Stacked + percent
 pdf(file.path("./results/endogram/st/healthy/",filename = "clustering_percentages_barplot_onlyhealthy.pdf"))
 ggplot(DFtall, aes(fill=group, y=Value, x=Cluster)) + 
-  geom_bar(position="fill", stat="identity") + 
-  scale_fill_brewer(palette = "RdBu")
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_manual(values = cell_type_color_map)
 dev.off()
 
 ######VIOLIN PLOT 
