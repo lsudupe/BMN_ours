@@ -15,7 +15,7 @@ Idents(object = se) <- "name"
 #M8
 M8 <- SubsetSTData(se, ident = "M8_F2_1C")
 meta <- M8@meta.data
-rownames(meta) <- sub("_5", "", rownames(meta))
+#rownames(meta) <- sub("_5", "", rownames(meta))
 M8@meta.data <- meta
 meta <- meta[, ncol(meta), drop = FALSE]
 
@@ -31,12 +31,12 @@ M8_s <- readRDS("./objects/pc_clusters/M8_s.rds")
 #M2
 M2 <- SubsetSTData(se, ident = "M2_F_2B")
 meta <- M2@meta.data
-rownames(meta) <- sub("_5", "", rownames(meta))
+#rownames(meta) <- sub("_5", "", rownames(meta))
 M2@meta.data <- meta
 meta <- meta[, ncol(meta), drop = FALSE]
 
 write.csv(meta, "./data/areas/m2_clustering.csv", row.names=TRUE)
-M2_s <- ManualAnnotation(M2)
+#M2_s <- ManualAnnotation(M2)
 meta <- M2_s@meta.data
 meta <- meta %>%
   mutate(pc_clusters = paste0("M2_", labels, "_cluster", clustering))
@@ -47,12 +47,12 @@ M2_s <- readRDS("./objects/pc_clusters/M2_s.rds")
 #M9
 M9 <- SubsetSTData(se, ident = "M9_F2_1C")
 meta <- M9@meta.data
-rownames(meta) <- sub("_5", "", rownames(meta))
+#rownames(meta) <- sub("_5", "", rownames(meta))
 M9@meta.data <- meta
 meta <- meta[, ncol(meta), drop = FALSE]
 
 write.csv(meta, "./data/areas/m9_clustering.csv", row.names=TRUE)
-M9_s <- ManualAnnotation(M9)
+#M9_s <- ManualAnnotation(M9)
 meta <- M9_s@meta.data
 meta <- meta %>%
   mutate(pc_clusters = paste0("M9_", labels, "_cluster", clustering))
@@ -63,7 +63,7 @@ M9_s <- readRDS("./objects/pc_clusters/M9_s.rds")
 #M1
 M1 <- SubsetSTData(se, ident = "M1_fem_1C")
 meta <- M1@meta.data
-rownames(meta) <- sub("_5", "", rownames(meta))
+#rownames(meta) <- sub("_5", "", rownames(meta))
 M1@meta.data <- meta
 meta <- meta[, ncol(meta), drop = FALSE]
 
@@ -144,30 +144,69 @@ se_s <- MergeSTData(M1_s, y = c(M2_s, M8_s, M9_s),
 saveRDS(se_s, "./objects/pc_clusters/combined_s_dormant.rds")
 se_s <- readRDS("./objects/pc_clusters/combined_s_dormant.rds")
 
-##subset 
-Idents(object = se_s) <- se_s@meta.data[["clustering"]]
-subset <- SubsetSTData(se_s, idents = c("5", "6", "7"))
+#######PLAY WITH THE METADATA
+meta_all <- se_s@meta.data
 
-se_s@meta.data[["pc_clusters"]] <- as.factor(se_s@meta.data[["pc_clusters"]])
+df <- subset(meta_all, clustering %in% c(5, 6, 7))
+# Filter the dataframe by selecting the necessary columns
+df_selected <- df %>% select(name, pc_clusters, residuals_dormant_ucellscore, labels)
 
-meta <- se_s@meta.data
-meta_s <- subset(meta, clustering %in% c("5", "6", "7"))
-meta_s <- meta_s[meta_s$pc_clusters != "M2_bone_marrow_cluster7", ]
-se_s@meta.data <- meta_s
+# Group and summarise the data
+df_grouped <- df_selected %>%
+  group_by(name, pc_clusters, labels) %>%
+  summarise(avg_signature_1_dormant = mean(residuals_dormant_ucellscore, na.rm = TRUE))
 
-se_s@meta.data[["pc_clusters"]] <- as.factor(se_s@meta.data[["pc_clusters"]])
+# Plot
 
-##spatial plots
-pdf(file.path("./results/pc_clusters/clusters.pdf"))
-FeatureOverlay(subset, features = "pc_clusters", ncols = 2,pt.size = 0.7)
+a <- ggplot(df_grouped, aes(x = pc_clusters, y = avg_signature_1_dormant, fill = labels)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Average 'signature_1_dormant' with respect to 'group_clusters' for each 'name'",
+       x = "Group Clusters", 
+       y = "Average Signature 1 Dormant", 
+       fill = "Label") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 4, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+  facet_wrap(~name)  # Separate plots by 'name'
+
+pdf(file.path("./results/pc_clusters/dormant_clusters_barplot.pdf"))
+a
 dev.off()
 
 
-p <- FeatureOverlay(se_s, features = c("residuals_dormant_ucellscore"), pt.size = 1.8, 
+#######PLAY WITH THE METADATA FIN
+
+#subset individual
+M8_s@meta.data[["pc_clusters"]] <- as.factor(M8_s@meta.data[["pc_clusters"]])
+Idents(object = M8_s) <- M8@meta.data[["pc_clusters"]]
+
+pdf(file.path("./results/pc_clusters/M1_clusters.pdf"))
+FeatureOverlay(M1_s, features = "pc_clusters", pt.size = 1.5)
+dev.off()
+
+
+
+##spatial plots
+pdf(file.path("./results/pc_clusters/clusters.pdf"))
+FeatureOverlay(subset, features = "seurat_clusters", ncols = 2,pt.size = 0.7)
+dev.off()
+
+
+p <- FeatureOverlay(subset, features = c("residuals_dormant_ucellscore"), pt.size = 1.8, 
                     value.scale = "all" ,cols = color)
 
 pdf(paste("./results/pc_clusters/", b,"_spatial_Ucell_residuals.pdf",sep=""))
 print(p)
+dev.off()
+
+###separate them
+Idents(object = subset) <- subset@meta.data[["name"]]
+M8 <- SubsetSTData(subset, ident = "M8_F2_1C")
+M2 <- SubsetSTData(subset, ident = "M2_F_2B")
+M9 <- SubsetSTData(subset, ident = "M9_F2_1C")
+M1 <- SubsetSTData(subset, ident = "M1_fem_1C")
+
+pdf(file.path("./results/pc_clusters/clusters.pdf"))
+FeatureOverlay(M8_s, features = "pc_clusters", ncols = 2,pt.size = 0.7)
 dev.off()
 
 #set colors
