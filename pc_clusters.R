@@ -94,8 +94,9 @@ dormant <- c("C1qa", "Aif1" ,"Axl" , "Mpeg1", "H2-Eb1",
              "Samd9l" ,"Oas1g" ,"Fcgr1", "Pla2g15", "Tifa" ,"Pmp22", "Abcc3" ,"S100a10")
 
 library(RColorBrewer)
-color <- brewer.pal(11,"Spectral")
+color <- brewer.pal(12,"Spectral")
 color <- rev(color)
+color <- rainbow(12)
 
 
 new <- c()
@@ -136,6 +137,17 @@ names(new) <- c("M1_s","M2_s","M8_s","M9_s")
 ## separate list
 list2env(new,envir=.GlobalEnv)
 
+#save the objects
+saveRDS(M1_s, "./objects/pc_clusters/M1_s_dormant.rds")
+saveRDS(M2_s,"./objects/pc_clusters/M2_s_dormant.rds")
+saveRDS(M8_s, "./objects/pc_clusters/M8_s_dormant.rds")
+saveRDS(M9_s, "./objects/pc_clusters/M9_s_dormant.rds")
+
+M1_s <- readRDS("./objects/pc_clusters/M1_s_dormant.rds")
+M2_s <- readRDS("./objects/pc_clusters/M2_s_dormant.rds")
+M8_s <- readRDS("./objects/pc_clusters/M8_s_dormant.rds")
+M9_s <- readRDS("./objects/pc_clusters/M9_s_dormant.rds")
+
 ###plots
 ###merge data
 se_s <- MergeSTData(M1_s, y = c(M2_s, M8_s, M9_s), 
@@ -144,33 +156,321 @@ se_s <- MergeSTData(M1_s, y = c(M2_s, M8_s, M9_s),
 saveRDS(se_s, "./objects/pc_clusters/combined_s_dormant.rds")
 se_s <- readRDS("./objects/pc_clusters/combined_s_dormant.rds")
 
-#######PLAY WITH THE METADATA
-meta_all <- se_s@meta.data
+#M1
+Idents(object = M1_s) <- M1_s@meta.data[["pc_clusters"]]
+M1_subset <- SubsetSTData(object = M1_s, ident = c("M1_group_1_cluster5","M1_group_1_cluster6", "M1_group_1_cluster7"))
 
-df <- subset(meta_all, clustering %in% c(5, 6, 7))
-# Filter the dataframe by selecting the necessary columns
-df_selected <- df %>% select(name, pc_clusters, residuals_dormant_ucellscore, labels)
+#M2
+Idents(object = M2_s) <- M2_s@meta.data[["pc_clusters"]]
+M2_subset <- SubsetSTData(object = M2_s, ident = c("M2_group_1_cluster5","M2_group_1_cluster6", "M2_group_1_cluster7",
+                                                   "M2_group_2_cluster5", "M2_group_2_cluster6", "M2_group_2_cluster7",
+                                                   "M2_group_3_cluster5","M2_group_3_cluster6", "M2_group_3_cluster7",
+                                                   "M2_group_4_cluster5","M2_group_4_cluster6", "M2_group_4_cluster7"
+                                                   ))
 
-# Group and summarise the data
-df_grouped <- df_selected %>%
-  group_by(name, pc_clusters, labels) %>%
-  summarise(avg_signature_1_dormant = mean(residuals_dormant_ucellscore, na.rm = TRUE))
+#M8
+Idents(object = M8_s) <- M8_s@meta.data[["pc_clusters"]]
+M8_subset <- SubsetSTData(object = M8_s, ident = c("M8_group_1_cluster5","M8_group_1_cluster6", "M8_group_1_cluster7",
+                                                   "M8_group_2_cluster5", "M8_group_2_cluster6", "M8_group_2_cluster7"))
 
-# Plot
 
-a <- ggplot(df_grouped, aes(x = pc_clusters, y = avg_signature_1_dormant, fill = labels)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  labs(title = "Average 'signature_1_dormant' with respect to 'group_clusters' for each 'name'",
-       x = "Group Clusters", 
-       y = "Average Signature 1 Dormant", 
-       fill = "Label") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(size = 4, angle = 45, hjust = 1)) +  # Adjust text size and angle here
-  facet_wrap(~name)  # Separate plots by 'name'
+#M9
+Idents(object = M9_s) <- M9_s@meta.data[["pc_clusters"]]
+M9_subset <- SubsetSTData(object = M9_s, ident = c("M9_group_1_cluster6",
+                                                   "M9_group_2_cluster5", "M9_group_2_cluster6",
+                                                   "M9_group_3_cluster6"))
 
-pdf(file.path("./results/pc_clusters/dormant_clusters_barplot.pdf"))
-a
-dev.off()
+
+#######TWO LOOPS FOR TWO LISTS
+normal <- c(M1_s,M2_s,M8_s,M9_s)
+names(normal) <- c("M1_s","M2_s","M8_s","M9_s")
+
+for (i in 1:length(normal)){
+  a <- normal[[i]]
+  b <- names(normal[i])
+  
+  color <- rainbow(30)
+  p <- FeatureOverlay(a, features = c("pc_clusters"), ncols = 1, pt.size = 1.5,cols = color)
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_clusters567.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  color <- brewer.pal(11,"Spectral")
+  color <- rev(color)
+  
+  p <- FeatureOverlay(a, features = c("signature_1_dormant"), ncols = 1, pt.size = 1.5, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_spatial_dormant.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  p <- FeatureOverlay(a, features = c("residuals_dormant_ucellscore"), ncols = 1, pt.size = 1.5, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_spatial_dormant_residuals.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  ##meta plots dormant signature
+  df <- a@meta.data
+  df_selected <- df %>% select(name, pc_clusters, signature_1_dormant, labels)
+  
+  df_grouped <- df_selected %>%
+    group_by(name, pc_clusters, labels) %>%
+    summarise(avg_signature_1_dormant = mean(signature_1_dormant, na.rm = TRUE))
+  
+  # Barplot
+  plot <- ggplot(df_grouped, aes(x = pc_clusters, y = avg_signature_1_dormant, fill = labels)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(title = "Average 'signature_1_dormant' with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Average Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_dormant_clusters_barplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  #Violinplot
+  df_selected <- df %>% select(name, pc_clusters, signature_1_dormant, labels)
+  
+  # Plot
+  plot <- ggplot(df_selected, aes(x = pc_clusters, y = signature_1_dormant, fill = labels)) +
+    geom_violin(scale = "width", adjust = 1) +
+    labs(title = "'Signature_1_dormant' distributions with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_dormant_clusters_violinplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  # Plot
+  plot <- ggplot(df_selected, aes(x = pc_clusters, y = signature_1_dormant, fill = labels)) +
+    geom_boxplot() +
+    labs(title = "'Signature_1_dormant' distributions with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_dormant_clusters_boxplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  ##meta plots dormant RESIDUALS signature
+  df <- a@meta.data
+  df_selected <- df %>% select(name, pc_clusters, residuals_dormant_ucellscore, labels)
+  
+  df_grouped <- df_selected %>%
+    group_by(name, pc_clusters, labels) %>%
+    summarise(avg_signature_1_dormant = mean(residuals_dormant_ucellscore, na.rm = TRUE))
+  
+  # Barplot
+  plot <- ggplot(df_grouped, aes(x = pc_clusters, y = avg_signature_1_dormant, fill = labels)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(title = "Average 'signature_1_dormant' with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Average Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_dormant_residuals_clusters_barplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  #Violinplot
+  df_selected <- df %>% select(name, pc_clusters, residuals_dormant_ucellscore, labels)
+  
+  # Plot
+  plot <- ggplot(df_selected, aes(x = pc_clusters, y = residuals_dormant_ucellscore, fill = labels)) +
+    geom_violin(scale = "width", adjust = 1) +
+    labs(title = "'Signature_1_dormant' distributions with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_dormant_residuals_clusters_violinplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  # Plot
+  plot <- ggplot(df_selected, aes(x = pc_clusters, y = residuals_dormant_ucellscore, fill = labels)) +
+    geom_boxplot() +
+    labs(title = "'Signature_1_dormant' distributions with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_dormant_residuals_clusters_boxplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+}
+
+subsets <- c(M1_subset,M2_subset, M8_subset, M9_subset)
+names(subsets) <- c("M1_subset","M2_subset", "M8_subset", "M9_subset")
+
+for (i in 1:length(subsets)){
+  a <- subsets[[i]]
+  b <- names(subsets[i])
+  
+  color <- rainbow(12)
+  p <- FeatureOverlay(a, features = c("pc_clusters"), ncols = 1, pt.size = 1.5,cols = color)
+  
+  pdf(paste("./results/pc_clusters/", b,"_clusters567.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  color <- brewer.pal(11,"Spectral")
+  color <- rev(color)
+  
+  p <- FeatureOverlay(a, features = c("signature_1_dormant"), ncols = 1, pt.size = 1.5, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/pc_clusters/", b,"_spatial_dormant.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  p <- FeatureOverlay(a, features = c("residuals_dormant_ucellscore"), ncols = 1, pt.size = 1.5, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/pc_clusters/", b,"_spatial_dormant_residuals.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  ##meta plots dormant signature
+  df <- a@meta.data
+  df_selected <- df %>% select(name, pc_clusters, signature_1_dormant, labels)
+  
+  df_grouped <- df_selected %>%
+    group_by(name, pc_clusters, labels) %>%
+    summarise(avg_signature_1_dormant = mean(signature_1_dormant, na.rm = TRUE))
+  
+  # Barplot
+  plot <- ggplot(df_grouped, aes(x = pc_clusters, y = avg_signature_1_dormant, fill = labels)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(title = "Average 'signature_1_dormant' with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Average Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/", b,"_dormant_clusters_barplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  #Violinplot
+  df_selected <- df %>% select(name, pc_clusters, signature_1_dormant, labels)
+  
+  # Plot
+  plot <- ggplot(df_selected, aes(x = pc_clusters, y = signature_1_dormant, fill = labels)) +
+    geom_violin(scale = "width", adjust = 1) +
+    labs(title = "'Signature_1_dormant' distributions with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/", b,"_dormant_clusters_violinplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  # Plot
+  plot <- ggplot(df_selected, aes(x = pc_clusters, y = signature_1_dormant, fill = labels)) +
+    geom_boxplot() +
+    labs(title = "'Signature_1_dormant' distributions with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/", b,"_dormant_clusters_boxplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  ##meta plots dormant RESIDUALS signature
+  df <- a@meta.data
+  df_selected <- df %>% select(name, pc_clusters, residuals_dormant_ucellscore, labels)
+  
+  df_grouped <- df_selected %>%
+    group_by(name, pc_clusters, labels) %>%
+    summarise(avg_signature_1_dormant = mean(residuals_dormant_ucellscore, na.rm = TRUE))
+  
+  # Barplot
+  plot <- ggplot(df_grouped, aes(x = pc_clusters, y = avg_signature_1_dormant, fill = labels)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(title = "Average 'signature_1_dormant' with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Average Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/", b,"_dormant_residuals_clusters_barplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  #Violinplot
+  df_selected <- df %>% select(name, pc_clusters, residuals_dormant_ucellscore, labels)
+  
+  # Plot
+  plot <- ggplot(df_selected, aes(x = pc_clusters, y = residuals_dormant_ucellscore, fill = labels)) +
+    geom_violin(scale = "width", adjust = 1) +
+    labs(title = "'Signature_1_dormant' distributions with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/", b,"_dormant_residuals_clusters_violinplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+  # Plot
+  plot <- ggplot(df_selected, aes(x = pc_clusters, y = residuals_dormant_ucellscore, fill = labels)) +
+    geom_boxplot() +
+    labs(title = "'Signature_1_dormant' distributions with respect to 'group_clusters' for each 'name'",
+         x = "Group Clusters", 
+         y = "Signature 1 Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/", b,"_dormant_residuals_clusters_boxplot.pdf",sep=""))
+  print(plot)
+  dev.off()
+  
+}
 
 
 #######PLAY WITH THE METADATA FIN
@@ -198,23 +498,4 @@ pdf(paste("./results/pc_clusters/", b,"_spatial_Ucell_residuals.pdf",sep=""))
 print(p)
 dev.off()
 
-###separate them
-Idents(object = subset) <- subset@meta.data[["name"]]
-M8 <- SubsetSTData(subset, ident = "M8_F2_1C")
-M2 <- SubsetSTData(subset, ident = "M2_F_2B")
-M9 <- SubsetSTData(subset, ident = "M9_F2_1C")
-M1 <- SubsetSTData(subset, ident = "M1_fem_1C")
-
-pdf(file.path("./results/pc_clusters/clusters.pdf"))
-FeatureOverlay(M8_s, features = "pc_clusters", ncols = 2,pt.size = 0.7)
-dev.off()
-
-#set colors
-n = 7
-gg_color_hue <- function(n) {
-  hues = seq(15, 375, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
-}
-cols = gg_color_hue(n)
-cluster_color_map <- setNames(cols, unique(se_s@meta.data[["clustering"]]))
 
