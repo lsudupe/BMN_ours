@@ -14,6 +14,20 @@ library(UCell)
 #Variables---------------------------------
 pc_mm <- readRDS("./data/single-cell/human/pc_mm/MM_multiome_list.rds")
 
+# Extract the gene list from the Seurat object
+seurat_genes <- rownames(pc_mm[["MM3"]]@assays$RNA@counts)
+
+#pc_markers
+pc_mm_markers <- c("SHH", "DHH", "IHH", "PTCH1", "PTCH2", "SMO", "SUFU", "GLI1", 
+                   "GLI2", "GLI3", "CD19", "CD44", "CXCR4", "KLF4", "CD28", "CD33", "CD27")
+
+#CD45,CD56,CD117
+# Check which genes_to_check are in seurat_genes
+genes_present <- pc_mm_markers %in% seurat_genes
+
+# Print out the results
+print(genes_present)
+
 #Variables---------------------------------
 DIR_ROOT <- file.path(getwd())
 DIR_DATA <- file.path(DIR_ROOT, "data/data/")
@@ -63,13 +77,8 @@ names(objects) <- name
 ## separate list
 list2env(objects,envir=.GlobalEnv)
 
-prueba <- c(`BM_human_AP-B08805`)
-names(prueba) <- c("BM_human_AP-B08805")
-
-
-#pc_markers
-pc_mm_markers <- c("SHH", "DHH", "IHH", "PTCH1", "PTCH2", "SMO", "SUFU", "GLI1", 
-                  "GLI2", "GLI3", "CD19", "CD44", "CD45", "CXCR4", "KLF4", "CD28", "CD33", "CD56", "CD117", "CD27")
+prueba <- c(`BM_human_AP-B00182_`, `BM_human_AP-B02149_`,`BM_human_AP-B08041_`,`BM_human_AP-B08805`, se)
+names(prueba) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805","se")
 
 
 ###Enrichment score
