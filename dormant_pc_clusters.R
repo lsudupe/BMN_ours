@@ -27,6 +27,8 @@ dormant <- c("C1qa", "Aif1" ,"Axl" ,"II18bp", "Glul", "Mpeg1", "H2-Eb1",
              "Anxa2" ,"Rgs2" ,"Tmed3" ,"Igll1", "Hpgd", "Glipr1", "Cd4" ,"Cd84" ,"Gbp2", "AB124611", "Slc44a2" ,
              "Samd9l" ,"Oas1g" ,"Fcgr1", "Pla2g15", "Tifa" ,"Pmp22", "Abcc3" ,"S100a10")
 
+jose_genes <- c ("Cd44", "Cd81", "Flna", "Mki67", "Pcna", "Xbp1")
+
 #M1
 Idents(object = M1_s) <- M1_s@meta.data[["pc_clusters"]]
 M1_subset <- SubsetSTData(object = M1_s, ident = c("M1_group_1_cluster5","M1_group_1_cluster6", "M1_group_1_cluster7"))
@@ -55,7 +57,121 @@ M9_subset <- SubsetSTData(object = M9_s, ident = c("M9_group_1_cluster6",
 normal <- c(M1_s,M2_s,M8_s,M9_s)
 names(normal) <- c("M1_s","M2_s","M8_s","M9_s")
 
+for (i in 1:length(normal)){
+  a <- normal[[i]]
+  b <- names(normal[i])
+  
+  color <- rainbow(30)
+  ######
+  # Get the expression data
+  data <- FetchData(a, vars = jose_genes)
+  
+  # Add the cluster data to the data frame
+  data$cluster <- a@meta.data$labels
+  
+  # Transform the data into a long format
+  df <- gather(data, gene, expression, -cluster)
+  
+  # Remove genes with zero expression
+  df <- df %>% filter(expression > 0)
+  
+  # Plot
+  plot <- ggplot(df, aes(x = gene, y = expression, fill = cluster)) +
+    geom_boxplot() +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(x = "Gene", y = "Gene Expression") +
+    coord_flip()
+  
+  pdf(paste("./results/pc_clusters/jose_genes/all/", b,"_j_a_genes_labels.pdf",sep=""), width = 10, height = 7)
+  print(plot)
+  dev.off()
+  
+  ######
+  #p <- FeatureOverlay(a, features = c("pc_clusters"), ncols = 1, pt.size = 1.5,cols = color)
+  
+  #pdf(paste("./results/pc_clusters/all/", b,"_clusters567.pdf",sep=""))
+  #print(p)
+  #dev.off()
+  
+  # Boxplot
+  df <- a@meta.data
+  df_selected <- df %>% select(name, labels, signature_1_dormant, labels)
+  
+  plot <- ggplot(df_selected, aes(x = labels, y = signature_1_dormant, fill = labels)) +
+    geom_boxplot() +
+    labs(title = "Dormant distributions with respect to labels",
+         x = "Groups", 
+         y = "Signature Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/jose_genes/all/", b,"_dormant_labels.pdf",sep=""), width = 10, height = 7)
+  print(plot)
+  dev.off()
+  
+}
+
 
 
 subsets <- c(M1_subset,M2_subset, M8_subset, M9_subset)
 names(subsets) <- c("M1_subset","M2_subset", "M8_subset", "M9_subset")
+
+for (i in 1:length(subsets)){
+  a <- subsets[[i]]
+  b <- names(subsets[i])
+  
+  color <- rainbow(30)
+  
+  ######
+  # Get the expression data
+  data <- FetchData(a, vars = jose_genes)
+  
+  # Add the cluster data to the data frame
+  data$cluster <- a@meta.data$labels
+  
+  # Transform the data into a long format
+  df <- gather(data, gene, expression, -cluster)
+  
+  # Remove genes with zero expression
+  df <- df %>% filter(expression > 0)
+  
+  # Plot
+  plot <- ggplot(df, aes(x = gene, y = expression, fill = cluster)) +
+    geom_boxplot() +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(x = "Gene", y = "Gene Expression") +
+    coord_flip()
+  
+  pdf(paste("./results/pc_clusters/jose_genes/subset/", b,"_j_a_genes_labels.pdf",sep=""), width = 10, height = 7)
+  print(plot)
+  dev.off()
+  
+  ######
+  #p <- FeatureOverlay(a, features = c("pc_clusters"), ncols = 1, pt.size = 1.5,cols = color)
+  
+  #pdf(paste("./results/pc_clusters/all/", b,"_clusters567.pdf",sep=""))
+  #print(p)
+  #dev.off()
+  
+  df <- a@meta.data
+  df_selected <- df %>% select(name, labels, signature_1_dormant, labels)
+  
+  plot <- ggplot(df_selected, aes(x = labels, y = signature_1_dormant, fill = labels)) +
+    geom_boxplot() +
+    labs(title = "Dormant distributions with respect to labels",
+         x = "Groups", 
+         y = "Signature Dormant", 
+         fill = "Label") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/jose_genes/subset/", b,"_dormant_labels.pdf",sep=""), width = 10, height = 7)
+  print(plot)
+  dev.off()
+  
+}
