@@ -8,6 +8,7 @@ library(ggplot2)
 library(STutility)
 library(dplyr)
 library(UCell)
+library(tidyr)
 
 #Data---------------------------------
 objects <- readRDS("./objects/sp/regress_out/list_regressout_ST.rds")
@@ -112,6 +113,42 @@ for (i in 1:length(normal)){
   print(plot)
   dev.off()
   
+  ##dormant signature in clusters boxplot 
+  
+  df_selected <- df %>% select(name, clustering, signature_1_dormant, clustering)
+  
+  plot <- ggplot(df_selected, aes(x = clustering, y = signature_1_dormant, fill = clustering)) +
+    geom_boxplot() +
+    labs(title = "Dormant distributions with respect to clusters",
+         x = "Groups", 
+         y = "Signature Dormant", 
+         fill = "clusters") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/clusters/", b,"_dormant_clusters.pdf",sep=""), width = 10, height = 7)
+  print(plot)
+  dev.off()
+  
+  #residuals_dormant_ucellscore
+  
+  df_selected <- df %>% select(name, clustering, residuals_dormant_ucellscore, clustering)
+  
+  plot <- ggplot(df_selected, aes(x = clustering, y = residuals_dormant_ucellscore, fill = clustering)) +
+    geom_boxplot() +
+    labs(title = "Dormant residuals distributions with respect to clusters",
+         x = "Groups", 
+         y = "Signature Dormant", 
+         fill = "clusters") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(size = 8, angle = 45, hjust = 1)) +  # Adjust text size and angle here
+    facet_wrap(~name)  # Separate plots by 'name'
+  
+  pdf(paste("./results/pc_clusters/clusters/", b,"_dormant_residuals_clusters.pdf",sep=""), width = 10, height = 7)
+  print(plot)
+  dev.off()
+  
 }
 
 
@@ -175,3 +212,88 @@ for (i in 1:length(subsets)){
   dev.off()
   
 }
+
+###merge data
+se_merged <- MergeSTData(M1_s, y = c(M2_s, M8_s, M9_s), 
+                    add.spot.ids = c("M1_s", "M2_s", "M8_s", "M9_s"), project = "BM")
+
+
+###correlation part
+meta <- se_merged@meta.data
+
+colnames <- colnames(meta)
+
+
+##1. Calculating correlation values
+# Select relevant columns for correlation analysis
+cols_of_interest <- c("Tcell", "Bcell", "MM_MIC", "Erythroblasts", "Monocytes", "Neutrophils",
+                      "DC", "signature_1_dormant", "residuals_dormant_ucellscore")
+
+# Create a subset of the dataframe with the selected columns
+subset_df <- meta[, cols_of_interest]
+
+# Calculate correlation matrix
+correlation_matrix <- cor(subset_df)
+
+# Write the correlation matrix to an Excel file
+write.csv(correlation_matrix, file = "correlation_matrix.csv", row.names = TRUE)
+
+
+#2: Adding gene expression values and calculating correlations
+# Extract normalized expression values for selected genes
+jose_genes <- c("Cd44", "Cd81", "Flna", "Mki67", "Pcna", "Xbp1")
+gene_expression <- FetchData(se_merged, vars = jose_genes)
+
+# Merge gene expression values with the existing dataframe
+merged_df <- cbind(meta, gene_expression)
+
+# Calculate correlation between gene expression values and groups
+gene_correlation <- cor(merged_df[, c("Tcell", "Bcell", "MM_MIC", "Erythroblasts", "Monocytes", 
+                                      "Neutrophils", "DC", "signature_1_dormant",
+                                      "residuals_dormant_ucellscore")],
+                        merged_df[, jose_genes])
+
+# Write the gene correlation matrix to an Excel file
+write.csv(gene_correlation, file = "gene_correlation_matrix.csv", row.names = TRUE)
+
+
+#3: Plotting correlation matrices
+# Read the correlation matrix CSV files
+# Read the correlation matrix CSV files
+correlation_matrix <- read.csv("correlation_matrix.csv", row.names = 1)
+gene_correlation <- read.csv("gene_correlation_matrix.csv", row.names = 1)
+
+# Convert correlation matrix values to numeric
+correlation_matrix[] <- lapply(correlation_matrix, as.numeric)
+gene_correlation[] <- lapply(gene_correlation, as.numeric)
+
+correlation_matrix <- as.matrix(correlation_matrix)
+gene_correlation <- as.matrix(gene_correlation)
+
+# Plot correlation matrix heatmap
+heatmap_plot <- heatmap(correlation_matrix, col = colorRampPalette(c("white", "blue")))
+heatmap_plot <- heatmap(correlation_matrix, col = colorRampPalette(c("white", "blue"))(100))
+
+# Plot gene correlation matrix heatmap
+gene_heatmap_plot <- heatmap(gene_correlation, col = colorRampPalette(c("white", "blue")))
+
+# Display the heatmaps
+library(gplots)
+heatmap.2(correlation_matrix, col = colorRampPalette(c("white", "blue")))
+
+plot(heatmap_plot)
+plot(gene_heatmap_plot)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
