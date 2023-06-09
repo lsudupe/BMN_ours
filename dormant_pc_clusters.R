@@ -217,15 +217,21 @@ for (i in 1:length(subsets)){
 se_merged <- MergeSTData(M1_s, y = c(M2_s, M8_s, M9_s), 
                     add.spot.ids = c("M1_s", "M2_s", "M8_s", "M9_s"), project = "BM")
 
+# Assume 'seurat_obj' is your Seurat object
+# Normalize data
+seurat_obj <- NormalizeData(se_merged)
+
+# Fetch the normalized expression data for each gene
+jose_genes <- c("Cd44", "Cd81", "Flna", "Mki67", "Pcna", "Xbp1")
+gene_data <- FetchData(seurat_obj, vars = jose_genes)
+
+# Combine the data
+df <- cbind(df, gene_data)
 
 ###########CORRELATION PLOTS AND EXCELL#########
 install.packages(c('tidyverse', 'readxl', 'writexl'))
 library(openxlsx)
 library(tidyverse)
-
-meta <- se_merged@meta.data
-df <- meta
-
 
 # Function to create an Excel file with separate sheets for each group within a category
 create_excel <- function(df, category) {
@@ -240,9 +246,10 @@ create_excel <- function(df, category) {
     # Subset the data for this group
     df_group <- df %>% filter((!!sym(category)) == group)
     
-    # Compute the correlation matrix
+    # Compute the correlation matrix after removing columns with zero standard deviation
     correlation_matrix <- df_group %>% 
-      select(Tcell:DC, signature_1_dormant, residuals_dormant_ucellscore) %>% 
+      select(Tcell:DC, signature_1_dormant, residuals_dormant_ucellscore, all_of(jose_genes)) %>% 
+      select_if(function(x) sd(x, na.rm=TRUE) != 0) %>% 
       cor()
     
     # Create a new sheet in the workbook for this correlation matrix
@@ -250,16 +257,16 @@ create_excel <- function(df, category) {
     writeData(wb, paste("Group", group), correlation_matrix)
     
     # Color code the cells based on the 'names' column
-    colors <- colorRampPalette(c("blue", "red", "green", "yellow"))(length(unique(df$name)))
-    color_mapping <- setNames(colors, unique(df$name))
-    cell_style <- createStyle(fgFill = color_mapping[df_group$name])
+    colors <- colorRampPalette(c("blue", "red", "green", "yellow"))(length(unique(df$names)))
+    color_mapping <- setNames(colors, unique(df$names))
+    cell_style <- createStyle(fgFill = color_mapping[df_group$names])
     addStyle(wb, paste("Group", group), style = cell_style, rows = 2:(nrow(correlation_matrix)+1), cols = 2:(ncol(correlation_matrix)+1), gridExpand = TRUE)
   }
   
   # Save the workbook to an Excel file
   saveWorkbook(wb, paste0(category, "_correlations.xlsx"), overwrite = TRUE)
 }
-
+  
 # Call the function for each category
 create_excel(df, "pc_clusters")
 create_excel(df, "labels")
@@ -270,6 +277,7 @@ library(corrplot)
 library(RColorBrewer)
 
 # Function to create correlation plots for each group within a category
+# Adjusted create_corrplot function
 create_corrplot <- function(df, category) {
   # Get unique groups within the category
   groups <- unique(df[[category]])
@@ -279,23 +287,28 @@ create_corrplot <- function(df, category) {
     # Subset the data for this group
     df_group <- df %>% filter((!!sym(category)) == group)
     
-    # Compute the correlation matrix
-    correlation_matrix <- df_group %>% 
-      select(Tcell:DC, signature_1_dormant, residuals_dormant_ucellscore) %>% 
-      cor(use = "pairwise.complete.obs")
+    # Remove columns with zero standard deviation
+    df_group <- df_group %>% 
+      select(Tcell:DC, signature_1_dormant, residuals_dormant_ucellscore, all_of(jose_genes)) %>% 
+      select_if(function(x) sd(x, na.rm=TRUE) != 0)
     
-    # Check if the correlation matrix is valid
-    if (all(is.finite(correlation_matrix)) && !all(is.na(correlation_matrix))) {
+    # Check if the data frame is not empty
+    if (nrow(df_group) > 0 && ncol(df_group) > 0) {
+      # Compute the correlation matrix
+      correlation_matrix <- df_group %>% 
+        cor(use = "pairwise.complete.obs")
+      
       # Create a correlation plot
       pdf(file = paste0(category, "_Group_", group, "_correlation.pdf"), width = 10, height = 10)
       corrplot(correlation_matrix, method = "color", col = colorRampPalette(c("blue", "white", "red"))(200), 
                title = paste0(category, "_Group_", group, "_correlation"), mar = c(0,0,1,0))
       dev.off()
     } else {
-      message(paste("Skipping", category, "group", group, "- correlation matrix is not valid."))
+      message(paste("Skipping", category, "group", group, "- data frame is empty after removing columns with zero standard deviation."))
     }
   }
 }
+
 
 # Call the function for each category
 create_corrplot(df, "pc_clusters")
