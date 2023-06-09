@@ -218,78 +218,93 @@ se_merged <- MergeSTData(M1_s, y = c(M2_s, M8_s, M9_s),
                     add.spot.ids = c("M1_s", "M2_s", "M8_s", "M9_s"), project = "BM")
 
 
-###correlation part
+###########CORRELATION PLOTS AND EXCELL#########
+install.packages(c('tidyverse', 'readxl', 'writexl'))
+library(openxlsx)
+library(tidyverse)
+
 meta <- se_merged@meta.data
-
-colnames <- colnames(meta)
-
-
-##1. Calculating correlation values
-# Select relevant columns for correlation analysis
-cols_of_interest <- c("Tcell", "Bcell", "MM_MIC", "Erythroblasts", "Monocytes", "Neutrophils",
-                      "DC", "signature_1_dormant", "residuals_dormant_ucellscore")
-
-# Create a subset of the dataframe with the selected columns
-subset_df <- meta[, cols_of_interest]
-
-# Calculate correlation matrix
-correlation_matrix <- cor(subset_df)
-
-# Write the correlation matrix to an Excel file
-write.csv(correlation_matrix, file = "correlation_matrix.csv", row.names = TRUE)
+df <- meta
 
 
-#2: Adding gene expression values and calculating correlations
-# Extract normalized expression values for selected genes
-jose_genes <- c("Cd44", "Cd81", "Flna", "Mki67", "Pcna", "Xbp1")
-gene_expression <- FetchData(se_merged, vars = jose_genes)
+# Function to create an Excel file with separate sheets for each group within a category
+create_excel <- function(df, category) {
+  # Get unique groups within the category
+  groups <- unique(df[[category]])
+  
+  # Create a new Excel workbook
+  wb <- createWorkbook()
+  
+  # For each group, compute the correlation matrix and add it to the workbook as a new sheet
+  for (group in groups) {
+    # Subset the data for this group
+    df_group <- df %>% filter((!!sym(category)) == group)
+    
+    # Compute the correlation matrix
+    correlation_matrix <- df_group %>% 
+      select(Tcell:DC, signature_1_dormant, residuals_dormant_ucellscore) %>% 
+      cor()
+    
+    # Create a new sheet in the workbook for this correlation matrix
+    addWorksheet(wb, paste("Group", group))
+    writeData(wb, paste("Group", group), correlation_matrix)
+    
+    # Color code the cells based on the 'names' column
+    colors <- colorRampPalette(c("blue", "red", "green", "yellow"))(length(unique(df$name)))
+    color_mapping <- setNames(colors, unique(df$name))
+    cell_style <- createStyle(fgFill = color_mapping[df_group$name])
+    addStyle(wb, paste("Group", group), style = cell_style, rows = 2:(nrow(correlation_matrix)+1), cols = 2:(ncol(correlation_matrix)+1), gridExpand = TRUE)
+  }
+  
+  # Save the workbook to an Excel file
+  saveWorkbook(wb, paste0(category, "_correlations.xlsx"), overwrite = TRUE)
+}
 
-# Merge gene expression values with the existing dataframe
-merged_df <- cbind(meta, gene_expression)
-
-# Calculate correlation between gene expression values and groups
-gene_correlation <- cor(merged_df[, c("Tcell", "Bcell", "MM_MIC", "Erythroblasts", "Monocytes", 
-                                      "Neutrophils", "DC", "signature_1_dormant",
-                                      "residuals_dormant_ucellscore")],
-                        merged_df[, jose_genes])
-
-# Write the gene correlation matrix to an Excel file
-write.csv(gene_correlation, file = "gene_correlation_matrix.csv", row.names = TRUE)
-
-
-#3: Plotting correlation matrices
-# Read the correlation matrix CSV files
-# Read the correlation matrix CSV files
-correlation_matrix <- read.csv("correlation_matrix.csv", row.names = 1)
-gene_correlation <- read.csv("gene_correlation_matrix.csv", row.names = 1)
-
-# Convert correlation matrix values to numeric
-correlation_matrix[] <- lapply(correlation_matrix, as.numeric)
-gene_correlation[] <- lapply(gene_correlation, as.numeric)
-
-correlation_matrix <- as.matrix(correlation_matrix)
-gene_correlation <- as.matrix(gene_correlation)
-
-# Plot correlation matrix heatmap
-heatmap_plot <- heatmap(correlation_matrix, col = colorRampPalette(c("white", "blue")))
-heatmap_plot <- heatmap(correlation_matrix, col = colorRampPalette(c("white", "blue"))(100))
-
-# Plot gene correlation matrix heatmap
-gene_heatmap_plot <- heatmap(gene_correlation, col = colorRampPalette(c("white", "blue")))
-
-# Display the heatmaps
-library(gplots)
-heatmap.2(correlation_matrix, col = colorRampPalette(c("white", "blue")))
-
-plot(heatmap_plot)
-plot(gene_heatmap_plot)
+# Call the function for each category
+create_excel(df, "pc_clusters")
+create_excel(df, "labels")
+create_excel(df, "clustering")
 
 
+library(corrplot)
+library(RColorBrewer)
+
+# Function to create correlation plots for each group within a category
+create_corrplot <- function(df, category) {
+  # Get unique groups within the category
+  groups <- unique(df[[category]])
+  
+  # For each group, compute the correlation matrix and create a correlation plot
+  for (group in groups) {
+    # Subset the data for this group
+    df_group <- df %>% filter((!!sym(category)) == group)
+    
+    # Compute the correlation matrix
+    correlation_matrix <- df_group %>% 
+      select(Tcell:DC, signature_1_dormant, residuals_dormant_ucellscore) %>% 
+      cor(use = "pairwise.complete.obs")
+    
+    # Check if the correlation matrix is valid
+    if (all(is.finite(correlation_matrix)) && !all(is.na(correlation_matrix))) {
+      # Create a correlation plot
+      pdf(file = paste0(category, "_Group_", group, "_correlation.pdf"), width = 10, height = 10)
+      corrplot(correlation_matrix, method = "color", col = colorRampPalette(c("blue", "white", "red"))(200), 
+               title = paste0(category, "_Group_", group, "_correlation"), mar = c(0,0,1,0))
+      dev.off()
+    } else {
+      message(paste("Skipping", category, "group", group, "- correlation matrix is not valid."))
+    }
+  }
+}
+
+# Call the function for each category
+create_corrplot(df, "pc_clusters")
+create_corrplot(df, "labels")
+create_corrplot(df, "clustering")
 
 
 
-
-
+###########CORRELATION PLOTS AND EXCELL######### FIN
 
 
 
