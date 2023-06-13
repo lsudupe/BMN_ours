@@ -257,9 +257,9 @@ create_excel <- function(df, category) {
     writeData(wb, paste("Group", group), correlation_matrix)
     
     # Color code the cells based on the 'names' column
-    colors <- colorRampPalette(c("blue", "red", "green", "yellow"))(length(unique(df$names)))
-    color_mapping <- setNames(colors, unique(df$names))
-    cell_style <- createStyle(fgFill = color_mapping[df_group$names])
+    colors <- colorRampPalette(c("blue", "red", "green", "yellow"))(length(unique(df$name)))
+    color_mapping <- setNames(colors, unique(df$name))
+    cell_style <- createStyle(fgFill = color_mapping[df_group$name])
     addStyle(wb, paste("Group", group), style = cell_style, rows = 2:(nrow(correlation_matrix)+1), cols = 2:(ncol(correlation_matrix)+1), gridExpand = TRUE)
   }
   
@@ -318,6 +318,179 @@ create_corrplot(df, "clustering")
 
 
 ###########CORRELATION PLOTS AND EXCELL######### FIN
+
+
+###########DAVID values AND EXCELL#########
+# Group the data by 'labels', 'name', 'clustering', and 'pc_clusters', then calculate median values
+df_grouped <- df %>%
+  select(name, labels, clustering, pc_clusters, Tcell:DC, signature_1_dormant, all_of(jose_genes)) %>%
+  group_by(name, labels, clustering, pc_clusters) %>%
+  summarise(across(Tcell:DC, median, na.rm = TRUE),
+            across(signature_1_dormant, median, na.rm = TRUE),
+            across(all_of(jose_genes), median, na.rm = TRUE),
+            .groups = "keep")
+
+# Save 'pc_clusters' as last column
+df_grouped <- df_grouped %>% relocate(pc_clusters, .after = last_col())
+
+# Create two dataframes based on 'clustering' values
+df_group1 <- df_grouped %>% filter(clustering %in% c(1,2,3,4))
+df_group2 <- df_grouped %>% filter(clustering %in% c(5,6,7))
+
+# Save dataframes to csv files
+write.csv(df_group1, "./results/correlation/pc_groups/group1_dataframe.csv", row.names = FALSE)
+write.csv(df_group2, "./results/correlation/pc_groups/group2_dataframe.csv", row.names = FALSE)
+
+#####group them
+# Create a new column 'sample_group' combining 'name' and 'labels'
+df_group1$sample_group <- paste(df_group1$name, df_group1$labels, sep = "_")
+df_group2$sample_group <- paste(df_group2$name, df_group2$labels, sep = "_")
+
+# Group the data by 'sample_group' and calculate median values
+df_group1_grouped <- df_group1 %>%
+  group_by(sample_group) %>%
+  summarise(across(Tcell:DC, median, na.rm = TRUE),
+            across(signature_1_dormant, median, na.rm = TRUE),
+            across(all_of(jose_genes), median, na.rm = TRUE),
+            .groups = "keep")
+
+df_group2_grouped <- df_group2 %>%
+  group_by(sample_group) %>%
+  summarise(across(Tcell:DC, median, na.rm = TRUE),
+            across(signature_1_dormant, median, na.rm = TRUE),
+            across(all_of(jose_genes), median, na.rm = TRUE),
+            .groups = "keep")
+
+# Save dataframes to csv files
+write.csv(df_group1_grouped, "./results/correlation/pc_groups/group1_dataframe_grouped.csv", row.names = FALSE)
+write.csv(df_group2_grouped, "./results/correlation/pc_groups/group2_dataframe_grouped.csv", row.names = FALSE)
+
+##cor
+# Install required packages
+if (!require(corrplot)) install.packages("corrplot")
+if (!require(gplots)) install.packages("gplots")
+
+# Load required packages
+library(corrplot)
+library(gplots)
+
+# Determine the columns with non-zero standard deviation
+cols_to_keep1 <- apply(df_group1_grouped[,3:ncol(df_group1_grouped)], 2, sd) != 0
+cols_to_keep2 <- apply(df_group2_grouped[,3:ncol(df_group2_grouped)], 2, sd) != 0
+
+# Subset the data frames
+df_grouped1_grouped <- df_group1_grouped[, c(TRUE, TRUE, cols_to_keep1)]
+df_grouped2_grouped <- df_group2_grouped[, c(TRUE, TRUE, cols_to_keep2)]
+
+
+# Compute correlations for df_grouped1_grouped and df_grouped2_grouped
+corr1 <- cor(df_grouped1_grouped[,3:ncol(df_grouped1_grouped)], use = "pairwise.complete.obs")
+corr2 <- cor(df_grouped2_grouped[,3:ncol(df_grouped2_grouped)], use = "pairwise.complete.obs")
+
+hc_order <- hclust(dist(corr1))$order
+
+# Set graphical parameters to make the labels smaller
+par(cex=0.6)
+
+# Generate correlation plot for df_grouped1_grouped
+pdf("./results/correlation/pc_groups/Correlation_df_group1_grouped.pdf")
+corrplot(corr1, method="color", col= colorRampPalette(c("blue", "white", "red"))(200),
+         type="upper", addCoef.col = "black", tl.col="black", tl.srt=45, number.cex=0.70)
+dev.off()
+
+# Generate correlation plot for df_grouped2_grouped
+pdf("./results/correlation/pc_groups/Correlation_df_group2_grouped.pdf")
+corrplot(corr2, method="color", col= colorRampPalette(c("blue", "white", "red"))(200),
+         type="upper", addCoef.col = "black", tl.col="black", tl.srt=45, number.cex=0.70)
+dev.off()
+##cor fin
+
+##hierachical
+# Perform hierarchical clustering on df_group1_grouped
+dist_matrix <- dist(df_group1_grouped[,3:ncol(df_group1_grouped)])
+hc <- hclust(dist_matrix)
+
+# Plot the dendrogram
+pdf("./results/correlation/pc_groups/Dendrogram_group1_grouped.pdf")
+plot(hc, labels = df_group1_grouped$sample_group, main = "Hierarchical Clustering Dendrogram - Group1")
+dev.off()
+
+# Repeat for df_group2_grouped
+dist_matrix <- dist(df_group2_grouped[,3:ncol(df_group2_grouped)])
+hc <- hclust(dist_matrix)
+
+# Plot the dendrogram
+pdf("./results/correlation/pc_groups/Dendrogram_group2_grouped.pdf")
+plot(hc, labels = df_group2_grouped$sample_group, main = "Hierarchical Clustering Dendrogram - Group2")
+dev.off()
+##hierachical fin
+
+##cor rows
+# Hierarchical clustering and Heatmap for df_group1_grouped
+heatmap_data <- df_group1_grouped[,3:ncol(df_group1_grouped)]  # select only numeric columns
+row_names <- df_group1_grouped$sample_group  # save row names
+row.names(heatmap_data) <- row_names  # assign row names to heatmap data
+
+# Create a heatmap
+pdf("./results/correlation/pc_groups/Heatmap_group1_grouped.pdf")
+heatmap.2(as.matrix(heatmap_data), 
+          trace="none", 
+          main="Heatmap - Group1",
+          labRow=row_names,
+          hclustfun = function(x) hclust(x, method="ward.D2"),
+          distfun = function(x) dist(x, method="euclidean"))
+dev.off()
+
+# Repeat for df_group2_grouped
+
+heatmap_data <- df_group2_grouped[,3:ncol(df_group2_grouped)]
+row_names <- df_group2_grouped$sample_group
+row.names(heatmap_data) <- row_names
+
+pdf("./results/correlation/pc_groups/Heatmap_group2_grouped.pdf")
+heatmap.2(as.matrix(heatmap_data), 
+          trace="none", 
+          main="Heatmap - Group2",
+          labRow=row_names,
+          hclustfun = function(x) hclust(x, method="ward.D2"),
+          distfun = function(x) dist(x, method="euclidean"))
+dev.off()
+
+##cor_rows fin
+
+##dendogram with pc_clusters
+# Select only numeric columns and set row names as pc_clusters
+heatmap_data <- df_group1[,3:ncol(df_group1)]
+row.names(heatmap_data) <- df_group1$pc_clusters
+
+# Compute a hierarchical clustering
+hc <- hclust(dist(heatmap_data), method="ward.D2")
+
+# Create a pdf for the dendrogram
+pdf("./results/correlation/pc_groups/Dendrogram_group1.pdf")
+plot(hc, main = "Hierarchical Clustering Dendrogram - df_grouped",
+     xlab = "pc_clusters",
+     sub = "",
+     cex = 0.6)
+dev.off()
+
+heatmap_data <- df_group2[,3:ncol(df_group2)]
+row.names(heatmap_data) <- df_group2$pc_clusters
+
+# Compute a hierarchical clustering
+hc <- hclust(dist(heatmap_data), method="ward.D2")
+
+# Create a pdf for the dendrogram
+pdf("./results/correlation/pc_groups/Dendrogram_group2.pdf")
+plot(hc, main = "Hierarchical Clustering Dendrogram - df_grouped",
+     xlab = "pc_clusters",
+     sub = "",
+     cex = 0.6)
+dev.off()
+
+##dendogram with pc_clusters fin
+
+###########DAVID values AND EXCELL######### FIN
 
 
 
