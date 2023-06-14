@@ -28,7 +28,7 @@ dormant <- c("C1qa", "Aif1" ,"Axl" ,"II18bp", "Glul", "Mpeg1", "H2-Eb1",
              "Anxa2" ,"Rgs2" ,"Tmed3" ,"Igll1", "Hpgd", "Glipr1", "Cd4" ,"Cd84" ,"Gbp2", "AB124611", "Slc44a2" ,
              "Samd9l" ,"Oas1g" ,"Fcgr1", "Pla2g15", "Tifa" ,"Pmp22", "Abcc3" ,"S100a10")
 
-jose_genes <- c ("Cd44", "Cd81", "Flna", "Mki67", "Pcna", "Xbp1")
+jose_genes <- c ("Cd44", "Cd81", "Flna", "Mki67", "Pcna", "Xbp1", "Cdc37")
 
 #M1
 Idents(object = M1_s) <- M1_s@meta.data[["pc_clusters"]]
@@ -222,9 +222,10 @@ se_merged <- MergeSTData(M1_s, y = c(M2_s, M8_s, M9_s),
 seurat_obj <- NormalizeData(se_merged)
 
 # Fetch the normalized expression data for each gene
-jose_genes <- c("Cd44", "Cd81", "Flna", "Mki67", "Pcna", "Xbp1")
+jose_genes <- c("Cd44", "Cd81", "Flna", "Mki67", "Pcna", "Xbp1", "Cdc37")
 gene_data <- FetchData(seurat_obj, vars = jose_genes)
 
+df <- seurat_obj@meta.data
 # Combine the data
 df <- cbind(df, gene_data)
 
