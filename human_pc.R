@@ -61,6 +61,7 @@ se <- InputFromTable(infoTable,
 st.object <- GetStaffli(se)
 st.object
 se <- LoadImages(se, time.resolve = FALSE)
+saveRDS(se, "./objects/sp/integrated/se_human.rds")
 
 ##divide by sample
 Idents(object = se) <- "name"
