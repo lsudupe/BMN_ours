@@ -20,7 +20,7 @@ library(Matrix.utils)
 #Data---------------------------------
 all <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
 b <- SetIdent(all, value = all@meta.data[["clustering"]])
-b <- SubsetSTData(b, idents = c("4", "5","6"))
+b <- SubsetSTData(b, idents = c("5", "6","7"))
 
 b <- SetIdent(b, value = b@meta.data[["name"]])
 subset <- SubsetSTData(b, idents = c("M1_fem_1C", "M2_F_2B", "M8_F2_1C", "M9_F2_1C"))
@@ -29,6 +29,8 @@ b <- SetIdent(subset, value = subset@meta.data[["clustering"]])
 
 # Extract raw counts and metadata to create SingleCellExperiment object
 counts <- b@assays$RNA@counts 
+numbermorezero <- apply(counts,1,function(x){sum(x>1)})
+counts <- counts[numbermorezero>2,]  
 metadata <- b@meta.data
 
 metadata$name[metadata$name == "M1_fem_1C"] <- "M1"
@@ -97,13 +99,6 @@ tstrsplit(colnames(aggr_counts), "_") %>% str()
 head(colnames(aggr_counts), n = 10)
 head(tstrsplit(colnames(aggr_counts), "_")[[1]], n = 10)
 
-# Using which() to look up tstrsplit() output
-cluster4_idx <- which(tstrsplit(colnames(aggr_counts), "_")[[1]] == "4")
-cluster4_idx
-
-colnames(aggr_counts)[cluster4_idx]
-aggr_counts[1:10, cluster4_idx]
-
 #######create a list for each cluster
 # As a reminder, we stored our cell types in a vector called cluster_names
 cluster_names
@@ -149,7 +144,7 @@ head(metadata)
 # Number of spots per sample and cluster
 t <- table(colData(sce)$sample_id,
            colData(sce)$cluster_id)
-t[1:6, 1:6]
+#t[1:6, 1:6]
 
 ###we will append this cell count information to our generic metadata table
 # Creating metadata list
@@ -201,10 +196,6 @@ cluster_names
 # Double-check that both lists have same names
 all(names(counts_ls) == names(metadata_ls))
 
-# cluster 4
-idx4 <- which(names(counts_ls) == "4")
-cluster_counts4 <- counts_ls[[idx4]]
-cluster_metadata4 <- metadata_ls[[idx4]]
 # cluster 5
 idx5 <- which(names(counts_ls) == "5")
 cluster_counts5 <- counts_ls[[idx5]]
@@ -213,18 +204,22 @@ cluster_metadata5 <- metadata_ls[[idx5]]
 idx6 <- which(names(counts_ls) == "6")
 cluster_counts6 <- counts_ls[[idx6]]
 cluster_metadata6 <- metadata_ls[[idx6]]
+# cluster 7
+idx7 <- which(names(counts_ls) == "7")
+cluster_counts7 <- counts_ls[[idx7]]
+cluster_metadata7 <- metadata_ls[[idx7]]
 
-# Check contents of extracted objects for cluster 4
-head(cluster_metadata4)
 # Check contents of extracted objects for cluster 5
 head(cluster_metadata5)
 # Check contents of extracted objects for cluster 6
 head(cluster_metadata6)
+# Check contents of extracted objects for cluster 7
+head(cluster_metadata7)
 
 # concatenate counts data for all three clusters
-cluster_counts_all <- do.call(cbind, list(cluster_counts4, cluster_counts5, cluster_counts6))
+cluster_counts_all <- do.call(cbind, list(cluster_counts5, cluster_counts6,cluster_counts7))
 # concatenate metadata data for all three clusters
-cluster_metadata_all <- rbind(cluster_metadata4, cluster_metadata5, cluster_metadata6)
+cluster_metadata_all <- rbind(cluster_metadata5, cluster_metadata6,cluster_metadata7)
 
 # Check matching of matrix columns and metadata rows
 all(colnames(cluster_counts_all) == rownames(cluster_metadata_all))
@@ -246,39 +241,6 @@ df_pivot <- pivot_wider(df_grouped,
 df_pivot <- df_pivot[order(rownames(df_pivot)),]
 # display the resulting dataframe
 print(df_pivot)
-
-##cluster4##
-# extract the values of column of interest from df_pivot and add them as a last row in df
-df_4 <- as.data.frame(cluster_counts4)
-matrix_t <- t(df_4)
-matrix_t <- as.data.frame(matrix_t)
-matrix_t["plasma_value"] <- df_pivot$cluster_4
-matrix_final <- as.data.frame(t(matrix_t))
-
-###REGRESS OUT
-data <- matrix_final
-# Get the number of genes and spots
-genes <- nrow(data) - 1 # Subtract 1 to exclude the last row with plasma cell percentage values
-spots <- ncol(data)
-# Convert the data frame to a matrix
-data_matrix <- as.matrix(data)
-# Initialize the residuals matrix with the same dimensions as the data matrix (without the last row)
-residuals_matrix <- matrix(0, nrow = genes, ncol = spots)
-# Loop through each gene
-for (i in 1:genes) {
-  # Create a linear model to regress out the plasma cell percentage
-  model <- lm(data_matrix[i, 1:spots] ~ data_matrix[genes + 1, 1:spots])
-  # Save the residuals in the corresponding row of the residuals_matrix
-  residuals_matrix[i, ] <- model$residuals
-}
-# Replace the original data_matrix with the residuals
-data_matrix[1:genes, 1:spots] <- residuals_matrix
-# Convert the matrix back to a data frame
-data <- as.data.frame(data_matrix)
-data <- data[1:(nrow(data)-1),]
-
-cluster_counts4 <- as.matrix(data)
-cluster_counts4 <- Matrix(cluster_counts4, sparse = FALSE)
 
 ##cluster5##
 # extract the values of column of interest from df_pivot and add them as a last row in df
@@ -346,14 +308,49 @@ data <- data[1:(nrow(data)-1),]
 cluster_counts6 <- as.matrix(data)
 cluster_counts6 <- Matrix(cluster_counts6, sparse = FALSE)
 
+##cluster7##
+# extract the values of column of interest from df_pivot and add them as a last row in df
+df_7 <- as.data.frame(cluster_counts7)
+matrix_t <- t(df_7)
+matrix_t <- as.data.frame(matrix_t)
+matrix_t["plasma_value"] <- df_pivot$cluster_7[1:3]
+matrix_final <- as.data.frame(t(matrix_t))
+
+###REGRESS OUT
+data <- matrix_final
+# Get the number of genes and spots
+genes <- nrow(data) - 1 # Subtract 1 to exclude the last row with plasma cell percentage values
+spots <- ncol(data)
+# Convert the data frame to a matrix
+data_matrix <- as.matrix(data)
+# Initialize the residuals matrix with the same dimensions as the data matrix (without the last row)
+residuals_matrix <- matrix(0, nrow = genes, ncol = spots)
+# Loop through each gene
+for (i in 1:genes) {
+  # Create a linear model to regress out the plasma cell percentage
+  model <- lm(data_matrix[i, 1:spots] ~ data_matrix[genes + 1, 1:spots])
+  # Save the residuals in the corresponding row of the residuals_matrix
+  residuals_matrix[i, ] <- model$residuals
+}
+# Replace the original data_matrix with the residuals
+data_matrix[1:genes, 1:spots] <- residuals_matrix
+# Convert the matrix back to a data frame
+data <- as.data.frame(data_matrix)
+data <- data[1:(nrow(data)-1),]
+
+cluster_counts7 <- as.matrix(data)
+cluster_counts7 <- Matrix(cluster_counts7, sparse = FALSE)
+
 #############REGRESSOUT FIN
 # concatenate counts data for all three clusters
-cluster_counts_all <- do.call(cbind, list(cluster_counts4, cluster_counts5, cluster_counts6))
+cluster_counts_all <- do.call(cbind, list(cluster_counts5, cluster_counts6, cluster_counts7))
 # scale the values in the matrix to be from 0 to 1
 scaled_mat <- apply(cluster_counts_all, 2, function(x) (x - min(x)) / (max(x) - min(x)))
 
+mat_integer <- as.matrix(as.integer(scaled_mat))
+
 # Create DESeq2 object        
-dds <- DESeqDataSetFromMatrix(cluster_counts_all, 
+dds <- DESeqDataSetFromMatrix(scaled_mat, 
                               colData = cluster_metadata_all, 
                               design = ~ cluster_id)
 
@@ -392,6 +389,7 @@ res <- lfcShrink(dds,
                  res=res,
                  type = "apeglm")
 
+res <- results(dds)
 
 
 #####Table of significant for all genes
