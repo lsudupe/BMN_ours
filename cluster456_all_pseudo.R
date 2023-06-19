@@ -20,7 +20,7 @@ library(Matrix.utils)
 #Data---------------------------------
 all <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
 b <- SetIdent(all, value = all@meta.data[["clustering"]])
-b <- SubsetSTData(b, idents = c("4", "5","6"))
+b <- SubsetSTData(b, idents = c("5", "6","7"))
 
 b <- SetIdent(b, value = b@meta.data[["name"]])
 subset <- SubsetSTData(b, idents = c("M1_fem_1C", "M2_F_2B", "M8_F2_1C", "M9_F2_1C"))
@@ -29,6 +29,9 @@ b <- SetIdent(subset, value = subset@meta.data[["clustering"]])
 
 # Extract raw counts and metadata to create SingleCellExperiment object
 counts <- b@assays$RNA@counts 
+numbermorezero <- apply(counts,1,function(x){sum(x>1)})
+counts <- counts[numbermorezero>2,]  
+
 metadata <- b@meta.data
 
 metadata$name[metadata$name == "M1_fem_1C"] <- "M1"
@@ -97,12 +100,6 @@ tstrsplit(colnames(aggr_counts), "_") %>% str()
 head(colnames(aggr_counts), n = 10)
 head(tstrsplit(colnames(aggr_counts), "_")[[1]], n = 10)
 
-# Using which() to look up tstrsplit() output
-cluster4_idx <- which(tstrsplit(colnames(aggr_counts), "_")[[1]] == "4")
-cluster4_idx
-
-colnames(aggr_counts)[cluster4_idx]
-aggr_counts[1:10, cluster4_idx]
 
 #######create a list for each cluster
 # As a reminder, we stored our cell types in a vector called cluster_names
@@ -149,7 +146,7 @@ head(metadata)
 # Number of spots per sample and cluster
 t <- table(colData(sce)$sample_id,
            colData(sce)$cluster_id)
-t[1:6, 1:6]
+#t[1:6, 1:6]
 
 ###we will append this cell count information to our generic metadata table
 # Creating metadata list
@@ -201,10 +198,6 @@ cluster_names
 # Double-check that both lists have same names
 all(names(counts_ls) == names(metadata_ls))
 
-# cluster 4
-idx4 <- which(names(counts_ls) == "4")
-cluster_counts4 <- counts_ls[[idx4]]
-cluster_metadata4 <- metadata_ls[[idx4]]
 # cluster 5
 idx5 <- which(names(counts_ls) == "5")
 cluster_counts5 <- counts_ls[[idx5]]
@@ -213,18 +206,22 @@ cluster_metadata5 <- metadata_ls[[idx5]]
 idx6 <- which(names(counts_ls) == "6")
 cluster_counts6 <- counts_ls[[idx6]]
 cluster_metadata6 <- metadata_ls[[idx6]]
+# cluster 7
+idx7 <- which(names(counts_ls) == "7")
+cluster_counts7 <- counts_ls[[idx7]]
+cluster_metadata7 <- metadata_ls[[idx7]]
 
-# Check contents of extracted objects for cluster 4
-head(cluster_metadata4)
 # Check contents of extracted objects for cluster 5
 head(cluster_metadata5)
 # Check contents of extracted objects for cluster 6
 head(cluster_metadata6)
+# Check contents of extracted objects for cluster 7
+head(cluster_metadata7)
 
 # concatenate counts data for all three clusters
-cluster_counts_all <- do.call(cbind, list(cluster_counts4, cluster_counts5, cluster_counts6))
+cluster_counts_all <- do.call(cbind, list(cluster_counts5, cluster_counts6,cluster_counts7))
 # concatenate metadata data for all three clusters
-cluster_metadata_all <- rbind(cluster_metadata4, cluster_metadata5, cluster_metadata6)
+cluster_metadata_all <- rbind(cluster_metadata5, cluster_metadata6,cluster_metadata7)
 
 # Check matching of matrix columns and metadata rows
 all(colnames(cluster_counts_all) == rownames(cluster_metadata_all))
@@ -238,7 +235,6 @@ dds <- DESeqDataSetFromMatrix(cluster_counts_all,
 rld <- rlog(dds, blind=TRUE)
 
 # Plot PCA
-DESeq2::plotPCA(rld, ntop = 500, intgroup = "cluster_id")
 DESeq2::plotPCA(rld, ntop = 500, intgroup = "cluster_id")
 
 #Hierarchical clustering
@@ -260,14 +256,10 @@ resultsNames(dds)
 
 # Generate results object
 res <- results(dds, 
-               name = "cluster_id_5_vs_4",
+               name = "cluster_id_6_vs_5",
                alpha = 0.05)
 
-# Shrink the log2 fold changes to be more appropriate using the apeglm method - should cite [paper]() when using this method
-res <- lfcShrink(dds, 
-                 coef = "group_id_stim_vs_ctrl",
-                 res=res,
-                 type = "apeglm")
+res <- results(dds)
 
 
 
@@ -278,6 +270,7 @@ res_tbl <- res %>%
   rownames_to_column(var = "gene") %>%
   as_tibble() %>%
   arrange(padj)
+
 
 # Check results output
 res_tbl 
@@ -315,7 +308,141 @@ pheatmap(sig_counts,
          height = 20)  
 dev.off()
 
+#####normal DE with covariate
+
+# Differential expression analysis between group1 and group2
+diff_exp_results_12 <- FindMarkers(b, ident.1 = '5', ident.2 = '6', 
+                                   test.use = "LR", latent.vars = "MM_MIC")
+
+# Differential expression analysis between group1 and group3
+diff_exp_results_13 <- FindMarkers(b, ident.1 = '5', ident.2 = '7', 
+                                   test.use = "LR", latent.vars = "MM_MIC")
+
+# Differential expression analysis between group2 and group3
+diff_exp_results_23 <- FindMarkers(b, ident.1 = '6', ident.2 = '7', 
+                                   test.use = "LR", latent.vars = "MM_MIC")
+
+# For each result object, filter based on adjusted p-value and log fold change
+# For each result object, filter based on adjusted p-value and log fold change
+significant_results_12 <- diff_exp_results_12[diff_exp_results_12$p_val_adj < 0.05 & abs(diff_exp_results_12$avg_log2FC) > 1,]
+significant_results_13 <- diff_exp_results_13[diff_exp_results_13$p_val_adj < 0.05 & abs(diff_exp_results_13$avg_log2FC) > 1,]
+significant_results_23 <- diff_exp_results_23[diff_exp_results_23$p_val_adj < 0.05 & abs(diff_exp_results_23$avg_log2FC) > 1,]
+
+# Volcano plot for results of group1 vs group2
+ggplot(significant_results_12, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
+  geom_point() +
+  theme_classic() +
+  xlab("Log2 fold change") +
+  ylab("-Log10 adjusted p-value") +
+  ggtitle("Volcano plot: Group1 vs Group2")
+
+# Get top genes from significant_results_12
+top_genes <- rownames(significant_results_12)
+
+# Heatmap for top differentially expressed genes
+DoHeatmap(b, features = top_genes) +
+  theme_classic() +
+  xlab("Groups") +
+  ylab("Top Differentially Expressed Genes") +
+  ggtitle("Heatmap")
 
 
+# Add a new column to the results indicating whether each gene is highly significant
+diff_exp_results_12$highly_sig <- diff_exp_results_12$p_val_adj < 0.05 & abs(diff_exp_results_12$avg_log2FC) > 1
+
+library(ggrepel)
+library(gggenes)
+# Volcano plot with different colors for highly significant genes
+pdf("./results/DE/st/volcano5vs6.pdf")
+ggplot(diff_exp_results_12, aes(x = avg_log2FC, y = -log10(p_val_adj), color = highly_sig)) +
+  geom_point() +
+  geom_text_repel(data = subset(diff_exp_results_12, highly_sig), 
+                  aes(label = rownames(subset(diff_exp_results_12, highly_sig))), 
+                  size = 3) +
+  scale_color_manual(values = c("black", "red")) +
+  theme_classic() +
+  xlab("Log2 fold change") +
+  ylab("-Log10 adjusted p-value") +
+  ggtitle("Volcano plot: Group5 vs Group6")
+dev.off()
+
+diff_exp_results_13$highly_sig <- diff_exp_results_13$p_val_adj < 0.05 & abs(diff_exp_results_13$avg_log2FC) > 1
+
+pdf("./results/DE/st/volcano5vs7.pdf")
+ggplot(diff_exp_results_13, aes(x = avg_log2FC, y = -log10(p_val_adj), color = highly_sig)) +
+  geom_point() +
+  geom_text_repel(data = subset(diff_exp_results_13, highly_sig), 
+                  aes(label = rownames(subset(diff_exp_results_13, highly_sig))), 
+                  size = 3) +
+  scale_color_manual(values = c("black", "red")) +
+  theme_classic() +
+  xlab("Log2 fold change") +
+  ylab("-Log10 adjusted p-value") +
+  ggtitle("Volcano plot: Group5 vs Group7")
+dev.off()
+
+diff_exp_results_23$highly_sig <- diff_exp_results_23$p_val_adj < 0.05 & abs(diff_exp_results_23$avg_log2FC) > 1
+
+pdf("./results/DE/st/volcano6vs7.pdf")
+ggplot(diff_exp_results_23, aes(x = avg_log2FC, y = -log10(p_val_adj), color = highly_sig)) +
+  geom_point() +
+  geom_text_repel(data = subset(diff_exp_results_23, highly_sig), 
+                  aes(label = rownames(subset(diff_exp_results_23, highly_sig))), 
+                  size = 3) +
+  scale_color_manual(values = c("black", "red")) +
+  theme_classic() +
+  xlab("Log2 fold change") +
+  ylab("-Log10 adjusted p-value") +
+  ggtitle("Volcano plot: Group6 vs Group7")
+dev.off()
+
+# Extract the names of the "highly significant" genes
+highly_sig_genes_12 <- rownames(subset(diff_exp_results_12, highly_sig))
+highly_sig_genes_13 <- rownames(subset(diff_exp_results_13, highly_sig))
+highly_sig_genes_23 <- rownames(subset(diff_exp_results_23, highly_sig))
+# Print the names
+print(highly_sig_genes_12)
+print(highly_sig_genes_13)
+print(highly_sig_genes_23)
+
+highly_sig_genes <- c(highly_sig_genes_12, highly_sig_genes_23)
+
+gene_expression <- b@assays$RNA@counts[highly_sig_genes, ]
+# Scale the data
+scaled_data <- scale(t(gene_expression))
+
+# Create the heatmap
+pdf("./results/DE/st/significant_heatmap.pdf")
+DoHeatmap(b, features = highly_sig_genes) +
+  theme_classic() +
+  xlab("Groups") +
+  ylab("Top Differentially Expressed Genes") +
+  ggtitle("Heatmap")
+dev.off()
+
+#####normal DE with covariate FIN
+
+####GO analysis
+DoHeatmap(b, assay = "RNA", features = top100$gene)#,disp.min = -2, disp.max = 2)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+
+genes_12 = bitr(rownames(diff_exp_results_12), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+genes_13 = bitr(rownames(diff_exp_results_13), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+genes_23 = bitr(rownames(diff_exp_results_23), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+
+
+genelist <- list(genes_12,
+                 genes_13,
+                 genes_23)
+                 
+GOclusterplot <- compareCluster(geneCluster = genelist, fun = "enrichGO", OrgDb = "org.Mm.eg.db")
+ck <- setReadable(GOclusterplot, OrgDb = org.Mm.eg.db, keyType="ENTREZID")
+                 
+pdf("./results/DE/st/se_all_clusters_dotplot_rna.pdf")
+print(dotplot(GOclusterplot))
+dev.off()
+                 
+####GO analysis FIN
 
 
