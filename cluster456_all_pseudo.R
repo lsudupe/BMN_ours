@@ -311,40 +311,25 @@ dev.off()
 #####normal DE with covariate
 
 # Differential expression analysis between group1 and group2
-diff_exp_results_12 <- FindMarkers(b, ident.1 = '5', ident.2 = '6', 
-                                   test.use = "LR", latent.vars = "MM_MIC")
+diff_exp_results_12 <- FindMarkers(b, ident.1 = '5', ident.2 = '6', latent.vars = "MM_MIC",
+                                   min.cells.feature = 3,
+                                   min.cells.group = 3)
 
 # Differential expression analysis between group1 and group3
-diff_exp_results_13 <- FindMarkers(b, ident.1 = '5', ident.2 = '7', 
-                                   test.use = "LR", latent.vars = "MM_MIC")
+diff_exp_results_13 <- FindMarkers(b, ident.1 = '5', ident.2 = '7', latent.vars = "MM_MIC",
+                                   min.cells.feature = 3,
+                                   min.cells.group = 3)
 
 # Differential expression analysis between group2 and group3
-diff_exp_results_23 <- FindMarkers(b, ident.1 = '6', ident.2 = '7', 
-                                   test.use = "LR", latent.vars = "MM_MIC")
+diff_exp_results_23 <- FindMarkers(b, ident.1 = '6', ident.2 = '7', latent.vars = "MM_MIC",
+                                   min.cells.feature = 3,
+                                   min.cells.group = 3)
 
 # For each result object, filter based on adjusted p-value and log fold change
 # For each result object, filter based on adjusted p-value and log fold change
 significant_results_12 <- diff_exp_results_12[diff_exp_results_12$p_val_adj < 0.05 & abs(diff_exp_results_12$avg_log2FC) > 1,]
 significant_results_13 <- diff_exp_results_13[diff_exp_results_13$p_val_adj < 0.05 & abs(diff_exp_results_13$avg_log2FC) > 1,]
 significant_results_23 <- diff_exp_results_23[diff_exp_results_23$p_val_adj < 0.05 & abs(diff_exp_results_23$avg_log2FC) > 1,]
-
-# Volcano plot for results of group1 vs group2
-ggplot(significant_results_12, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
-  geom_point() +
-  theme_classic() +
-  xlab("Log2 fold change") +
-  ylab("-Log10 adjusted p-value") +
-  ggtitle("Volcano plot: Group1 vs Group2")
-
-# Get top genes from significant_results_12
-top_genes <- rownames(significant_results_12)
-
-# Heatmap for top differentially expressed genes
-DoHeatmap(b, features = top_genes) +
-  theme_classic() +
-  xlab("Groups") +
-  ylab("Top Differentially Expressed Genes") +
-  ggtitle("Heatmap")
 
 
 # Add a new column to the results indicating whether each gene is highly significant
@@ -423,13 +408,17 @@ dev.off()
 #####normal DE with covariate FIN
 
 ####GO analysis
-DoHeatmap(b, assay = "RNA", features = top100$gene)#,disp.min = -2, disp.max = 2)
 library(clusterProfiler)
 library(org.Mm.eg.db)
 
-genes_12 = bitr(rownames(diff_exp_results_12), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
-genes_13 = bitr(rownames(diff_exp_results_13), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
-genes_23 = bitr(rownames(diff_exp_results_23), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+genes_12 <- diff_exp_results_12[diff_exp_results_12$p_val_adj < 0.05 & abs(diff_exp_results_12$avg_log2FC) > 0.5,]
+genes_13 <- diff_exp_results_13[diff_exp_results_13$p_val_adj < 0.05 & abs(diff_exp_results_13$avg_log2FC) > 0.5,]
+genes_23 <- diff_exp_results_23[diff_exp_results_23$p_val_adj < 0.05 & abs(diff_exp_results_23$avg_log2FC) > 0.5,]
+
+
+genes_12 = bitr(rownames(genes_12), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+genes_13 = bitr(rownames(genes_13), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+genes_23 = bitr(rownames(genes_23), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
 
 
 genelist <- list(genes_12,
@@ -444,5 +433,22 @@ print(dotplot(GOclusterplot))
 dev.off()
                  
 ####GO analysis FIN
+
+##save data
+# Write combined_lines to a .txt file
+writeLines(highly_sig_genes_12, "./results/DE/st/5vs6.txt")
+writeLines(highly_sig_genes_13, "./results/DE/st/5vs7.txt")
+writeLines(highly_sig_genes_23, "./results/DE/st/6vs7.txt")
+
+#spatial plots
+color <- brewer.pal(11,"Spectral")
+color <- rev(color)
+
+pdf(file.path("./results/DE/st/Tmsb4x.pdf"))
+FeatureOverlay(b, features = "Tmsb4x",sampleids = 1:6, ncols = 2,pt.size = 0.7,cols = color)
+dev.off()
+
+
+
 
 
