@@ -239,8 +239,10 @@ df_pivot <- pivot_wider(df_grouped,
   column_to_rownames("name")
 # sort the row names alphabetically
 df_pivot <- df_pivot[order(rownames(df_pivot)),]
+df_pivot <- data.frame(lapply(df_pivot, function(x) x*100))
 # display the resulting dataframe
 print(df_pivot)
+
 
 ##cluster5##
 # extract the values of column of interest from df_pivot and add them as a last row in df
@@ -271,6 +273,10 @@ data_matrix[1:genes, 1:spots] <- residuals_matrix
 # Convert the matrix back to a data frame
 data <- as.data.frame(data_matrix)
 data <- data[1:(nrow(data)-1),]
+
+#for ana
+cluster_counts5 <- as.matrix(matrix_final)
+#for ana fin 
 
 cluster_counts5 <- as.matrix(data)
 cluster_counts5 <- Matrix(cluster_counts5, sparse = FALSE)
@@ -305,6 +311,10 @@ data_matrix[1:genes, 1:spots] <- residuals_matrix
 data <- as.data.frame(data_matrix)
 data <- data[1:(nrow(data)-1),]
 
+#for ana
+cluster_counts6 <- as.matrix(matrix_final)
+#for ana fin 
+
 cluster_counts6 <- as.matrix(data)
 cluster_counts6 <- Matrix(cluster_counts6, sparse = FALSE)
 
@@ -338,12 +348,21 @@ data_matrix[1:genes, 1:spots] <- residuals_matrix
 data <- as.data.frame(data_matrix)
 data <- data[1:(nrow(data)-1),]
 
+#for ana
+cluster_counts7 <- as.matrix(matrix_final)
+#for ana fin 
+
 cluster_counts7 <- as.matrix(data)
 cluster_counts7 <- Matrix(cluster_counts7, sparse = FALSE)
 
 #############REGRESSOUT FIN
 # concatenate counts data for all three clusters
 cluster_counts_all <- do.call(cbind, list(cluster_counts5, cluster_counts6, cluster_counts7))
+
+#save data for ana
+write.csv(cluster_counts_all, "./counts.csv", row.names=TRUE)
+write.csv(cluster_metadata_all, "./meta.csv", row.names=TRUE)
+
 # scale the values in the matrix to be from 0 to 1
 scaled_mat <- apply(cluster_counts_all, 2, function(x) (x - min(x)) / (max(x) - min(x)))
 
