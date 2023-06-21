@@ -392,6 +392,20 @@ print(highly_sig_genes_23)
 
 highly_sig_genes <- c(highly_sig_genes_12, highly_sig_genes_23)
 
+##save data
+# Write combined_lines to a .txt file
+writeLines(highly_sig_genes_12, "./results/DE/st/5vs6.txt")
+writeLines(highly_sig_genes_13, "./results/DE/st/5vs7.txt")
+writeLines(highly_sig_genes_23, "./results/DE/st/6vs7.txt")
+
+#spatial plots
+color <- brewer.pal(11,"Spectral")
+color <- rev(color)
+
+pdf(file.path("./results/DE/st/Ighj4_all.pdf"))
+FeatureOverlay(all, features = "Ighj4",sampleids = 1:6, ncols = 2,pt.size = 0.7,cols = color)
+dev.off()
+
 gene_expression <- b@assays$RNA@counts[highly_sig_genes, ]
 # Scale the data
 scaled_data <- scale(t(gene_expression))
@@ -411,9 +425,13 @@ dev.off()
 library(clusterProfiler)
 library(org.Mm.eg.db)
 
-genes_12 <- diff_exp_results_12[diff_exp_results_12$p_val_adj < 0.05 & abs(diff_exp_results_12$avg_log2FC) > 0.5,]
-genes_13 <- diff_exp_results_13[diff_exp_results_13$p_val_adj < 0.05 & abs(diff_exp_results_13$avg_log2FC) > 0.5,]
-genes_23 <- diff_exp_results_23[diff_exp_results_23$p_val_adj < 0.05 & abs(diff_exp_results_23$avg_log2FC) > 0.5,]
+##foldchange decreciente!!!
+##no filtrar por pvalue
+##lista de patways enriqucidos
+
+genes_12 <- diff_exp_results_12[diff_exp_results_12$p_val_adj < 0.05 & abs(diff_exp_results_12$avg_log2FC) > 1.5,]
+genes_13 <- diff_exp_results_13[diff_exp_results_13$p_val_adj < 0.05 & abs(diff_exp_results_13$avg_log2FC) > 1.5,]
+genes_23 <- diff_exp_results_23[diff_exp_results_23$p_val_adj < 0.05 & abs(diff_exp_results_23$avg_log2FC) > 1.5,]
 
 
 genes_12 = bitr(rownames(genes_12), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
@@ -434,21 +452,78 @@ dev.off()
                  
 ####GO analysis FIN
 
-##save data
-# Write combined_lines to a .txt file
-writeLines(highly_sig_genes_12, "./results/DE/st/5vs6.txt")
-writeLines(highly_sig_genes_13, "./results/DE/st/5vs7.txt")
-writeLines(highly_sig_genes_23, "./results/DE/st/6vs7.txt")
+library(clusterProfiler)
+library(org.Mm.eg.db)
 
-#spatial plots
-color <- brewer.pal(11,"Spectral")
-color <- rev(color)
-
-pdf(file.path("./results/DE/st/Tmsb4x.pdf"))
-FeatureOverlay(b, features = "Tmsb4x",sampleids = 1:6, ncols = 2,pt.size = 0.7,cols = color)
-dev.off()
-
+group5vs6 <- diff_exp_results_12
+group5vs6 <- group5vs6[order(group5vs6$avg_log2FC, decreasing = TRUE),]
+group5vs6_ = bitr(rownames(group5vs6), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+group5vs7 <-diff_exp_results_13
+group5vs7 <- group5vs7[order(group5vs7$avg_log2FC, decreasing = TRUE),]
+group5vs7_ = bitr(rownames(group5vs7), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+group6vs7 <-diff_exp_results_23
+group6vs7 <- group6vs7[order(group6vs7$avg_log2FC, decreasing = TRUE),]
+group6vs7_ = bitr(rownames(group6vs7), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
 
 
+# list of Seurat DE results
+listSeuratDE <- list("group5vs6" = group5vs6_$ENTREZID,
+                 "group5vs7" = group5vs7_$ENTREZID,
+                 "group6vs7" = group6vs7_$ENTREZID)
 
+# Assuming 'df' is one of your differential expression result data frames
+group6vs7_prueba <- df[order(df$log2FoldChange, decreasing = TRUE),]
+
+# Create a named numeric vector
+geneList <- df$log2FoldChange
+names(geneList) <- df$ENTREZID
+
+
+GOclusterplot <- compareCluster(geneCluster = listSeuratDE, fun = "enrichGO", OrgDb = "org.Mm.eg.db",)
+GOenrichment <- compareCluster(listSeuratDE, fun = "gseGO",OrgDb = org.Mm.eg.db, keyType = "ENTREZID")
+KEGGenrichment <- compareCluster(listSeuratDE, fun = "gseKEGG", organism = "mmu")
+
+
+listSeuratDE <- list(group5vs6, group5vs7, group6vs7)  
+listDiffExprFilter <- list()
+orderGenes <- list()
+
+for (i in 1:length(listSeuratDE)){
+  # Add ENTREZ id
+  listSeuratDE[[i]]$ENTREZ <- mapIds(x=org.Mm.eg.db, column = "ENTREZID", 
+                                     key = rownames(listSeuratDE[[i]]), keytype = "SYMBOL")
+  
+  # Filter and order by avg_log2FC
+  listDiffExprFilter[[i]] <- listSeuratDE[[i]][order(listSeuratDE[[i]]$avg_log2FC, decreasing = T),]
+  
+  # Filter out rows with NA in avg_log2FC or ENTREZ
+  listDiffExprFilter[[i]] <- listDiffExprFilter[[i]][!(is.na(listDiffExprFilter[[i]]$avg_log2FC)) | !is.na(listDiffExprFilter[[i]]$ENTREZ),] 
+  
+  # Store the ordered avg_log2FC values with their corresponding ENTREZ ids
+  orderGenes[[i]] <- listDiffExprFilter[[i]]$avg_log2FC
+  names(orderGenes[[i]]) <- listDiffExprFilter[[i]]$ENTREZ
+  
+}
+
+names(orderGenes) <- paste0("Cluster", 1:length(orderGenes))
+
+GOenrichment <- compareCluster(orderGenes, fun = "gseGO",OrgDb = org.Mm.eg.db, keyType = "ENTREZID")
+ck <- setReadable(GOenrichment, OrgDb = org.Mm.eg.db, keyType="ENTREZID")
+dotplot(GOenrichment, showCategory=5) + ggtitle("dotplot for GSEA")
+dotplot(ck)
+
+KEGGenrichment <- compareCluster(orderGenes, fun = "gseKEGG", organism = "mmu")
+
+source("./PlotTools_Dani.R")
+## plot_Dani is a dot plot showing only the top pathways for each comparison
+plot_Dani(GOenrichment)
+plot_Dani(KEGGenrichment)
+### plot_heatmpaGSEA_Dani is a heatmap plot showing all the enriched pathway for each comparison
+plot_heatmapGSEA_Dani(GOenrichment)
+plot_heatmapGSEA_Dani(KEGGenrichment)
+
+require(DOSE)
+dotplot(gse, showCategory=10, split=".sign") + facet_grid(.~.sign)
+
+head(listSeuratDE[[1]])
 
