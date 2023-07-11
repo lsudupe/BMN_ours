@@ -78,8 +78,10 @@ names(objects) <- name
 ## separate list
 list2env(objects,envir=.GlobalEnv)
 
-prueba <- c(`BM_human_AP-B00182_`, `BM_human_AP-B02149_`,`BM_human_AP-B08041_`,`BM_human_AP-B08805`, se)
-names(prueba) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805","se")
+prueba <- c(`BM_human_AP-B00182_`, `BM_human_AP-B02149_`,`BM_human_AP-B08041_`,`BM_human_AP-B08805`,
+            `BM_B000943`,`BM_B01320`,`BM_B02817`,`BM_B10395`)
+names(prueba) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805",
+                   "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395")
 
 
 ###Enrichment score
