@@ -9,6 +9,9 @@ library(Signac)
 library(RColorBrewer)
 library(STutility)
 library(UCell)
+library(readr)
+library(dplyr)
+library(tibble)
 
 # Read data, human sample
 #Variables---------------------------------
@@ -62,6 +65,7 @@ st.object <- GetStaffli(se)
 st.object
 se <- LoadImages(se, time.resolve = FALSE)
 saveRDS(se, "./objects/sp/integrated/se_human.rds")
+se <- readRDS("./objects/sp/integrated/se_human.rds")
 
 ##divide by sample
 Idents(object = se) <- "name"
@@ -77,6 +81,35 @@ for (i in name){
 names(objects) <- name
 ## separate list
 list2env(objects,envir=.GlobalEnv)
+
+#####change some of the objects
+df2 <- `BM_human_AP-B08041_`@meta.data
+df <-  read_csv("./data/data/BM_human_AP-B08041_/spatial/on_tissue.csv")
+# Replace NA in the 'on_tissue' column with 'off'
+df$on_tissue[is.na(df$on_tissue)] <- "off"
+# Convert rownames to a column 
+df <- df %>%
+  rownames_to_column(var = "index")
+df$index <- df$Barcode
+# Add "_7" to each index in df
+df$index <- paste(df$index, "_7", sep = "")
+# Suppose df2 is your second data frame
+# Convert rownames to a column in df2
+df2 <- df2 %>%
+  rownames_to_column(var = "index")
+# Add 'on_tissue' column to df2 based on index match and in the order of df2
+df2 <- df2 %>%
+  left_join(df[, c("index", "on_tissue")], by = "index") %>%
+  filter(!is.na(on_tissue))
+# In case you have NAs in df2 for 'on_tissue', replace them with 'off'
+df2$on_tissue[is.na(df2$on_tissue)] <- "off"
+df2 <- column_to_rownames(df2, var = "index")
+`BM_human_AP-B08041_`@meta.data <- df2
+#subset
+Idents(object = `BM_human_AP-B08041_`) <- `BM_human_AP-B08041_`@meta.data[["on_tissue"]]
+`BM_human_AP-B08041_` <- SubsetSTData(object = `BM_human_AP-B08041_`, ident = c("on"))
+
+#####fin
 
 prueba <- c(`BM_human_AP-B00182_`, `BM_human_AP-B02149_`,`BM_human_AP-B08041_`,`BM_human_AP-B08805`,
             `BM_B000943`,`BM_B01320`,`BM_B02817`,`BM_B10395`)
