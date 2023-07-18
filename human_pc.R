@@ -74,6 +74,7 @@ objects <- c()
 
 for (i in name){
   a <- SubsetSTData(se, idents = i)
+  a <- SCTransform(a)
   ## add object to list
   objects[[length(objects) + 1]] <- a
   
@@ -112,12 +113,13 @@ Idents(object = `BM_human_AP-B08041_`) <- `BM_human_AP-B08041_`@meta.data[["on_t
 #####fin
 
 prueba <- c(`BM_human_AP-B00182_`, `BM_human_AP-B02149_`,`BM_human_AP-B08041_`,`BM_human_AP-B08805`,
-            `BM_B000943`,`BM_B01320`,`BM_B02817`,`BM_B10395`)
+            `BM_B000943`,`BM_B01320`,`BM_B02817`,`BM_B10395`, se)
 names(prueba) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805",
-                   "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395")
+                   "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395", "se")
 
 
 ###Enrichment score
+post <- c()
 for (i in 1:length(prueba)){
   a <- prueba[[i]]
   b <- names(prueba[i])
@@ -136,4 +138,20 @@ for (i in 1:length(prueba)){
   print(p)
   dev.off()
   
+  post[[length(post) + 1]] <- a
 }
+
+names(post) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805",
+                   "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395", "se")
+se <- post[["se"]]
+
+p <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 1:8, ncols = 2, pt.size = 0.3, 
+                    value.scale = "all" ,cols = color)
+
+pdf(paste("./results/human/pc_enrich/se_pc.pdf",sep=""))
+print(p)
+dev.off()
+
+
+
+
