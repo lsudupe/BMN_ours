@@ -10,6 +10,7 @@ library(dplyr)
 library(UCell)
 library(tidyr)
 library(RColorBrewer)
+library(tidyverse)
 
 #Data---------------------------------
 all <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
@@ -74,6 +75,40 @@ for (i in tcells8){
   print(plot)
   dev.off()
   
+  Idents(object = all) <- "clustering"
+  plot <- VlnPlot(object = all, features = i)
+  
+  pdf(paste("./results/tcells/mouse/", i,"_tcell_violin_ALL.pdf",sep=""), width = 10, height = 7)
+  print(plot)
+  dev.off()
+  
+  #boxplot
+  # Fetch data for the current feature
+  data <- FetchData(all, vars = i)
+  
+  # Add cluster identities to the data
+  data$cluster <- all@meta.data[["clustering"]]
+  
+  # Convert to long format data frame for ggplot
+  data_long <- data %>% pivot_longer(cols = starts_with(i),
+                                     names_to = "Feature",
+                                     values_to = "Expression") %>% 
+    filter(Expression != 0)
+  
+  # Plot boxplot using ggplot2
+  p <- ggplot(data_long, aes(x = cluster, y = Expression, fill = cluster)) + 
+    geom_boxplot() +
+    labs(title = i) +
+    theme_minimal() +
+    xlab("Cluster") +
+    ylab("Expression Level")
+
+  pdf(paste("./results/tcells/mouse/", i,"_tcell_boxplot.pdf",sep=""), width = 10, height = 7)
+  print(p)
+  dev.off()
+  
 }
 
+Idents(object = all) <- "clustering"
+VlnPlot(object = all, features = c("Cd4"))
 
