@@ -7,6 +7,7 @@ library(Seurat)
 library(tidyverse)
 library(STutility)
 library(UCell)
+library(RColorBrewer)
 
 # Data
 se <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
@@ -93,6 +94,12 @@ dormant <- c("C1qa", "Aif1" ,"Axl" , "Mpeg1", "H2-Eb1",
              "Anxa2" ,"Rgs2" ,"Tmed3" ,"Igll1", "Hpgd", "Glipr1", "Cd4" ,"Cd84" ,"Gbp2", "AB124611", "Slc44a2" ,
              "Samd9l" ,"Oas1g" ,"Fcgr1", "Pla2g15", "Tifa" ,"Pmp22", "Abcc3" ,"S100a10")
 
+candidate <- c("Pdcd1", "Ctla4", "Tnfrsf9", "Havcr2", "Tox", "Tigit", "Wars", "Rsad2",
+               "Mcm7", "Mx1", "Ndfip2", "Enosf1", "Ccdc141", "Stmn1", "Ttn", "Faslg",
+               "Mcm5", "Nab1", "Phlda1", "Mcm3", "Pcna", "Gapdh", "Oasl", "Ifi44l",
+               "Tbc1d4", "Slc43a3", "Pam", "Ccl3", "Acp5", "Oas3", "Cd38", "Tnfs10",
+               "Gbp2", "Kif20b", "Ctsb")
+
 library(RColorBrewer)
 color <- brewer.pal(12,"Spectral")
 color <- rev(color)
@@ -128,6 +135,10 @@ for (i in 1:length(objects)){
   pdf(paste("./results/pc_clusters/", b,"_spatial_Ucell_residuals.pdf",sep=""))
   print(p)
   dev.off()
+  
+  ####add Tcell exhausted signature
+  vector<- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(candidate))
+  a@meta.data[["signature_1_candidate"]] <- as.vector(vector)
   
   ## add object to list
   new[[length(new) + 1]] <- a
@@ -325,6 +336,15 @@ for (i in 1:length(normal)){
   print(plot)
   dev.off()
   
+  
+  #########Each cluster plots
+  p <- ST.FeaturePlot(a, features = "pc_clusters",   ncol =3,
+                      split.labels = T, pt.size = 0.3) & theme(plot.title = element_blank(), strip.text = element_blank())
+  
+  pdf(paste("./results/pc_clusters/all/", b,"_each_cluster.pdf",sep=""))
+  print(p)
+  dev.off()
+  
 }
 
 subsets <- c(M1_subset,M2_subset, M8_subset, M9_subset)
@@ -470,10 +490,23 @@ for (i in 1:length(subsets)){
   print(plot)
   dev.off()
   
+  
+  #########Each cluster plots
+  p <- ST.FeaturePlot(a, features = "pc_clusters",  ncol =3,
+                       split.labels = T, pt.size = 0.3) & theme(plot.title = element_blank(), strip.text = element_blank())
+  
+  pdf(paste("./results/pc_clusters/", b,"_each_cluster.pdf",sep=""))
+  print(p)
+  dev.off()
+  
 }
 
 
 #######PLAY WITH THE METADATA FIN
+
+###each cluster plot
+
+
 
 #subset individual
 M8_s@meta.data[["pc_clusters"]] <- as.factor(M8_s@meta.data[["pc_clusters"]])
