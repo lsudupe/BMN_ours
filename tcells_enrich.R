@@ -11,6 +11,7 @@ library(UCell)
 library(tidyr)
 library(RColorBrewer)
 library(tidyverse)
+library(hrbrthemes)
 
 #Data---------------------------------
 all <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
@@ -54,6 +55,22 @@ plot <- VlnPlot(object = all, features = "signature_1_candidate")
 pdf(paste("./results/tcells/mouse/candidate_violin.pdf",sep=""), width = 10, height = 7)
 print(plot)
 dev.off()
+
+
+###Tcells
+plot <- VlnPlot(all, "Tcell", group.by = "name", split.by = "clustering") +
+  geom_boxplot()
+
+pdf(paste("./results/tcells/mouse/Tcell_violin_bysample.pdf",sep=""), width = 10, height = 7)
+print(plot)
+dev.off()
+
+###scater plot
+df <- all@meta.data
+ggplot(df, aes(x=signature_1_candidate, y=MM_MIC, color=clustering)) + 
+  geom_point(size=0.5) +
+  geom_smooth(method=lm , color="red") +
+  theme_ipsum()
 
 plot <- VlnPlot(all, "signature_1_candidate", group.by = "clustering", split.by = "clustering") +
   geom_boxplot()
