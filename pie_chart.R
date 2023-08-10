@@ -6,6 +6,7 @@
 library(Seurat)
 library(ggplot2)
 library(STutility)
+library(RColorBrewer)
 library(tidyverse)
 
 #Data---------------------------------
@@ -77,6 +78,7 @@ plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
 pdf(file.path("./results/ST/gradient/cell_types_per_cluster_20percent_color.pdf"))
 print(plot)
 dev.off()
+
 
 # Separate the dataframe by sample
 df_list <- split(df_rescaled, df_rescaled$sample)
@@ -178,4 +180,66 @@ print(FeatureOverlay(y, features = c("heterogeneity"), sampleids = 1:6,pt.size =
 dev.off()
 
 
+## SEPARATED BY CONDITION
+#separate the data HEALTHY AND MM
+x <- se
+Idents(object = x) <- x@meta.data[["condition"]]
+control <- SubsetSTData(object =x , ident = c("control"))
+MM <- SubsetSTData(object =x , ident = c("MM"))
+
+x <- MM
+###coordinates
+coor <- x@tools[["Staffli"]]@meta.data
+##replace all values below 10% with 0
+meta <- x@meta.data
+a <- meta[,12:18]
+a["cluster"] <- as.vector(x@meta.data[["clustering"]])
+df <- a
+############ Filter values below whatever
+# Calculate the 75th percentile threshold for each row
+#thresholds <- apply(df[, -ncol(df)], 1, function(x) quantile(x, 0.75))
+# Filter values below the 75th percentile threshold for each row
+#df_filtered <- df %>%
+# mutate(across(-cluster, ~ifelse(. < thresholds[row_number()], 0, .)))
+df["x_coord"] <- as.vector(coor$x) 
+df["y_coord"] <- as.vector(coor$y) 
+df["sample"] <- as.vector(meta$name) 
+# Filter values below the 15% threshold for each row
+df_filtered <- df %>%
+  mutate(across(-c(cluster, x_coord, y_coord, sample), ~ifelse(. < 0.20, 0, .)))
+# Rescale non-zero values in each row to sum up to 1 and overwrite the original values
+df_rescaled <- df_filtered %>%
+  rowwise() %>%
+  mutate(across(-c(cluster, x_coord, y_coord, sample), 
+                ~ifelse(. != 0, . / sum(c_across(-c(cluster, x_coord, y_coord, sample))[c_across(-c(cluster, x_coord, y_coord, sample)) != 0]), 0))) %>%
+  ungroup()
+# Reshape the data frame to a long format for plotting
+df_new <- df_rescaled
+df_new$x_coord <- NULL
+df_new$y_coord <- NULL
+df_new$sample <- NULL
+df_long <- df_new %>%
+  pivot_longer(cols = -cluster,
+               names_to = "cell_type",
+               values_to = "percentage") %>%
+  filter(percentage > 0)
+##color
+cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
+cell_type_colors <- brewer.pal(length(cells_order), "RdBu")
+cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#b2182b" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
+cell_type_color_map <- setNames(cell_type_colors, cells_order)
+
+# Create a plot to visualize the number of major cell types driving each cluster
+plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
+  geom_count(aes(size = ..n..)) +
+  labs(title = "Major Cell Types Driving Each Cluster",
+       x = "Cluster",
+       y = "Cell Type",
+       size = "Count") +
+  theme_minimal() +
+  scale_color_manual(name = "Cell Type", values = cell_type_color_map)
+# Print the plot
+pdf(file.path("./results/ST/gradient/cell_types_per_cluster_mm.pdf"))
+print(plot)
+dev.off()
 
