@@ -56,6 +56,41 @@ pdf(paste("./results/tcells/mouse/candidate_violin.pdf",sep=""), width = 10, hei
 print(plot)
 dev.off()
 
+##Regressout Tcell value
+## Regress out FB values
+meta <- all@meta.data
+lm <- lm(meta$signature_1_candidate ~ meta$Tcell, data =meta)
+residuals <- lm$residuals
+all@meta.data[["residuals_exhausted"]] <- residuals
+
+p <- FeatureOverlay(all, features = c("residuals_exhausted"),sampleids = 1:6, ncols = 2, pt.size = 0.7, 
+                    value.scale = "all" ,cols = color)
+
+pdf(paste("./results/tcells/mouse/residuals_exhausted_all.pdf",sep=""))
+print(p)
+dev.off()
+
+Idents(object = all) <- "clustering"
+plot <- VlnPlot(object = all, features = "residuals_exhausted")
+
+pdf(paste("./results/tcells/mouse/residuals_exhausted_violin.pdf",sep=""), width = 10, height = 7)
+print(plot)
+dev.off()
+
+plot <- VlnPlot(all, "residuals_exhausted", group.by = "name", split.by = "clustering") +
+  geom_boxplot()
+
+pdf(paste("./results/tcells/mouse/residuals_exhausted_violin_bysample.pdf",sep=""), width = 10, height = 7)
+print(plot)
+dev.off()
+
+plot <- VlnPlot(all, "residuals_exhausted", group.by = "clustering", split.by = "clustering") +
+  geom_boxplot()
+
+pdf(paste("./results/tcells/mouse/residuals_exhausted_violin_allbox.pdf",sep=""), width = 10, height = 7)
+print(plot)
+dev.off()
+
 
 ###Tcells
 plot <- VlnPlot(all, "Tcell", group.by = "name", split.by = "clustering") +
