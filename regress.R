@@ -87,27 +87,31 @@ x@assays[["regress_monocytes"]] <- regress
 x@assays$regress_monocytes@key <- "regress_monocytes_"
 ###REGRESS OUT monocytes FIN
 
+##extract m8
+#M1
+Idents(object = x) <- x@meta.data[["name"]]
+m8 <- SubsetSTData(object = x, ident = c("M8_F2_1C"))
 
 ##plotting
-DefaultAssay(x) <- "SCT"
-p <- VlnPlot(x, features = c("Mmp9"), group.by = "clustering")
+DefaultAssay(m8) <- "SCT"
+p <- VlnPlot(m8, features = c("Mmp9"), group.by = "clustering")
 pdf(paste("./results/regress/violin_Mmp9_normal.pdf",sep=""))
 print(p)
 dev.off()
 
-p <- VlnPlot(x, features = c("Cd44"), group.by = "clustering")
+p <- VlnPlot(m8, features = c("Cd44"), group.by = "clustering")
 pdf(paste("./results/regress/violin_Cd44_normal.pdf",sep=""))
 print(p)
 dev.off()
 
-DefaultAssay(x) <- "regress_pc"
-p <- VlnPlot(x, features = c("Cd44"), group.by = "clustering")
+DefaultAssay(m8) <- "regress_pc"
+p <- VlnPlot(m8, features = c("Cd44"), group.by = "clustering")
 pdf(paste("./results/regress/violin_Cd44_regress.pdf",sep=""))
 print(p)
 dev.off()
 
-DefaultAssay(x) <- "regress_monocytes"
-p <- VlnPlot(x, features = c("Mmp9"), group.by = "clustering")
+DefaultAssay(m8) <- "regress_monocytes"
+p <- VlnPlot(m8, features = c("Mmp9"), group.by = "clustering")
 pdf(paste("./results/regress/violin_Mmp9_regress.pdf",sep=""))
 print(p)
 dev.off()
