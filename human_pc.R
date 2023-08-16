@@ -24,7 +24,12 @@ human_tcell_exhausted <- c("Pdcd1", "Ctla4", "Tnfrsf9", "Havcr2", "Tox", "Tigit"
                             "Tbc1d4", "Slc43a3", "Pam", "Ccl3", "Acp5", "Oas3", "Cd38", "Tnfsf10",
                              "Gbp2", "Kif20b", "Ctsb")
 
-neutro <- c
+neutro <- c(c("Rpl11", "Nbpf10", "Hist2h2aa3", "Hist2h2ac", "Rps27", "Zc3h11a", "Rps27a", "Nbeal1", 
+              "Rpl32", "Rpl34", "Matr3", "Rbm27", "Rps14", "Rack1", "Sox4", "Hist1h1c", "Hist1h4c", 
+              "Hist1h1e", "Hist1h1d", "Hist1h2bk", "Hist1h2aj", "Hist1h2am", "Rps18", "Eef1a1", 
+              "Npy", "Polr2j3", "C7orf55-luc7l2", "Rpl10", "Defa4", "Ms4a3", "Malat1", "Atp5mg", 
+              "Rpl41", "Hnrnpa1l2", "Rnase3", "Ctsg", "Cox16", "B2m", "Rplp1", "Rps15a", "Aldoa",
+              "Rpl13", "Eif4a1", "Nme1-nme2", "Mpo", "Serpinb10", "Atp5f1e", "Azu1", "Prtn3", "Elane"))
 
 #Variables---------------------------------
 DIR_ROOT <- file.path(getwd())
