@@ -94,6 +94,7 @@ group_of_interest <- "neutro"
 # Find markers for that specific group compared to all other cells
 markers <- FindMarkers(harmony, ident.1 = group_of_interest)
 
+markers$genes <- rownames(markers)
 # Extract the top 100 genes (sorted by adjusted p-value)
 top_genes <- head(markers, 50)$gene
 
