@@ -11,25 +11,20 @@ library(STutility)
 library(UCell)
 library(readr)
 library(dplyr)
+library(gridExtra)
 library(tibble)
-
-# Read data, human sample
-#Variables---------------------------------
-pc_mm <- readRDS("./data/single-cell/human/pc_mm/MM_multiome_list.rds")
-
-# Extract the gene list from the Seurat object
-seurat_genes <- rownames(pc_mm[["MM3"]]@assays$RNA@counts)
 
 #pc_markers
 pc_mm_markers <- c("SHH", "DHH", "IHH", "PTCH1", "PTCH2", "SMO", "SUFU", "GLI1", 
                    "GLI2", "GLI3", "CD19", "CD44", "CXCR4", "KLF4", "CD28", "CD33", "CD27")
 
-#CD45,CD56,CD117
-# Check which genes_to_check are in seurat_genes
-genes_present <- pc_mm_markers %in% seurat_genes
+human_tcell_exhausted <- c("Pdcd1", "Ctla4", "Tnfrsf9", "Havcr2", "Tox", "Tigit", "Wars", "Rsad2",
+                           "Mcm7", "Mx1", "Ndfip2", "Enosf1", "Ccdc141", "Stmn1", "Ttn", "Faslg",
+                            "Mcm5", "Nab1", "Phlda1", "Mcm3", "Pcna", "Gapdh", "Oasl", "Ifi44l",
+                            "Tbc1d4", "Slc43a3", "Pam", "Ccl3", "Acp5", "Oas3", "Cd38", "Tnfsf10",
+                             "Gbp2", "Kif20b", "Ctsb")
 
-# Print out the results
-print(genes_present)
+neutro <- c
 
 #Variables---------------------------------
 DIR_ROOT <- file.path(getwd())
@@ -124,7 +119,7 @@ for (i in 1:length(prueba)){
   a <- prueba[[i]]
   b <- names(prueba[i])
   
-  ## Add UCellScore
+  ## Add UCellScore PC
   vector<- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(pc_mm_markers))
   a@meta.data[["signature_1_pc"]] <- as.vector(vector)
   
@@ -138,6 +133,28 @@ for (i in 1:length(prueba)){
   print(p)
   dev.off()
   
+  ## Add UCellScore neutro
+  #vector<- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(neutro))
+  #a@meta.data[["signature_1_neutro"]] <- as.vector(vector)
+  
+  #p <- FeatureOverlay(a, features = c("signature_1_neutro"), ncols = 1, pt.size = 1.5, 
+                     # value.scale = "all" ,cols = color)
+  
+  #pdf(paste("./results/human/neutro_enrich/", b,"_pc.pdf",sep=""))
+  #print(p)
+  #dev.off()
+  
+  ## Add UCellScore Tcell
+  vector<- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(human_tcell_exhausted))
+  a@meta.data[["signature_1_tcell_ex"]] <- as.vector(vector)
+  
+  p <- FeatureOverlay(a, features = c("signature_1_tcell_ex"), ncols = 1, pt.size = 1.5, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/human/tcell_ex_enrich/", b,"_tcell_ex.pdf",sep=""))
+  print(p)
+  dev.off()
+  
   post[[length(post) + 1]] <- a
 }
 
@@ -145,12 +162,97 @@ names(post) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B080
                    "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395", "se")
 se <- post[["se"]]
 
-p <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 1:8, ncols = 2, pt.size = 0.3, 
-                    value.scale = "all" ,cols = color)
+color <- brewer.pal(11,"Spectral")
+color <- rev(color)
 
-pdf(paste("./results/human/pc_enrich/se_pc.pdf",sep=""))
+#pc
+
+a <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 1, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,0.25),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,0.25))
+b <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 2, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,0.25),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,0.25))
+c <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 3, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,0.25),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,0.25))
+d <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 4, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,0.25),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,0.25))
+f <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 5, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,0.25),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,0.25))
+g <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 6, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,0.25),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,0.25))
+h <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 7, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,0.25),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,0.25))
+i <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 8, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,0.25),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,0.25))
+
+
+
+pdf(paste("./results/human/pc_enrich/se_pc_1.pdf",sep=""))
+print(grid.arrange(a,b,c,d, ncol=2))
+dev.off()
+pdf(paste("./results/human/pc_enrich/se_pc_2.pdf",sep=""))
+print(grid.arrange(f,g,h,i, ncol=2))
+dev.off()
+
+#neutro
+FeatureOverlay(se, features = c("signature_1_neutro"), pt.size = 1) +
+  scale_fill_gradient(colours = color,
+                      breaks = c(0.0,2.5),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,2.5))
+
+pdf(paste("./results/human/neutro_enrich/se_neutro.pdf",sep=""))
 print(p)
 dev.off()
+
+#tcell
+FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 1:8, pt.size = 1) +
+  scale_fill_gradientn(colours = color,
+                      breaks = c(0.0,2.5),
+                      labels = c("Min", "Max"),
+                      limits = c(0.0,2.5))
+
+pdf(paste("./results/human/tcell_ex_enrich/se_tcell_ex.pdf",sep=""))
+print(p)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
