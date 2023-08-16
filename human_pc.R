@@ -139,15 +139,15 @@ for (i in 1:length(prueba)){
   dev.off()
   
   ## Add UCellScore neutro
-  #vector<- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(neutro))
-  #a@meta.data[["signature_1_neutro"]] <- as.vector(vector)
+  vector<- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(neutro))
+  a@meta.data[["signature_1_neutro"]] <- as.vector(vector)
   
-  #p <- FeatureOverlay(a, features = c("signature_1_neutro"), ncols = 1, pt.size = 1.5, 
-                     # value.scale = "all" ,cols = color)
+  p <- FeatureOverlay(a, features = c("signature_1_neutro"), ncols = 1, pt.size = 1.5, 
+                      value.scale = "all" ,cols = color)
   
-  #pdf(paste("./results/human/neutro_enrich/", b,"_pc.pdf",sep=""))
-  #print(p)
-  #dev.off()
+  pdf(paste("./results/human/neutro_enrich/", b,"_pc.pdf",sep=""))
+  print(p)
+  dev.off()
   
   ## Add UCellScore Tcell
   vector<- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(human_tcell_exhausted))
