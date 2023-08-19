@@ -88,11 +88,22 @@ harmony_i <- harmony %>%
 saveRDS(harmony_i, "./objects/sc/integrated/integrated_sc_human_harmony.rds")
 saveRDS(subset, "./objects/sc/integrated/single_cell_bonemarrow_human_all_groups_harmony.rds")
 
+harmony <- readRDS("./objects/sc/integrated/integrated_sc_human_harmony.rds")
+Seurat::Idents(object = harmony) <- harmony@meta.data[["orig.ident"]]
+
+# subsample
+# Randomly select a subset of cells
+num_cells <- 1000 # Number of cells you want to keep
+random_cells <- sample(Cells(harmony), num_cells)
+
+# Subset the Seurat object based on the randomly selected cells
+subset_obj <- subset(harmony, cells = random_cells)
+
 ###extract neutrophile marker genes
 group_of_interest <- "neutro"
 
 # Find markers for that specific group compared to all other cells
-markers <- FindMarkers(harmony, ident.1 = group_of_interest)
+markers <- FindMarkers(subset_obj, ident.1 = group_of_interest)
 
 markers$genes <- rownames(markers)
 # Extract the top 100 genes (sorted by adjusted p-value)
