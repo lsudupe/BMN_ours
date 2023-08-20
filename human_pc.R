@@ -321,14 +321,43 @@ dev.off()
 
 
 
-###Check interesting markers
+###Check interesting markers Cd81, Xbp1, Cd44, Mmp9
+genes <- c("CD81", "XBP1", "CD44", "MMP9")
+
+for (i in genes){
+  a <- i
+  p1 <- FeatureOverlay(se, features = i,sampleids = 1:4, ncols = 2, pt.size = 0.5, 
+                      value.scale = "all" ,cols = color)
+  p2 <- FeatureOverlay(se, features = i,sampleids = 5:8, ncols = 2, pt.size = 0.5, 
+                      value.scale = "all" ,cols = color)
+  
+  pdf(paste("./results/human/individual/", i,"_1.pdf",sep=""))
+  print(p1)
+  dev.off()
+  
+  pdf(paste("./results/human/individual/", i,"_2.pdf",sep=""))
+  print(p2)
+  dev.off()
 
 
+}
 
+#correlation plot
+# Create a scatter plot
+ggplot(se@meta.data, aes(x = signature_1_neutro, y = signature_1_pc)) +
+  geom_point() +
+  labs(title = "PC vs neutro",
+       x = "Signature Neutro",
+       y = "Signature PC") +
+  theme_minimal()
 
-
-
-
+# Create a scatter plot
+ggplot(se@meta.data, aes(x = signature_1_tcell_ex, y = signature_1_pc)) +
+  geom_point() +
+  labs(title = "PC vs Texhausted",
+       x = "Signature Texhausted",
+       y = "Signature PC") +
+  theme_minimal()
 
 
 
