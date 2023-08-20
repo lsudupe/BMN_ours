@@ -11,6 +11,7 @@ library(tidyverse)
 
 #Data---------------------------------
 se <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
+se <- readRDS("./objects/heterogeneity/healthy/se_hierarchical.rds")
 x <- se
 
 ###coordinates
@@ -34,6 +35,10 @@ df <- a
 df["x_coord"] <- as.vector(coor$x) 
 df["y_coord"] <- as.vector(coor$y) 
 df["sample"] <- as.vector(meta$name) 
+
+# Convert factor columns to numeric
+df <- df %>%
+  mutate(across(where(is.factor), as.numeric))
 
 # Filter values below the 15% threshold for each row
 df_filtered <- df %>%
@@ -72,9 +77,14 @@ plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
        y = "Cell Type",
        size = "Count") +
   theme_minimal() +
-  scale_color_manual(name = "Cell Type", values = cell_type_color_map)
+  scale_color_manual(name = "Cell Type", values = cell_type_color_map, limits = cells_order) +
+  scale_y_discrete(limits = rev(cells_order))
 
 # Print the plot
+#pdf(file.path("./results/ST/gradient/healthy/cell_types_per_cluster_20percent_color.pdf"))
+#print(plot)
+#dev.off()
+
 pdf(file.path("./results/ST/gradient/cell_types_per_cluster_20percent_color.pdf"))
 print(plot)
 dev.off()
