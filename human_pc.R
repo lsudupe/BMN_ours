@@ -18,18 +18,19 @@ library(tibble)
 pc_mm_markers <- c("SHH", "DHH", "IHH", "PTCH1", "PTCH2", "SMO", "SUFU", "GLI1", 
                    "GLI2", "GLI3", "CD19", "CD44", "CXCR4", "KLF4", "CD28", "CD33", "CD27")
 
-human_tcell_exhausted <- c("Pdcd1", "Ctla4", "Tnfrsf9", "Havcr2", "Tox", "Tigit", "Wars", "Rsad2",
-                           "Mcm7", "Mx1", "Ndfip2", "Enosf1", "Ccdc141", "Stmn1", "Ttn", "Faslg",
-                            "Mcm5", "Nab1", "Phlda1", "Mcm3", "Pcna", "Gapdh", "Oasl", "Ifi44l",
-                            "Tbc1d4", "Slc43a3", "Pam", "Ccl3", "Acp5", "Oas3", "Cd38", "Tnfsf10",
-                             "Gbp2", "Kif20b", "Ctsb")
+human_tcell_exhausted <- c("PDCD1", "CTLA4", "TNFRSF9", "HAVCR2", "TOX", "TIGIT", "WARS", "RSAD2",
+                           "MCM7", "MX1", "NDFIP2", "ENOSF1", "CCDC141", "STMN1", "TTN", "FASLG",
+                           "MCM5", "NAB1", "PHLDA1", "MCM3", "PCNA", "GAPDH", "OASL", "IFI44L",
+                           "TBC1D4", "SLC43A3", "PAM", "CCL3", "ACP5", "OAS3", "CD38", "TNFSF10",
+                           "GBP2", "KIF20B", "CTSB")
 
-neutro <- c(c("Rpl11", "Nbpf10", "Hist2h2aa3", "Hist2h2ac", "Rps27", "Zc3h11a", "Rps27a", "Nbeal1", 
-              "Rpl32", "Rpl34", "Matr3", "Rbm27", "Rps14", "Rack1", "Sox4", "Hist1h1c", "Hist1h4c", 
-              "Hist1h1e", "Hist1h1d", "Hist1h2bk", "Hist1h2aj", "Hist1h2am", "Rps18", "Eef1a1", 
-              "Npy", "Polr2j3", "C7orf55-luc7l2", "Rpl10", "Defa4", "Ms4a3", "Malat1", "Atp5mg", 
-              "Rpl41", "Hnrnpa1l2", "Rnase3", "Ctsg", "Cox16", "B2m", "Rplp1", "Rps15a", "Aldoa",
-              "Rpl13", "Eif4a1", "Nme1-nme2", "Mpo", "Serpinb10", "Atp5f1e", "Azu1", "Prtn3", "Elane"))
+neutro <- c("GNB2L1", "ATP5L", "C14ORF2", "ATP5E", "ATP5G2", "TMSB4X", "ATP5I", "MPO", "UQCR11.1",
+            "RPS4Y1", "C19ORF43", "TCEB2", "GLTSCR2", "GPX1", "ATP5D", "SOX4", "ATP5G3", "ATP5J",
+            "ATP5O", "HLA-DRA", "C6ORF48", "ATP5J2", "USMG5", "PRTN3", "SHFM1", "ATP5B", "DEK",
+            "ATP5A1", "MATR3", "TMEM66", "C11ORF31", "LAPTM5", "AZU1", "RPSAP58", "SF3B14",
+            "HLA-DPB1", "ELANE", "HMGB2", "HLA-DRB1", "ALDOA", "NME1-NME2", "AIF1", "SEPT7",
+            "RP11-620J15.3", "C14ORF166", "ATP5G1", "NHP2L1", "CD99", "ATPIF1", "LSMD1")
+
 
 #Variables---------------------------------
 DIR_ROOT <- file.path(getwd())
@@ -171,7 +172,6 @@ color <- brewer.pal(11,"Spectral")
 color <- rev(color)
 
 #pc
-
 a <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 1, pt.size = 0.5) +
   scale_fill_gradientn(colours = color,
                       breaks = c(0.0,0.25),
@@ -213,8 +213,6 @@ i <- FeatureOverlay(se, features = c("signature_1_pc"),sampleids = 8, pt.size = 
                       labels = c("Min", "Max"),
                       limits = c(0.0,0.25))
 
-
-
 pdf(paste("./results/human/pc_enrich/se_pc_1.pdf",sep=""))
 print(grid.arrange(a,b,c,d, ncol=2))
 dev.off()
@@ -223,26 +221,107 @@ print(grid.arrange(f,g,h,i, ncol=2))
 dev.off()
 
 #neutro
-FeatureOverlay(se, features = c("signature_1_neutro"), pt.size = 1) +
-  scale_fill_gradient(colours = color,
-                      breaks = c(0.0,2.5),
-                      labels = c("Min", "Max"),
-                      limits = c(0.0,2.5))
+a <- FeatureOverlay(se, features = c("signature_1_neutro"),sampleids = 1, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+b <- FeatureOverlay(se, features = c("signature_1_neutro"),sampleids = 2, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+c <- FeatureOverlay(se, features = c("signature_1_neutro"),sampleids = 3, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+d <- FeatureOverlay(se, features = c("signature_1_neutro"),sampleids = 4, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+f <- FeatureOverlay(se, features = c("signature_1_neutro"),sampleids = 5, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+g <- FeatureOverlay(se, features = c("signature_1_neutro"),sampleids = 6, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.25))
+h <- FeatureOverlay(se, features = c("signature_1_neutro"),sampleids = 7, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+i <- FeatureOverlay(se, features = c("signature_1_neutro"),sampleids = 8, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
 
-pdf(paste("./results/human/neutro_enrich/se_neutro.pdf",sep=""))
-print(p)
+pdf(paste("./results/human/neutro_enrich/se_neutro_1.pdf",sep=""))
+print(grid.arrange(a,b,c,d, ncol=2))
 dev.off()
+pdf(paste("./results/human/neutro_enrich/se_neutro_2.pdf",sep=""))
+print(grid.arrange(f,g,h,i, ncol=2))
+dev.off()
+
 
 #tcell
-FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 1:8, pt.size = 1) +
+a <- FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 1, pt.size = 0.5) +
   scale_fill_gradientn(colours = color,
-                      breaks = c(0.0,2.5),
-                      labels = c("Min", "Max"),
-                      limits = c(0.0,2.5))
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+b <- FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 2, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+c <- FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 3, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+d <- FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 4, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+f <- FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 5, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+g <- FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 6, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.25))
+h <- FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 7, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
+i <- FeatureOverlay(se, features = c("signature_1_tcell_ex"),sampleids = 8, pt.size = 0.5) +
+  scale_fill_gradientn(colours = color,
+                       breaks = c(0.0,0.2),
+                       labels = c("Min", "Max"),
+                       limits = c(0.0,0.2))
 
-pdf(paste("./results/human/tcell_ex_enrich/se_tcell_ex.pdf",sep=""))
-print(p)
+pdf(paste("./results/human/tcell_ex_enrich/se_tex_1.pdf",sep=""))
+print(grid.arrange(a,b,c,d, ncol=2))
 dev.off()
+pdf(paste("./results/human/tcell_ex_enrich/se_tex_2.pdf",sep=""))
+print(grid.arrange(f,g,h,i, ncol=2))
+dev.off()
+
+
+
+###Check interesting markers
 
 
 
