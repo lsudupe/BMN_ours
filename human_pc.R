@@ -326,10 +326,21 @@ genes <- c("CD81", "XBP1", "CD44", "MMP9")
 
 for (i in genes){
   a <- i
-  p1 <- FeatureOverlay(se, features = i,sampleids = 1:4, ncols = 2, pt.size = 0.5, 
-                      value.scale = "all" ,cols = color)
-  p2 <- FeatureOverlay(se, features = i,sampleids = 5:8, ncols = 2, pt.size = 0.5, 
-                      value.scale = "all" ,cols = color)
+  
+  color <- brewer.pal(11,"Spectral")
+  color <- rev(color)
+  
+  p1 <- FeatureOverlay(se, features = i,sampleids = 1:4, ncols = 2,pt.size = 0.5) +
+    scale_fill_gradientn(colours = color,
+                         breaks = c(0.0,40),
+                         labels = c("Min", "Max"),
+                         limits = c(0.0,40))
+  
+  p2 <- FeatureOverlay(se, features = i,sampleids = 5:8, ncols = 2, pt.size = 0.5) + 
+    scale_fill_gradientn(colours = color,
+                         breaks = c(0.0,40),
+                         labels = c("Min", "Max"),
+                         limits = c(0.0,40))
   
   pdf(paste("./results/human/individual/", i,"_1.pdf",sep=""))
   print(p1)
@@ -338,9 +349,22 @@ for (i in genes){
   pdf(paste("./results/human/individual/", i,"_2.pdf",sep=""))
   print(p2)
   dev.off()
-
-
+  
+  p3 <- FeatureOverlay(`BM_human_AP-B08041_`, features = i,pt.size = 1.3) + 
+    scale_fill_gradientn(colours = color,
+                         breaks = c(0.0,40),
+                         labels = c("Min", "Max"),
+                         limits = c(0.0,40))
+  pdf(paste("./results/human/individual/", i,"_B08041.pdf",sep=""))
+  print(p3)
+  dev.off()
 }
+
+VlnPlot(object = se, features = c('CD81', 'XBP1', 'CD44', 'MMP9'))
+
+pdf(paste("./results/human/individual/", i,"_B08041.pdf",sep=""))
+print(p3)
+dev.off()
 
 #correlation plot
 # Create a scatter plot
@@ -352,12 +376,50 @@ ggplot(se@meta.data, aes(x = signature_1_neutro, y = signature_1_pc)) +
   theme_minimal()
 
 # Create a scatter plot
-ggplot(se@meta.data, aes(x = signature_1_tcell_ex, y = signature_1_pc)) +
+ggplot(se@meta.data, aes(x = se@meta.data[["signature_1_neutro"]], y = se@meta.data[["signature_1_pc"]] , color = se@meta.data[["name"]]))  +
   geom_point() +
   labs(title = "PC vs Texhausted",
        x = "Signature Texhausted",
        y = "Signature PC") +
   theme_minimal()
+
+## Individual scatterplots
+## separate list
+list2env(post,envir=.GlobalEnv)
+
+scatter <- c(`BM_human_AP-B00182_`, `BM_human_AP-B02149_`,`BM_human_AP-B08041_`,`BM_human_AP-B08805`,
+            `BM_B000943`,`BM_B01320`,`BM_B02817`,`BM_B10395`)
+names(scatter) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805",
+                   "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395")
+
+###EScatter and correlation
+for (i in 1:length(scatter)){
+  a <- scatter[[i]]
+  b <- names(scatter[i])
+  
+  # Create a scatter plot
+  pdf(paste("./results/human/scatter/", b,".pdf",sep=""))
+  print(ggplot(a@meta.data, aes(x = signature_1_tcell_ex, y = signature_1_pc))  +
+    geom_point() +
+    labs(title = paste("PC vs Texhausted", b, sep=" "),
+         x = "Signature Texhausted",
+         y = "Signature PC") +
+    theme_minimal())
+  dev.off()
+  
+  # Extract enrichment scores for two genes (replace 'Gene1' and 'Gene2' with your genes of interest)
+  gene1_scores <- a@meta.data[["signature_1_pc"]]
+  gene2_scores <- a@meta.data[["signature_1_tcell_ex"]]
+  
+  # Compute Spearman's rank correlation
+  correlation_result <- cor(gene1_scores, gene2_scores, method="spearman")
+  
+  pdf(paste("./results/human/correlation/", b,"TexhaustedvsPC.pdf",sep=""))
+  print(correlation_result)
+  dev.off()
+  
+}
+
 
 
 
