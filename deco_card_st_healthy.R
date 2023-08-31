@@ -156,6 +156,11 @@ for (i in 1:length(objects)){
 }
 #######
 
+#cell type percentages
+percentages <- colSums(pro) / sum(pro) * 100
+percentages
+#cell type percentages fin 
+
 name <- c("M3_F_1C", "M3_fem_1C")
 names(o) <- name
 ## separate list
