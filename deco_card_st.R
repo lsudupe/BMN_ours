@@ -153,6 +153,11 @@ for (i in 1:length(objects)){
 }
 #######
 
+#cell type percentages
+percentages <- colSums(pro) / sum(pro) * 100
+percentages
+#cell type percentages fin 
+
 names(o) <- name
 ## separate list
 list2env(o,envir=.GlobalEnv)
