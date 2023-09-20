@@ -56,6 +56,7 @@ df_new <- df_rescaled
 df_new$x_coord <- NULL
 df_new$y_coord <- NULL
 df_new$sample <- NULL
+#df_new$clustering <- NULL
 
 df_long <- df_new %>%
   pivot_longer(cols = -cluster,
@@ -65,27 +66,40 @@ df_long <- df_new %>%
 
 ##color
 cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
+#cells_order <- c("Bcell", "DC", "Erythroblasts", "Monocytes","Neutrophils","Tcell")
 cell_type_colors <- brewer.pal(length(cells_order), "RdBu")
 cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#b2182b" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
+#cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
 cell_type_color_map <- setNames(cell_type_colors, cells_order)
 
 # Create a plot to visualize the number of major cell types driving each cluster
+
+scaling_factor <- 15
 plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
-  geom_count(aes(size = ..n..)) +
+  geom_count(aes(size = after_stat(n) * scaling_factor)) +
   labs(title = "Major Cell Types Driving Each Cluster",
        x = "Cluster",
        y = "Cell Type",
        size = "Count") +
   theme_minimal() +
+  scale_y_discrete(limits = rev(cells_order)) +
   scale_color_manual(name = "Cell Type", values = cell_type_color_map, limits = cells_order) +
-  scale_y_discrete(limits = rev(cells_order))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major = element_line(color = "grey80", size = 0.05),
+    panel.grid.minor = element_blank()#,
+    #panel.border = element_rect(colour = "black", fill = NA, size = 1.5)
+  ) 
 
+
+pdf_width <- 5.2  # in inches; adjust as needed
+pdf_height <- 4  # in inches; adjust as needed
 # Print the plot
-#pdf(file.path("./results/ST/gradient/healthy/cell_types_per_cluster_20percent_color.pdf"))
+#pdf(file.path("./results/ST/gradient/healthy/cell_types_per_cluster_20percent_color.pdf"), width = pdf_width, height = pdf_height)
 #print(plot)
 #dev.off()
 
-pdf(file.path("./results/ST/gradient/cell_types_per_cluster_20percent_color.pdf"))
+pdf(file.path("./results/ST/gradient/cell_types_per_cluster_20percent_color.pdf"), width = pdf_width, height = pdf_height)
 print(plot)
 dev.off()
 
