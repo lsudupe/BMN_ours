@@ -267,3 +267,9 @@ pdf(file.path("./results/ST/gradient/cell_types_per_cluster_mm.pdf"))
 print(plot)
 dev.off()
 
+##add some spatial
+pdf_width <- 4.7  # in inches; adjust as needed
+pdf_height <- 7.3 
+pdf(file.path("./results/prueba.pdf"), width = pdf_width, height = pdf_height)
+print(FeatureOverlay(x, features = "clustering", sampleids = 3:4, ncols = 1,pt.size = 0.8))
+dev.off()
