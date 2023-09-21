@@ -322,7 +322,7 @@ dev.off()
 
 
 ###Check interesting markers Cd81, Xbp1, Cd44, Mmp9
-genes <- c("CD81", "XBP1", "CD44", "MMP9")
+genes <- c("CD81", "XBP1", "CD44", "MMP9", "TNFRS17")
 
 for (i in genes){
   a <- i
@@ -360,7 +360,9 @@ for (i in genes){
   dev.off()
 }
 
-VlnPlot(object = se, features = c('CD81', 'XBP1', 'CD44', 'MMP9'))
+VlnPlot(object = se, features = c('CD81', 'XBP1', 'CD44', 'MMP9', "TNFRS17"))
+
+VlnPlot(object = se, features = c("BCM", "BCMA", "CD269", "TNFRSF13A", "TNFRSF17"))
 
 pdf(paste("./results/human/individual/", i,"_B08041.pdf",sep=""))
 print(p3)
@@ -420,15 +422,51 @@ for (i in 1:length(scatter)){
   
 }
 
+se <- NormalizeData(se)
+
+FeatureOverlay(se, features = c('XBP1', 'CD44', 'MMP9'),sampleids = 1, ncols = 2,pt.size = 0.5)
+se <- SCTransform(se, assay = "RNA", verbose = FALSE)
+VlnPlot(object = se, features = c('XBP1', 'CD44', 'MMP9'), group.by = "name")
 
 
+BM_B10395 <- prueba[["BM_B10395"]]
+FeatureOverlay(BM_B10395, features = c('XBP1', 'CD44', 'MMP9'), ncols = 2,pt.size = 0.5)
+
+###EScatter and correlation
+for (i in 1:length(prueba)){
+  a <- prueba[[i]]
+  b <- names(prueba[i])
+  a <- NormalizeData(a)
+  
+  # spatial
+  pdf(paste("./results/human/new_pc_genes/", b,"_spatial.pdf",sep=""))
+  print(FeatureOverlay(a, features = c('XBP1', 'CD44', 'MMP9'), ncols = 2,pt.size = 0.5))
+  dev.off()
+
+  # violin
+  pdf(paste("./results/human/new_pc_genes/", b,"_violin.pdf",sep=""))
+  print(VlnPlot(object = a, features = c('XBP1', 'CD44', 'MMP9')))
+  dev.off()
+}
+
+aaaa <- BM_B000943
+aaaa <- NormalizeData(aaaa)
 
 
+pdf("./results/human/new_pc_genes/prueba1.pdf")
+print(VlnPlot(object = `BM_human_AP-B08805`, features = c('XBP1', 'CD44', 'MMP9'), assay = "RNA"))
+dev.off()
 
+aaaa <- NormalizeData(`BM_human_AP-B08805`)
+pdf("./results/human/new_pc_genes/prueba1.1.pdf")
+print(VlnPlot(object = aaaa, features = c('XBP1', 'CD44', 'MMP9'), assay = "RNA"))
+dev.off()
 
+pdf("./results/human/new_pc_genes/prueba2.pdf")
+print(VlnPlot(object = `BM_human_AP-B08805`, features = c('XBP1', 'CD44', 'MMP9'), assay = "SCT"))
+dev.off()
 
-
-
-
-
-
+aaaa <- NormalizeData(se)
+pdf("./results/human/new_pc_genes/prueba3.pdf")
+print(VlnPlot(object = aaaa, features = c('XBP1', 'CD44', 'MMP9'), assay = "RNA"))
+dev.off()
