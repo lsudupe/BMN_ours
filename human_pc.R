@@ -449,24 +449,19 @@ for (i in 1:length(prueba)){
   dev.off()
 }
 
-aaaa <- BM_B000943
-aaaa <- NormalizeData(aaaa)
 
-
-pdf("./results/human/new_pc_genes/prueba1.pdf")
-print(VlnPlot(object = `BM_human_AP-B08805`, features = c('XBP1', 'CD44', 'MMP9'), assay = "RNA"))
-dev.off()
-
-aaaa <- NormalizeData(`BM_human_AP-B08805`)
-pdf("./results/human/new_pc_genes/prueba1.1.pdf")
-print(VlnPlot(object = aaaa, features = c('XBP1', 'CD44', 'MMP9'), assay = "RNA"))
-dev.off()
-
-pdf("./results/human/new_pc_genes/prueba2.pdf")
-print(VlnPlot(object = `BM_human_AP-B08805`, features = c('XBP1', 'CD44', 'MMP9'), assay = "SCT"))
-dev.off()
-
-aaaa <- NormalizeData(se)
-pdf("./results/human/new_pc_genes/prueba3.pdf")
-print(VlnPlot(object = aaaa, features = c('XBP1', 'CD44', 'MMP9'), assay = "RNA"))
-dev.off()
+# Iterate over each Seurat object in your list
+for (i in seq_along(prueba)) {
+  # Extract the current Seurat object
+  se <- prueba[[i]]
+  # Normalize the Seurat object
+  aaaa <- NormalizeData(se)
+  # Create a name for the PDF file based on the name of the Seurat object within the list
+  pdf_name <- paste0("./results/human/new_pc_genes/", names(prueba)[i], ".pdf")
+  # Open a PDF device to save the plot
+  pdf(pdf_name)
+  # Create and print the violin plot to the PDF device
+  print(VlnPlot(object = aaaa, features = c('XBP1', 'CD44', 'MMP9'), assay = "RNA"))
+  # Close the PDF device
+  dev.off()
+}
