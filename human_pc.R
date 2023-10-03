@@ -465,3 +465,5 @@ for (i in seq_along(prueba)) {
   # Close the PDF device
   dev.off()
 }
+
+saveRDS(se,"./objects/sp/human/human_combined.rds")
