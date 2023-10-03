@@ -125,7 +125,7 @@ combined_object <- lista[[1]]
 
 # Loop through the rest of the objects and merge them into the combined_object
 for (i in 2:length(lista)) {
-  combined_object <- merge(combined_object, y = lista[[i]])
+  combined_object <- MergeSTData(combined_object, lista[[i]])
 }
 
 #save
