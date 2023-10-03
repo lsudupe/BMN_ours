@@ -119,17 +119,9 @@ names(prueba) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B0
                    "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395", "se")
 lista <- prueba
 lista$se <- NULL
-# combine
-# Initialize with the first object
-combined_object <- lista[[1]]
-
-# Loop through the rest of the objects and merge them into the combined_object
-for (i in 2:length(lista)) {
-  combined_object <- MergeSTData(combined_object, lista[[i]])
-}
 
 #save
-saveRDS(combined_object,"./objects/sp/human/human_combined.rds")
+saveRDS(lista,"./objects/sp/human/human_combined.rds")
 
 ###Enrichment score
 post <- c()
