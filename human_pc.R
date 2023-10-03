@@ -117,7 +117,19 @@ prueba <- c(`BM_human_AP-B00182_`, `BM_human_AP-B02149_`,`BM_human_AP-B08041_`,`
             `BM_B000943`,`BM_B01320`,`BM_B02817`,`BM_B10395`, se)
 names(prueba) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805",
                    "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395", "se")
+lista <- prueba
+lista$se <- NULL
+# combine
+# Initialize with the first object
+combined_object <- lista[[1]]
 
+# Loop through the rest of the objects and merge them into the combined_object
+for (i in 2:length(lista)) {
+  combined_object <- merge(combined_object, y = lista[[i]])
+}
+
+#save
+saveRDS(combined_object,"./objects/sp/human/human_combined.rds")
 
 ###Enrichment score
 post <- c()
@@ -466,4 +478,4 @@ for (i in seq_along(prueba)) {
   dev.off()
 }
 
-saveRDS(se,"./objects/sp/human/human_combined.rds")
+
