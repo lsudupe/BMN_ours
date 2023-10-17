@@ -78,7 +78,59 @@ for (i in 1:length(lista)){
     print(p)
     dev.off()
   }
-
+  
+  ##ratio
+  enrich7 <- a@meta.data[["signature_1_cluster7"]]
+  enrich4 <- a@meta.data[["signature_1_cluster4"]]
+  enrich1 <- a@meta.data[["signature_1_cluster1"]]
+  
+  #ratio 1 vs 7
+  ratio_cluster1vs7 <- log10(enrich1/enrich7)
+  is.na(ratio_cluster1vs7) <-sapply(ratio_cluster1vs7, is.infinite)
+  ratio_cluster1vs7[is.na(ratio_cluster1vs7)] = 0
+  a$ratio_cluster1vs7 <- ratio_cluster1vs7
+  
+  #plot
+  bl <- colorRampPalette(c("navy","royalblue","lightskyblue"))(200)                      
+  re <- colorRampPalette(c("mistyrose", "red2","darkred"))(200)
+  
+  l <- c(min(a@meta.data[["ratio_cluster1vs7"]]), max(a@meta.data[["ratio_cluster1vs7"]]))
+  p1 <- SpatialFeaturePlot(a, features = c("ratio_cluster1vs7"), combine = FALSE, ncol = 2)
+  fix.p1 <- scale_fill_gradientn(colours=c(bl,"white", re),
+                                 breaks=b,
+                                 labels=c("Min","Max"),
+                                 na.value = "grey98",
+                                 limits = l)
+  p2 <- lapply(p1, function (x) x + fix.p1)
+  
+  pdf(paste0("./results/human/cluster_enrich/ratio/", b, "_", "ratio_cluster1vs7.pdf", sep = ""))
+  print(CombinePlots(p2))
+  dev.off()
+  
+  #ratio 4 vs 7
+  ratio_cluster4vs7 <- log10(enrich4/enrich7)
+  is.na(ratio_cluster4vs7) <-sapply(ratio_cluster4vs7, is.infinite)
+  ratio_cluster4vs7[is.na(ratio_cluster4vs7)] = 0
+  a$ratio_cluster4vs7 <- ratio_cluster4vs7
+  
+  #plot
+  bl <- colorRampPalette(c("navy","royalblue","lightskyblue"))(200)                      
+  re <- colorRampPalette(c("mistyrose", "red2","darkred"))(200)
+  
+  l <- c(min(a@meta.data[["ratio_cluster4vs7"]]), max(a@meta.data[["ratio_cluster4vs7"]]))
+  p1 <- SpatialFeaturePlot(a, features = c("ratio_cluster4vs7"), combine = FALSE, ncol = 2)
+  fix.p1 <- scale_fill_gradientn(colours=c(bl,"white", re),
+                                 breaks=b,
+                                 labels=c("Min","Max"),
+                                 na.value = "grey98",
+                                 limits = l)
+  p2 <- lapply(p1, function (x) x + fix.p1)
+  
+  pdf(paste0("./results/human/cluster_enrich/ratio/", b, "_", "ratio_cluster4vs7.pdf", sep = ""))
+  print(CombinePlots(p2))
+  dev.off()
+  
+  
   post[[length(post) + 1]] <- a
 }
 
