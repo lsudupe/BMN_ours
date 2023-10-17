@@ -58,7 +58,7 @@ for (i in 1:length(lista)){
     # Define the variable names dynamically based on the cluster_name
     signature_var <- paste0("signature_1_", cluster_name)
     
-    file_name <- paste0("./results/human/cluster_enrich/new/100/", b, "_", cluster_name, "_pc.pdf", sep = "")
+    file_name <- paste0("./results/human/cluster_enrich/new/25/", b, "_", cluster_name, "_pc.pdf", sep = "")
     
     # Add UCellScore for the current cluster
     vector <- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(get(cluster_name)))
@@ -95,16 +95,17 @@ for (i in 1:length(lista)){
   re <- colorRampPalette(c("mistyrose", "red2","darkred"))(200)
   
   l <- c(min(a@meta.data[["ratio_cluster1vs7"]]), max(a@meta.data[["ratio_cluster1vs7"]]))
-  p1 <- SpatialFeaturePlot(a, features = c("ratio_cluster1vs7"), combine = FALSE, ncol = 2)
+  p1 <- FeatureOverlay(a, features = c("ratio_cluster1vs7"), ncols = 2, pt.size = 1.1, 
+                       value.scale = "all" ,cols = color)
   fix.p1 <- scale_fill_gradientn(colours=c(bl,"white", re),
-                                 breaks=b,
+                                 breaks=l,
                                  labels=c("Min","Max"),
                                  na.value = "grey98",
                                  limits = l)
-  p2 <- lapply(p1, function (x) x + fix.p1)
+  p2 <- p1[[1]] + fix.p1
   
-  pdf(paste0("./results/human/cluster_enrich/ratio/", b, "_", "ratio_cluster1vs7.pdf", sep = ""))
-  print(CombinePlots(p2))
+  pdf(paste0("./results/human/cluster_enrich/25_ratio/", b, "_", "ratio_cluster1vs7.pdf", sep = ""))
+  print(p2)
   dev.off()
   
   #ratio 4 vs 7
@@ -118,16 +119,17 @@ for (i in 1:length(lista)){
   re <- colorRampPalette(c("mistyrose", "red2","darkred"))(200)
   
   l <- c(min(a@meta.data[["ratio_cluster4vs7"]]), max(a@meta.data[["ratio_cluster4vs7"]]))
-  p1 <- SpatialFeaturePlot(a, features = c("ratio_cluster4vs7"), combine = FALSE, ncol = 2)
+  p1 <- FeatureOverlay(a, features = c("ratio_cluster4vs7"), ncols = 2, pt.size = 1.1, 
+                           value.scale = "all" ,cols = color)
   fix.p1 <- scale_fill_gradientn(colours=c(bl,"white", re),
-                                 breaks=b,
+                                 breaks=l,
                                  labels=c("Min","Max"),
                                  na.value = "grey98",
                                  limits = l)
-  p2 <- lapply(p1, function (x) x + fix.p1)
+  p2 <- p1[[1]] + fix.p1
   
-  pdf(paste0("./results/human/cluster_enrich/ratio/", b, "_", "ratio_cluster4vs7.pdf", sep = ""))
-  print(CombinePlots(p2))
+  pdf(paste0("./results/human/cluster_enrich/25_ratio/", b, "_", "ratio_cluster4vs7.pdf", sep = ""))
+  print(p2)
   dev.off()
   
   
