@@ -65,43 +65,60 @@ df_long <- df_new %>%
   filter(percentage > 0)
 
 ##color
-cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
-#cells_order <- c("Bcell", "DC", "Erythroblasts", "Monocytes","Neutrophils","Tcell")
+#cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
+cells_order <- c("Bcell", "DC", "Erythroblasts", "Monocytes","Neutrophils","Tcell")
 cell_type_colors <- brewer.pal(length(cells_order), "RdBu")
-cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#b2182b" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
-#cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
+#cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#b2182b" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
+cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
 cell_type_color_map <- setNames(cell_type_colors, cells_order)
 
 # Create a plot to visualize the number of major cell types driving each cluster
 
-scaling_factor <- 15
-plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
-  geom_count(aes(size = after_stat(n) * scaling_factor)) +
+#scaling_factor <- 15
+#plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
+#  geom_count(aes(size = after_stat(n) * scaling_factor)) +
+#  labs(title = "Major Cell Types Driving Each Cluster",
+#       x = "Cluster",
+#       y = "Cell Type",
+#       size = "Count") +
+#  theme_minimal() +
+#  scale_y_discrete(limits = rev(cells_order)) +
+#  scale_color_manual(name = "Cell Type", values = cell_type_color_map, limits = cells_order) +
+#  theme(
+#    axis.text.x = element_text(angle = 45, hjust = 1),
+#    panel.grid.major = element_line(color = "grey80", size = 0.05),
+#    panel.grid.minor = element_blank()#,
+    #panel.border = element_rect(colour = "black", fill = NA, size = 1.5)
+#  ) 
+
+
+plot <- ggplot(df_long, aes(x = cluster, y = cell_type, size = percentage, color = cell_type)) +
+  geom_point(alpha = 0.7) +  # Establece la transparencia para mejor visualización
   labs(title = "Major Cell Types Driving Each Cluster",
        x = "Cluster",
        y = "Cell Type",
-       size = "Count") +
+       size = "Percentage") +
   theme_minimal() +
   scale_y_discrete(limits = rev(cells_order)) +
   scale_color_manual(name = "Cell Type", values = cell_type_color_map, limits = cells_order) +
+  scale_size_continuous(range = c(1, 10)) +  # Ajusta esto según sea necesario
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.grid.major = element_line(color = "grey80", size = 0.05),
-    panel.grid.minor = element_blank()#,
-    #panel.border = element_rect(colour = "black", fill = NA, size = 1.5)
+    panel.grid.minor = element_blank()
   ) 
-
 
 pdf_width <- 5.2  # in inches; adjust as needed
 pdf_height <- 4  # in inches; adjust as needed
-# Print the plot
-#pdf(file.path("./results/ST/gradient/healthy/cell_types_per_cluster_20percent_color.pdf"), width = pdf_width, height = pdf_height)
-#print(plot)
-#dev.off()
 
-pdf(file.path("./results/ST/gradient/cell_types_per_cluster_20percent_color.pdf"), width = pdf_width, height = pdf_height)
+# Print the plot
+pdf(file.path("./results/ST/gradient/healthy/cell_types_per_cluster_20percent_color.pdf"), width = pdf_width, height = pdf_height)
 print(plot)
 dev.off()
+
+#pdf(file.path("./results/ST/gradient/cell_types_per_cluster_20percent_color.pdf"), width = pdf_width, height = pdf_height)
+#print(plot)
+#dev.off()
 
 
 # Separate the dataframe by sample
@@ -270,6 +287,6 @@ dev.off()
 ##add some spatial
 pdf_width <- 4.7  # in inches; adjust as needed
 pdf_height <- 7.3 
-pdf(file.path("./results/prueba.pdf"), width = pdf_width, height = pdf_height)
-print(FeatureOverlay(x, features = "clustering", sampleids = 3:4, ncols = 1,pt.size = 0.8))
+pdf(file.path("./results/prueba3.pdf"), width = pdf_width, height = pdf_height)
+print(FeatureOverlay(x, features = "clustering", sampleids = 1:2, ncols = 1,pt.size = 0.8))
 dev.off()
