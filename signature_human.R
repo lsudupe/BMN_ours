@@ -106,6 +106,7 @@ for (i in 1:length(lista)){
   # Call the function for each comparison
   plot_ratio(a, 1, 7, color, "./results/human/cluster_enrich/25_ratio/")
   plot_ratio(a, 5, 7, color, "./results/human/cluster_enrich/25_ratio/")
+  plot_ratio(a, 5, 6, color, "./results/human/cluster_enrich/25_ratio/")
   plot_ratio(a, 6, 7, color, "./results/human/cluster_enrich/25_ratio/")
   
   post[[length(post) + 1]] <- a
