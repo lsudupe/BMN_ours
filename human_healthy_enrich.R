@@ -14,7 +14,7 @@ library(dplyr)
 library(gridExtra)
 library(tibble)
 library(readxl)
-
+color <- rev(brewer.pal(11,"Spectral"))
 
 # Leer los nombres de las hojas del archivo Excel
 nombres_hojas <- excel_sheets("./data/itziar_genes.xlsx")
@@ -46,71 +46,11 @@ listas_marcadores <- list(
 # Crear variables en el entorno global para cada hoja
 list2env(top_genes_por_hoja, envir = .GlobalEnv)
 
-#Variables---------------------------------
-DIR_ROOT <- file.path(getwd())
-DIR_DATA <- file.path(DIR_ROOT, "data/data/")
+## Read list of objects after cleanning
+objects <- readRDS("./objects/sp/integrated/healthy_clean.rds")
 
-# samples
-all <- dir(path = DIR_DATA)
-#samples <- samples[ samples %in% c("BM_human_AP-B08805")]
-
-samples <- list.files(path = DIR_DATA, recursive = TRUE, pattern = "filtered",full.names = TRUE)
-imgs <- list.files(path = DIR_DATA, pattern = "tissue_hires_image.png", recursive = TRUE, full.names = TRUE)
-spotfiles <- list.files(path = DIR_DATA, pattern = "tissue_positions_list.csv", recursive = TRUE, full.names = TRUE)
-json <- list.files(path = DIR_DATA, pattern = "scalefactors_json.json", recursive = TRUE, full.names = TRUE)
-name <- dir(path = DIR_DATA)
-
-infoTable <- data.frame(samples = samples, imgs = imgs, spotfiles = spotfiles, json = json, 
-                        name = name)
-
-
-infoTable <- subset(infoTable, name != "M1_fem_1C" &
-                      name != "M1_tib_1A" & 
-                      name != "M2_F_2B" &
-                      name != "M3_F_1C" &
-                      name != "M3_fem_1C" &
-                      name != "M3_tib_2A" & 
-                      name != "M8_F2_1C" & 
-                      name !="M9_F2_1C" &
-                      name !="BM_B000943" &
-                      name !="BM_B01320" &
-                      name !="BM_B02817" &
-                      name !="BM_B10395" &
-                      name !="BM_human_AP-B00182_" &
-                      name !="BM_human_AP-B02149_" &
-                      name !="BM_human_AP-B08041_" &
-                      name !="BM_human_AP-B08805" )
-
-se <- InputFromTable(infoTable,
-                     platform =  "Visium")
-
-st.object <- GetStaffli(se)
-st.object
-se <- LoadImages(se, time.resolve = FALSE)
-saveRDS(se, "./objects/sp/integrated/se_human_healthy.rds")
-se <- readRDS("./objects/sp/integrated/se_human_healthy.rds")
-
-##divide by sample
-Idents(object = se) <- "name"
-name <- unique(se@meta.data[["name"]])
-objects <- c()
-
-for (i in name){
-  a <- SubsetSTData(se, idents = i)
-  a <- SCTransform(a)
-  ## add object to list
-  objects[[length(objects) + 1]] <- a
-  
-}
-names(objects) <- name
 ## separate list
-list2env(objects,envir=.GlobalEnv)
-
-se <- SCTransform(se)
-
-objects <- c(BM_human_H13, BM_human_H6, BM_human_H7, BM_human_H9)
-names(objects) <- c("BM_human_H13", "BM_human_H6", "BM_human_H7", "BM_human_H9")
-
+#list2env(objects,envir=.GlobalEnv)
 ###Enrichment score
 post <- c()
 for(i in 1:length(objects)) {
@@ -171,9 +111,9 @@ for(i in 1:length(post)) {
   p <- FeatureOverlay(a, features = c("signature_Dendritic"), ncols = 1, pt.size = 1.1, 
                       value.scale = "all" ,cols = color) +
     scale_fill_gradientn(colours = color,
-                         breaks = c(0.0,0.4),
+                         breaks = c(0.0,0.2),
                          labels = c("Min", "Max"),
-                         limits = c(0.0,0.4))
+                         limits = c(0.0,0.2))
   
   # Save the plot to a PDF filef
   pdf(paste("./results/human/healthy/samerange/", b,"_dentritic.pdf",sep=""))
@@ -184,9 +124,9 @@ for(i in 1:length(post)) {
   p <- FeatureOverlay(a, features = c("signature_EC"), ncols = 1, pt.size = 1.1, 
                       value.scale = "all" ,cols = color) +
     scale_fill_gradientn(colours = color,
-                         breaks = c(0.0,0.3),
+                         breaks = c(0.0,0.25),
                          labels = c("Min", "Max"),
-                         limits = c(0.0,0.3))
+                         limits = c(0.0,0.25))
   
   # Save the plot to a PDF filef
   pdf(paste("./results/human/healthy/samerange/", b,"_EC.pdf",sep=""))
@@ -197,9 +137,9 @@ for(i in 1:length(post)) {
   p <- FeatureOverlay(a, features = c("signature_Erythrobl"), ncols = 1, pt.size = 1.1, 
                       value.scale = "all" ,cols = color) +
     scale_fill_gradientn(colours = color,
-                         breaks = c(0.0,0.4),
+                         breaks = c(0.0,0.5),
                          labels = c("Min", "Max"),
-                         limits = c(0.0,0.4))
+                         limits = c(0.0,0.5))
   
   # Save the plot to a PDF filef
   pdf(paste("./results/human/healthy/samerange/", b,"_Erythrobl.pdf",sep=""))
@@ -223,9 +163,9 @@ for(i in 1:length(post)) {
   p <- FeatureOverlay(a, features = c("signature_MSC"), ncols = 1, pt.size = 1.1, 
                       value.scale = "all" ,cols = color) +
     scale_fill_gradientn(colours = color,
-                         breaks = c(0.0,0.2),
+                         breaks = c(0.0,0.45),
                          labels = c("Min", "Max"),
-                         limits = c(0.0,0.2))
+                         limits = c(0.0,0.45))
   
   # Save the plot to a PDF filef
   pdf(paste("./results/human/healthy/samerange/", b,"_MSC.pdf",sep=""))
@@ -236,9 +176,9 @@ for(i in 1:length(post)) {
   p <- FeatureOverlay(a, features = c("signature_Neutrop"), ncols = 1, pt.size = 1.1, 
                       value.scale = "all" ,cols = color) +
     scale_fill_gradientn(colours = color,
-                         breaks = c(0.0,0.25),
+                         breaks = c(0.0,0.30),
                          labels = c("Min", "Max"),
-                         limits = c(0.0,0.25))
+                         limits = c(0.0,0.30))
   
   # Save the plot to a PDF filef
   pdf(paste("./results/human/healthy/samerange/", b,"_Neutrop.pdf",sep=""))
@@ -262,9 +202,9 @@ for(i in 1:length(post)) {
   p <- FeatureOverlay(a, features = c("signature_Tcells"), ncols = 1, pt.size = 1.1, 
                       value.scale = "all" ,cols = color) +
     scale_fill_gradientn(colours = color,
-                         breaks = c(0.0,0.2),
+                         breaks = c(0.0,0.31),
                          labels = c("Min", "Max"),
-                         limits = c(0.0,0.2))
+                         limits = c(0.0,0.31))
   
   # Save the plot to a PDF filef
   pdf(paste("./results/human/healthy/samerange/", b,"_Tcells.pdf",sep=""))
@@ -276,15 +216,15 @@ for(i in 1:length(post)) {
 
 ###plot specific genes
 # Read the Excel files
-ec_data <- read_excel("./data/EC_mergedNORIBO_markers_ages.xlsx")
-msc_data <- read_excel("./data/MSC_NEW_Age_05FCmarkers.xlsx")
+ec_data <- read_excel("./data/EC_mergedNORIBO_markers_ages.xlsx", sheet = 2)
+msc_data <- read_excel("./data/MSC_NEW_Age_05FCmarkers.xlsx", sheet = 2)
 
 # Define a function to filter and get top 5 genes
 get_top_genes <- function(data) {
   data %>%
-    filter(p_val_adj < 0.005, avg_log2FC > 0) %>%
-    arrange(desc(avg_log2FC)) %>%
-    slice_head(n = 10) %>%
+    #filter(p_val_adj < 0.005, avg_log2FC > 0) %>%
+   # arrange(desc(avg_log2FC)) %>%
+   # slice_head(n = 10) %>%
     select(gene)
 }
 
@@ -292,6 +232,8 @@ get_top_genes <- function(data) {
 top_genes_ec <- get_top_genes(ec_data)
 top_genes_msc <- get_top_genes(msc_data)
 
+ec_genes <- pull(top_genes_ec, gene) 
+msc_genes <- pull(top_genes_msc, gene)
 # Print the results
 print("Top 5 genes for EC:")
 print(top_genes_ec)
@@ -299,32 +241,40 @@ print(top_genes_ec)
 print("Top 5 genes for MSC:")
 print(top_genes_msc)
 
-for(i in 1:length(post)) {
-  a <- post[[i]]
-  b <- names(post)[i]
+for(i in 1:length(objects)) {
+  a <- objects[[i]]
+  b <- names(objects)[i]
   
   # MSC
-  for(gene in c("PLCG2", "SOX4", "PPP1R10", "RETREG1", "FAM43A")) {
-    p <- FeatureOverlay(a, features = c(gene), ncols = 1, pt.size = 1.5, 
-                        value.scale = "all", cols = color)
-    
-    # Guardar el plot
-    pdf_name <- paste0("./human/healthy/genes/", b, "_", gene, "_MSC.pdf")
-    pdf(pdf_name)
-    print(p)
-    dev.off()
+  for(gene in ec_genes) {
+    tryCatch({
+      p <- FeatureOverlay(a, features = c(gene), ncols = 1, pt.size = 1.5, 
+                          value.scale = "all", cols = color)
+      
+      # Save the plot
+      pdf_name <- paste0("./results/human/healthy/genes/old/", b, "_", gene, "_MSC.pdf")
+      pdf(pdf_name)
+      print(p)
+      dev.off()
+    }, error = function(e) {
+      message(paste("Skipping:", gene, "in MSC - not found in dataset."))
+    })
   }
   
   # EC
-  for(gene in c("PLCG2","MAFB", "SLC2A3")) {
-    p <- FeatureOverlay(a, features = c(gene), ncols = 1, pt.size = 1.5, 
-                        value.scale = "all", cols = color)
-    
-    # Guardar el plot
-    pdf_name <- paste0("./human/healthy/genes/", b, "_", gene, "_EC.pdf")
-    pdf(pdf_name)
-    print(p)
-    dev.off()
+  for(gene in msc_genes) {
+    tryCatch({
+      p <- FeatureOverlay(a, features = c(gene), ncols = 1, pt.size = 1.5, 
+                          value.scale = "all", cols = color)
+      
+      # Save the plot
+      pdf_name <- paste0("./results/human/healthy/genes/old/", b, "_", gene, "_EC.pdf")
+      pdf(pdf_name)
+      print(p)
+      dev.off()
+    }, error = function(e) {
+      message(paste("Skipping:", gene, "in EC - not found in dataset."))
+    })
   }
 }
 
