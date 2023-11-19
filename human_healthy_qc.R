@@ -122,3 +122,7 @@ ggplot(combined_metadata, aes(x = Sample, y = nFeature_RNA, fill = Sample)) +
   theme_bw() +
   labs(title = "nFeature_RNA Distribution", x = "Sample", y = "nFeature_RNA") +
   scale_fill_brewer(palette = "Set1")
+
+# Save your list to a file
+saveRDS(objects, file = "./objects/sp/integrated/healthy_clean.rds")
+
