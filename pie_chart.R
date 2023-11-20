@@ -24,14 +24,6 @@ a["cluster"] <- as.vector(x@meta.data[["clustering"]])
 
 df <- a
 
-############ Filter values below whatever
-# Calculate the 75th percentile threshold for each row
-#thresholds <- apply(df[, -ncol(df)], 1, function(x) quantile(x, 0.75))
-
-# Filter values below the 75th percentile threshold for each row
-#df_filtered <- df %>%
- # mutate(across(-cluster, ~ifelse(. < thresholds[row_number()], 0, .)))
-
 df["x_coord"] <- as.vector(coor$x) 
 df["y_coord"] <- as.vector(coor$y) 
 df["sample"] <- as.vector(meta$name) 
@@ -56,7 +48,6 @@ df_new <- df_rescaled
 df_new$x_coord <- NULL
 df_new$y_coord <- NULL
 df_new$sample <- NULL
-#df_new$clustering <- NULL
 
 df_long <- df_new %>%
   pivot_longer(cols = -cluster,
@@ -64,36 +55,30 @@ df_long <- df_new %>%
                values_to = "percentage") %>%
   filter(percentage > 0)
 
+# Suma los porcentajes por tipo de célula y clúster
+df_aggregated <- df_long %>%
+  group_by(cluster, cell_type) %>%
+  summarise(total_percentage = sum(percentage)) %>%
+  ungroup()
+
+# Normaliza los porcentajes para que la suma por clúster sea 1
+df_normalized <- df_aggregated %>%
+  group_by(cluster) %>%
+  mutate(normalized_percentage = total_percentage / sum(total_percentage)) %>%
+  ungroup()
+
 ##color
-#cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
+cells_order <- c("Bcell", "DC", "Erythroblasts","MM_MIC", "Monocytes","Neutrophils","Tcell")
 cells_order <- c("Bcell", "DC", "Erythroblasts", "Monocytes","Neutrophils","Tcell")
 cell_type_colors <- brewer.pal(length(cells_order), "RdBu")
-#cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#b2182b" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
+cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#b2182b" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
 cell_type_colors <-  c("#ef8a62" ,"#ffd1b6" ,"#faeae0" ,"#d1e5f0" ,"#67a9cf" ,"#2166ac")
 cell_type_color_map <- setNames(cell_type_colors, cells_order)
 
-# Create a plot to visualize the number of major cell types driving each cluster
 
-#scaling_factor <- 15
-#plot <- ggplot(df_long, aes(x = cluster, y = cell_type, color = cell_type)) +
-#  geom_count(aes(size = after_stat(n) * scaling_factor)) +
-#  labs(title = "Major Cell Types Driving Each Cluster",
-#       x = "Cluster",
-#       y = "Cell Type",
-#       size = "Count") +
-#  theme_minimal() +
-#  scale_y_discrete(limits = rev(cells_order)) +
-#  scale_color_manual(name = "Cell Type", values = cell_type_color_map, limits = cells_order) +
-#  theme(
-#    axis.text.x = element_text(angle = 45, hjust = 1),
-#    panel.grid.major = element_line(color = "grey80", size = 0.05),
-#    panel.grid.minor = element_blank()#,
-    #panel.border = element_rect(colour = "black", fill = NA, size = 1.5)
-#  ) 
-
-
-plot <- ggplot(df_long, aes(x = cluster, y = cell_type, size = percentage, color = cell_type)) +
-  geom_point(alpha = 0.7) +  # Establece la transparencia para mejor visualización
+plot <-ggplot(df_normalized, aes(x = cluster, y = cell_type, size = normalized_percentage, color = cell_type)) +
+  geom_point(alpha = 1) +
+  # El resto de tu código de ggplot
   labs(title = "Major Cell Types Driving Each Cluster",
        x = "Cluster",
        y = "Cell Type",
@@ -101,24 +86,22 @@ plot <- ggplot(df_long, aes(x = cluster, y = cell_type, size = percentage, color
   theme_minimal() +
   scale_y_discrete(limits = rev(cells_order)) +
   scale_color_manual(name = "Cell Type", values = cell_type_color_map, limits = cells_order) +
-  scale_size_continuous(range = c(1, 10)) +  # Ajusta esto según sea necesario
+  scale_size_continuous(range = c(1, 5)) +  # Ajusta esto según sea necesario
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.grid.major = element_line(color = "grey80", size = 0.05),
     panel.grid.minor = element_blank()
   ) 
 
-pdf_width <- 5.2  # in inches; adjust as needed
-pdf_height <- 4  # in inches; adjust as needed
 
 # Print the plot
-pdf(file.path("./results/ST/gradient/healthy/cell_types_per_cluster_20percent_color.pdf"), width = pdf_width, height = pdf_height)
+pdf(file.path("./results/ST/gradient/healthy/mayor_celltype_healthy.pdf"))
 print(plot)
 dev.off()
 
-#pdf(file.path("./results/ST/gradient/cell_types_per_cluster_20percent_color.pdf"), width = pdf_width, height = pdf_height)
-#print(plot)
-#dev.off()
+pdf(file.path("./results/ST/gradient/mayor_celltype_MM.pdf"))
+print(plot)
+dev.off()
 
 
 # Separate the dataframe by sample
