@@ -14,7 +14,6 @@ color <- rev(brewer.pal(11,"Spectral"))
 ## Data
 mm <- readRDS("./objects/sp/human/human_combined.rds")
 
-
 ## Spatial plots
 for (i in 1:length(mm)){
   a <- mm[[i]]
@@ -98,5 +97,35 @@ plot_data <- combined_metadata %>%
     ggtitle("A Violin wrapping a boxplot") +
     xlab("")
 
-
+## Check quartiles
+for (i in 1:length(mm)){
+  a <- mm[[i]]
+  b <- names(mm[i])
+  metadata <- a@meta.data
+      
+  # Calculate the quartiles for nFeature_RNA
+  Q1 <- quantile(metadata$nFeature_RNA, 0.1)
+  Q4 <- quantile(metadata$nFeature_RNA, 0.9)
+      
+  # Filter rows
+  filtered_metadata <- metadata[metadata$nFeature_RNA >= Q1 & metadata$nFeature_RNA <= Q4, ]
+      
+  # Update the Seurat object with the filtered metadata
+  a@meta.data <- filtered_metadata
+      
+  # Plot the feature plot
+  feature <- "nFeature_RNA"
+  c <- c(min(a@meta.data[feature]), max(a@meta.data[feature]))
+  p <- FeatureOverlay(a, features = feature, ncols = 1, pt.size = 1.5, slot = "count",
+                   value.scale = "all" ,cols = color) +
+        scale_fill_gradientn(colours = color,
+                             breaks = c,
+                             labels = c,
+                             limits = c)
+      
+  # Save the plot to a PDF file
+  pdf_filename <- paste0("./results/human/QC/mm_quartiles/", b, "_nfeature.pdf")
+   ggsave(pdf_filename, plot = p, device = "pdf")
+}
+    
 
