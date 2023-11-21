@@ -159,9 +159,15 @@ for(i in 1:length(human)) {
     # Crear visualización
     color <- rev(brewer.pal(11,"Spectral"))
     
-    p <- FeatureOverlay(a, features = c(signature_name), ncols = 1, pt.size = 1.5, 
-                        value.scale = "all", cols = color)
+    c <- c(min(a@meta.data[signature_name]), max(a@meta.data[signature_name]))
+    p <- FeatureOverlay(a, features = c(signature_name), ncols = 1, pt.size = 1.5, slot = "count", 
+                        value.scale = "all", cols = color)+
+      scale_fill_gradientn(colours = color,
+                           breaks = c,
+                           labels = c,
+                           limits = c)
     
+
     # Crear directorios si no existen
     dir.create(file.path("./results/human/mm_celltype/", lista_name), recursive = TRUE, showWarnings = FALSE)
     
