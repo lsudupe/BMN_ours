@@ -76,6 +76,8 @@ objects <- c()
 for (i in name){
   a <- SubsetSTData(se, idents = i)
   a <- SCTransform(a)
+  a <- NormalizeData(a)
+  a <- ScaleData(a)
   ## add object to list
   objects[[length(objects) + 1]] <- a
   
@@ -122,6 +124,7 @@ lista$se <- NULL
 
 #save
 saveRDS(lista,"./objects/sp/human/human_combined.rds")
+prueba <- readRDS("./objects/sp/human/human_combined.rds")
 
 ###Enrichment score
 post <- c()
@@ -169,7 +172,10 @@ for (i in 1:length(prueba)){
 }
 
 names(post) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805",
-                   "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395", "se")
+                   "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395")
+
+saveRDS(post,"./objects/sp/human/human_combined_enriched.rds")
+
 se <- post[["se"]]
 
 color <- brewer.pal(11,"Spectral")
