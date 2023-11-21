@@ -9,6 +9,8 @@ library(STutility)
 library(RColorBrewer)
 library(tidyverse)
 library(UCell)
+library(readxl)
+library(dplyr)
 
 #Data---------------------------------
 se <- readRDS("./objects/heterogeneity/se_hierarchical.rds")
@@ -114,3 +116,138 @@ for (i in 1:length(lista)){
 
 names(post) <- c("B08041","B08805", "B10395")
 
+## Check Isa signatures
+# Leer los nombres de las hojas del archivo Excel
+nombres_hojas <- excel_sheets("./data/itziar_genes.xlsx")
+
+# Leer los datos de cada hoja y seleccionar los top 100 genes por avg_log2FC
+top_genes_por_hoja <- lapply(nombres_hojas, function(nombre_hoja) {
+  dataset <- read_excel("./data/itziar_genes.xlsx", sheet = nombre_hoja)
+  top_genes <- dataset %>%
+    arrange(desc(abs(avg_log2FC))) %>%
+    slice_head(n = 50) %>%
+    select(gene) %>% # Seleccionamos solo la columna de genes
+    pull() # Convertimos la columna de genes en un vector
+})
+
+# Asignar los nombres de las hojas a los vectores de genes
+names(top_genes_por_hoja) <- nombres_hojas
+listas_marcadores <- list(
+  Neutrop = top_genes_por_hoja$Neutrop,
+  Erythrobl = top_genes_por_hoja$Erythrobl,
+  Tcells = top_genes_por_hoja$Tcells,
+  Dendritic = top_genes_por_hoja$Dendritic,
+  Bcells = top_genes_por_hoja$Bcells
+)
+
+#list2env(objects,envir=.GlobalEnv)
+###Enrichment score
+post <- c()
+for(i in 1:length(human)) {
+  a <- human[[i]]
+  b <- names(human)[i]  # Note: I've changed this to ensure it gets the name of the ith object
+  
+  # Iterar sobre cada lista de marcadores
+  for(lista_name in names(listas_marcadores)) {
+    marcadores <- listas_marcadores[[lista_name]] # Directly use the list
+    
+    # Calcular UCell Score para la lista actual de marcadores
+    vector <- ScoreSignatures_UCell(a@assays[["RNA"]]@counts, features = list(marcadores))
+    signature_name <- paste0("signature_", lista_name)
+    a@meta.data[[signature_name]] <- as.vector(vector)
+    
+    # Crear visualización
+    color <- rev(brewer.pal(11,"Spectral"))
+    
+    p <- FeatureOverlay(a, features = c(signature_name), ncols = 1, pt.size = 1.5, 
+                        value.scale = "all", cols = color)
+    
+    # Crear directorios si no existen
+    dir.create(file.path("./results/human/mm_celltype/", lista_name), recursive = TRUE, showWarnings = FALSE)
+    
+    # Guardar la visualización en PDF
+    pdf_name <- paste("./results/human/mm_celltype/", lista_name, paste0(b, "_", lista_name, ".pdf"), sep = "/")
+    pdf(pdf_name)
+    print(p)
+    dev.off()
+  }
+  
+  # Añadir el objeto Seurat modificado a la lista post
+  post[[length(post) + 1]] <- a
+}
+
+names(post) <- c("BM_human_AP-B00182_", "BM_human_AP-B02149_", "BM_human_AP-B08041_", "BM_human_AP-B08805",
+                  "BM_B000943", "BM_B01320", "BM_B02817", "BM_B10395")
+
+###same range
+###Enrichment score
+for(i in 1:length(post)) {
+  a <- post[[i]]
+  b <- names(post)[i] 
+  
+  #bcell
+  p <- FeatureOverlay(a, features = c("signature_Bcells"), ncols = 1, pt.size = 1.1, 
+                      value.scale = "all" ,cols = color) +
+    scale_fill_gradientn(colours = color,
+                         breaks = c(0.0,0.2),
+                         labels = c("Min", "Max"),
+                         limits = c(0.0,0.2))
+  
+  # Save the plot to a PDF filef
+  pdf(paste("./results/human/healthy/samerange/", b,"_bcell.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  #dentritic
+  p <- FeatureOverlay(a, features = c("signature_Dendritic"), ncols = 1, pt.size = 1.1, 
+                      value.scale = "all" ,cols = color) +
+    scale_fill_gradientn(colours = color,
+                         breaks = c(0.0,0.2),
+                         labels = c("Min", "Max"),
+                         limits = c(0.0,0.2))
+  
+  # Save the plot to a PDF filef
+  pdf(paste("./results/human/healthy/samerange/", b,"_dentritic.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  #Erythrobl
+  p <- FeatureOverlay(a, features = c("signature_Erythrobl"), ncols = 1, pt.size = 1.1, 
+                      value.scale = "all" ,cols = color) +
+    scale_fill_gradientn(colours = color,
+                         breaks = c(0.0,0.5),
+                         labels = c("Min", "Max"),
+                         limits = c(0.0,0.5))
+  
+  # Save the plot to a PDF filef
+  pdf(paste("./results/human/healthy/samerange/", b,"_Erythrobl.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  #Neutrop
+  p <- FeatureOverlay(a, features = c("signature_Neutrop"), ncols = 1, pt.size = 1.1, 
+                      value.scale = "all" ,cols = color) +
+    scale_fill_gradientn(colours = color,
+                         breaks = c(0.0,0.30),
+                         labels = c("Min", "Max"),
+                         limits = c(0.0,0.30))
+  
+  # Save the plot to a PDF filef
+  pdf(paste("./results/human/healthy/samerange/", b,"_Neutrop.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+  #Tcells
+  p <- FeatureOverlay(a, features = c("signature_Tcells"), ncols = 1, pt.size = 1.1, 
+                      value.scale = "all" ,cols = color) +
+    scale_fill_gradientn(colours = color,
+                         breaks = c(0.0,0.31),
+                         labels = c("Min", "Max"),
+                         limits = c(0.0,0.31))
+  
+  # Save the plot to a PDF filef
+  pdf(paste("./results/human/healthy/samerange/", b,"_Tcells.pdf",sep=""))
+  print(p)
+  dev.off()
+  
+}
