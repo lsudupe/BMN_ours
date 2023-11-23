@@ -66,6 +66,8 @@ names(post) <- c( "BM_human_H13","BM_human_H6","BM_human_H7", "BM_human_H9","BM_
 "BM_human_AP-B02149_" ,"BM_human_AP-B08041_", "BM_human_AP-B08805" , "BM_B000943" , "BM_B01320",      
 "BM_B02817" ,"BM_B10395")
 
+saveRDS(post, file = "./objects/sp/integrated/human_all_list.rds")
+
 # Correlations
 for (i in 1:length(post)) {
   seurat <- post[[i]]
