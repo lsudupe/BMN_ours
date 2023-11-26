@@ -9,7 +9,9 @@ library(UCell)
 library(STutility)
 library(dplyr)
 library(RColorBrewer)
-library("viridis")
+library(viridis)
+library(ggrepel)
+library(openxlsx)
 color <- rev(brewer.pal(11,"Spectral"))
 
 ## Functions
@@ -17,6 +19,8 @@ source("./regress_out_function.R")
 
 ## Data
 mouse <- readRDS("./objects/sp/se_hierarchical_signatures.rds")
+Idents(object = mouse) <- "name"
+mouse <- SubsetSTData(mouse, idents = c("M1_fem_1C", "M2_F_2B", "M8_F2_1C", "M9_F2_1C"))
 
 ## Quantiles
 metadata <- mouse@meta.data
@@ -51,55 +55,70 @@ FeatureOverlay(mouse, features = "Quantile", ncols = 2, pt.size = 1,
 
 
 ## Regress out pc
-mouse <- regress_out(mouse, "MM_MIC")
+#mouse <- regress_out(mouse, "MM_MIC")
+mouse <- SCTransform(mouse, vars.to.regress = "MM_MIC", new.assay.name ="SCT_PC")
 
 ## DE
 
 Idents(mouse) <- "Quantile"
-all_markers <- FindAllMarkers(mouse)
-
-top_markers_per_cluster <- all_markers %>%
-  group_by(cluster) %>%
-  dplyr::filter(p_val_adj < 0.005,avg_log2FC > 2) %>%
-  slice_head(n = 5) 
+# Differential expression for Q3 vs Q4
+de_Q3_Q4 <- FindMarkers(mouse, ident.1 = "Q3", ident.2 = "Q4", min.pct = 0.25)
+# Differential expression for Q2 vs Q3
+de_Q2_Q3 <- FindMarkers(mouse, ident.1 = "Q2", ident.2 = "Q3", min.pct = 0.25)
 
 ## Comparation plots
-# Create a heatmap for the top genes
-DoHeatmap(mouse, features = top_markers_per_cluster$gene, group.by = c("Quantile", "clustering")) 
+## Volcan
+prepare_for_volcano <- function(de_results, top_n = 50) {
+  de_results$logP <- -log10(de_results$p_val_adj)
+  de_results$logFC <- de_results$avg_log2FC
+  de_results$significant <- de_results$p_val_adj < 0.05 & abs(de_results$logFC) > log2(1.5)
+  
+  top_genes_to_label <- de_results[de_results$significant, ]
+  top_genes_to_label <- top_genes_to_label[order(top_genes_to_label$logP, decreasing = TRUE), ][1:top_n, ]
+  
+  list(data = de_results, labels = top_genes_to_label)
+}
+
+data_Q3_Q4 <- prepare_for_volcano(de_Q3_Q4)
+data_Q2_Q3 <- prepare_for_volcano(de_Q2_Q3)
 
 
-VlnPlot(mouse, features = c("Sdc1", "Sel1l", "Ly6d", "Pon3", "Cp"))
+create_volcano_plot <- function(data, title) {
+  ggplot(data$data, aes(x=logFC, y=logP)) +
+    geom_point(aes(color=significant), alpha=0.5) +
+    geom_text_repel(data = data$labels, aes(label=rownames(data$labels)), size = 3, box.padding = 0.35, point.padding = 0.5) +
+    theme_minimal() +
+    scale_color_manual(values=c("grey", "red")) +
+    labs(title=title, x="Log2 Fold Change", y="-Log10 Adjusted p-value") +
+    geom_vline(xintercept=0, linetype="dashed", color = "black", alpha=0.7) +
+    theme(legend.position="none")
+}
 
-VlnPlot(mouse, features = c("Igha", "Eef1a1", "B2m", "Sec11c", "Hist1h1d"))
+# Create and plot for "Q3 vs Q4"
+volcano_Q3_Q4 <- create_volcano_plot(data_Q3_Q4, "Volcano Plot: Q3 vs Q4")
+volcano_Q3_Q4
+# Create and plot for "Q2 vs Q3"
+volcano_Q2_Q3 <- create_volcano_plot(data_Q2_Q3, "Volcano Plot: Q2 vs Q3")
+volcano_Q2_Q3
 
-## Volcano
-# Select results for a specific quantile, e.g., Q1
-quantile_results <- all_markers[all_markers$cluster == "Q4", ]
+## Violin
+VlnPlot(mouse, features = c("Cldn7", "Slamf9"))
 
-# Prepare the data for plotting
-quantile_results$logP <- -log10(quantile_results$p_val_adj) # Using adjusted p-values
-quantile_results$logFC <- quantile_results$avg_log2FC
 
-# Adding a column to label genes with significant changes
-threshold_pval <- 0.05
-threshold_logFC <- log2(1.5)
+## Save excell
+# Create a new workbook
+wb <- createWorkbook()
 
-quantile_results$significant <- quantile_results$p_val_adj < threshold_pval & 
-  abs(quantile_results$logFC) > threshold_logFC
+# Add sheets with the DE results
+de_Q3_Q4$Gene <- rownames(de_Q3_Q4)
+de_Q2_Q3$Gene <- rownames(de_Q2_Q3)
 
-top_genes_to_label <- quantile_results[quantile_results$significant, ]
-top_genes_to_label <- top_genes_to_label[order(top_genes_to_label$logP, decreasing = TRUE), ][1:10, ] # Top 10 as an example
+addWorksheet(wb, "DE_Q3_Q4")
+writeData(wb, sheet = "DE_Q3_Q4", de_Q3_Q4)
 
-# Creating the volcano plot with labels
-library(ggrepel)
+addWorksheet(wb, "DE_Q2_Q3")
+writeData(wb, sheet = "DE_Q2_Q3", de_Q2_Q3)
 
-ggplot(quantile_results, aes(x=logFC, y=logP)) +
-  geom_point(aes(color=significant), alpha=0.5) +
-  geom_text_repel(data = top_genes_to_label, aes(label=gene), size = 3, box.padding = 0.35, point.padding = 0.5) +
-  theme_minimal() +
-  scale_color_manual(values=c("grey", "red")) +
-  labs(title="Volcano Plot: Q4",
-       x="Log2 Fold Change",
-       y="-Log10 Adjusted p-value") +
-  geom_vline(xintercept=0, linetype="dashed", color = "black", alpha=0.7) +
-  theme(legend.position="none")
+# Save the workbook to a file
+saveWorkbook(wb, "./DE_quantiles.xlsx", overwrite = TRUE)
+
