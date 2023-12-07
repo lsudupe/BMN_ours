@@ -3,13 +3,14 @@
 ## 05.12.23 Laura Sudupe , git @lsudupe
 
 #Libraries---------------------------------
-
 library(Seurat)
 library(Matrix)
 library(genefilter)
 library(RColorBrewer)
 library(gridExtra)
 library(ggplot2)
+library(STutility)
+library(ComplexHeatmap)
 color <- rev(brewer.pal(11,"Spectral"))
 
 ## Data
@@ -37,21 +38,20 @@ metaData <- data.frame(row.names = rownames(metaData),
                        sampleID = metaData$name,
                        modules = metaData$community)
 
-st <- SCTransform(se.merged, assay = "RNA", new.assay.name = "SCT_novars")
-
+st <- SCTransform(se.merged, assay = "RNA", new.assay.name = "SCT_novars", variable.features.n = 18000)
 st <- SCTransform(se.merged, assay = "RNA", new.assay.name = "SCT_novars_sample", vars.to.regress = "name")
 #st <- SCTransform(se.merged, assay = "RNA", new.assay.name = "SCT_novars_pc", vars.to.regress = "name")
 
 # Step1: aggregate counts by community
 Seurat::Idents(object = st) <- st@meta.data[["community"]]
-cts <- AggregateExpression(st, 
+cts <- AggregateExpression(se.merged, 
                            group.by = c("community"),
-                           assays = 'SCT_novars',
+                           assays = 'RNA',
                            #assays = 'SCT_novars_sample',
-                           slot = "data",
+                           slot = "count",
                            return.seurat = FALSE)
 
-aggregated_counts <- cts$SCT_novars
+aggregated_counts <- cts$RNA
 #aggregated_counts <- cts$SCT_novars_sample
 head(aggregated_counts)
 row_totals <- rowSums(aggregated_counts)
@@ -61,12 +61,16 @@ quantile_99 <- quantile(filtered_data, probs = 0.99)
 #filtered_data <- filtered_data[row_totals <= 500, ]
 head(filtered_data)
 
-final_mat <- NormalizeData(filtered_data)
-final_mat <- ScaleData(final_mat)
-head(final_mat)
+final_mat <- log1p(filtered_data)
 
-final_mat <- NormalizeData(filtered_data)
-final_mat <- ScaleData(final_mat)
+library_sizes <- colSums(filtered_data)
+scaling_factor <- mean(library_sizes)
+normalized_matrix <- apply(filtered_data, 2, library_sizes, FUN="/") * scaling_factor
+
+filtered_data <- NormalizeData(filtered_data)
+
+final_mat <- normalized_matrix
+head(final_mat)
 
 ## top var genes
 ### standar error
@@ -77,9 +81,9 @@ se_mat <- se_mat[order(se_mat, decreasing = T)]
 se_mat_top100 <- names(sort(se_mat, decreasing = TRUE))[1:100]
 
 ## pca
-pca<- prcomp(t(expression_mat_sub),center = TRUE, scale. = TRUE) 
+pca<- prcomp(t(final_mat),center = TRUE, scale. = TRUE) 
 # check the order of the samples are the same.
-all.equal(rownames(pca$x), colnames(expression_mat_sub))
+all.equal(rownames(pca$x), colnames(final_mat))
 # extract pca 1 and pca2
 PC1_and_PC2<- data.frame(PC1=pca$x[,1], PC2= pca$x[,2])
 PC1_and_PC2$sample <- c("M1","M1", "M2", "M2","M2","M2","M2", "M8","M8","M9","M9","M9")
@@ -93,37 +97,7 @@ ggplot(PC1_and_PC2, aes(x=PC1, y=PC2)) +
   geom_point(aes(color = rownames(PC1_and_PC2))) +
   theme_bw(base_size = 14) 
 
-## data
-#scale.data <- st@assays$SCT_novars_sample@scale.data #826 spots, 3000 genes
-#dim(scale.data)
-scale.data <- st@assays$SCT_novars@scale.data #826 spots, 3000 genes
-dim(scale.data)
-scale.data_se <- scale.data[rownames(scale.data) %in% names(se_mat)[1:100],] #826 spots 76 genes
-dim(scale.data_se)
-
-
-metaData <- st@meta.data
-metaData <- data.frame(row.names = rownames(metaData),
-                       modules = metaData$community)
-
-
 ## heatmap
-library(ComplexHeatmap)
-Heatmap(scale.data_se, show_column_names = F, row_names_gp = gpar(fontsize=6),cluster_columns = FALSE,
-        top_annotation = HeatmapAnnotation(df = metaData,
-                                           col = list(modules = c("S1_M1" = "#1f77b4",  # blue
-                                                                  "S1_M2" = "#e377c2",  
-                                                                  "S2_M1" = "#ff7f0e",  # orange
-                                                                  "S2_M2" = "#2ca02c",  # green
-                                                                  "S2_M3" = "#d62728",  # red
-                                                                  "S2_M4" = "#9467bd",  # purple
-                                                                  "S2_M5" = "#731e59",
-                                                                  "S8_M1" = "#8c564b",  # brown
-                                                                  "S8_M2" = "#e377c2",  # pink
-                                                                  "S9_M1" = "#7f7f7f",  # grey
-                                                                  "S9_M2" = "#bcbd22",  # yellow-green
-                                                                  "S9_M3" = "#17becf"))))   # cyan))))
-
 
 module_colors <- c(S1_M1 = "#1f77b4",  # blue
                    S1_M2 = "#e377c2",  # pink
@@ -141,30 +115,30 @@ module_colors <- c(S1_M1 = "#1f77b4",  # blue
 # Use the module_colors named vector directly
 top_annotation <- HeatmapAnnotation(modules = module_colors)
 
-se_mat_top500 <- names(sort(se_mat, decreasing = TRUE))[1:100]
+top <- names(sort(se_mat, decreasing = TRUE))[1:100]
 
-final_mat_se <- final_mat[se_mat_top500, ]
-final_mat_se <- final_mat[se_mat_top100, ] #pseudobulk ordered most var genes
+final_mat_se <- final_mat[top, ] #pseudobulk ordered most var genes
 dim(final_mat_se)
 
-prueba <- final_mat_se
-prueba <- NormalizeData(prueba)
-prueba <- ScaleData(prueba)
+
+#final_mat_se <- NormalizeData(final_mat_se)
+final_mat_se <- ScaleData(final_mat_se)
+
 # Draw the heatmap
 suppressMessages(
-  Heatmap(prueba, show_column_names = TRUE, 
+  Heatmap(final_mat_se, show_column_names = TRUE, 
           row_names_gp = gpar(fontsize=6), cluster_columns = FALSE,
           top_annotation = top_annotation)
 )
 
-#noRegressGenes <- se_mat_top100
+#noRegressGenes <- top
 nameRegressGenes <- se_mat_top100
 pcRegreesGenes <- se_mat_top100
 
-top5 <- names(se_mat)[1:20]
+top5 <- top[1:20]
 top5
 
-x <- "Igkc"
+x <- "Lilra5"
 
 
 m1 <- FeatureOverlay(M1, features = c(x),pt.size = 1.3, col=color)
