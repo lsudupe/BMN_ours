@@ -9,6 +9,7 @@ library(STutility)
 library(igraph)
 library(deldir)
 library(dbscan)
+library(cluster)
 
 
 ## Data
@@ -17,80 +18,110 @@ mouse <- readRDS("./objects/sp/st_q3.rds")
 # Define the subsets to processq
 subsets <- c("M1_fem_1C", "M2_F_2B", "M8_F2_1C", "M9_F2_1C")
 
+
 # Sample
-M8 <- SubsetSTData(mouse, idents = c("M8_F2_1C"))
-Idents(object = M8) <- M8@meta.data[["new_groups"]]
-M8 <- SubsetSTData(M8, idents = c("Hot_spot"))
+a <- SubsetSTData(mouse, idents = c("M9_F2_1C"))
+Idents(object = a) <- a@meta.data[["new_groups"]]
+a <- SubsetSTData(a, idents = c("Hot_spot"))
 
 # Extract coordinates
-meta <- M8@meta.data
-coor <- M8@tools[["Staffli"]]@meta.data
+meta <- a@meta.data
+coor <- a@tools[["Staffli"]]@meta.data
 meta["x_coord"] <- as.vector(coor$x) 
 meta["y_coord"] <- as.vector(coor$y) 
 coordinates <- as.matrix(meta[, c("x_coord", "y_coord")])
 
-# Define the number of nearest neighbors 
-k <- 15  
+dist_matrix <- as.matrix(dist(coordinates))
 
-# Find k nearest neighbors for each spot
-# The function returns a list of integer vectors, each containing the indices of the k nearest neighbors
-knn_result <- kNN(coordinates, k=k, search="kd")
+# Inicializa una matriz de adyacencia con ceros
+adj_matrix <- matrix(0, nrow = nrow(dist_matrix), ncol = nrow(dist_matrix))
 
-# Initialize an empty graph
-graph <- make_empty_graph(nrow(coordinates), directed = FALSE)
-
-# Add vertices with spatial information as attributes
-V(graph)$x <- meta$x_coord
-V(graph)$y <- meta$y_coord
-
-# Iterate through the knn_result list to add edges
-for (i in 1:length(knn_result)) {
-  # Get the indices of the k-nearest neighbors for the i-th spot
-  # Exclude the first one because it's the point itself
-  neighbors <- knn_result[[i]][-1]
-  # Add edges from the current point to its neighbors
-  graph <- graph + edges(cbind(rep(i, length(neighbors)), neighbors))
+# Llena la matriz de adyacencia conectando cada punto solo a sus 6 vecinos más cercanos
+for (i in 1:nrow(dist_matrix)) {
+  # Ordena y selecciona los índices de los 6 vecinos más cercanos
+  neighbors <- order(dist_matrix[i,])[2:7]  # Excluye el propio punto [1]
+  adj_matrix[i, neighbors] <- 1
 }
 
-# Simplify the graph to remove loops and multiple edges
-graph <- simplify(graph)
+# Asegúrate de que la matriz de adyacencia es simétrica
+adj_matrix <- pmax(adj_matrix, t(adj_matrix))
 
-# Perform community detection using the Louvain algorithm
-communities <- cluster_louvain(graph,resolution =  0.2)
+# Crea el grafo a partir de la matriz de adyacencia
+graph <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", diag = FALSE)
 
-# Add the community information to the metadata
-meta$community <- factor(communities$membership)
+# Opcional: Eliminar nodos aislados si los hay
+graph <- delete.vertices(graph, which(degree(graph) == 0))
 
-# Extract the layout from the graph's vertex attributes
-layout_matrix <- cbind(V(graph)$x, V(graph)$y)
+# Visualiza el grafo
+plot(graph, vertex.size=5, vertex.label=NA, asp=1)
 
-# Plot the graph using the layout based on the original spatial coordinates
-#plot(graph, layout=layout_matrix, vertex.size=3, vertex.label=NA, edge.arrow.size=.1)
-# Color the vertices based on the community membership to visualize clusters
-plot(communities, graph, layout=layout_matrix, vertex.size=3, vertex.label=NA, edge.arrow.size=.1, edge.width=0.1)
+
+
+# Check resolutions
+resolutions = seq(0.1, 1, by=0.1)
+silhouette_scores = numeric(length(resolutions))
+
+for (j in 1:length(resolutions)) {
+  communities <- cluster_louvain(graph, resolution = resolutions[j])
+  meta$community <- factor(communities$membership)
+  
+  # Convertir meta$community en un vector numérico
+  community_numeric <- as.numeric(meta$community)
+  
+  # Calcula la matriz de distancia
+  dist_matrix <- dist(coordinates)
+  
+  # Calcula los coeficientes de silueta
+  silhouette_values <- silhouette(community_numeric, dist_matrix)
+  
+  # Comprobar si hay suficientes clusters para calcular la silueta
+  if (length(unique(community_numeric)) > 1) {
+    silhouette_scores[j] <- mean(silhouette_values[, "sil_width"])
+  } else {
+    silhouette_scores[j] <- NA  # NA para resoluciones con un único cluster
+  }
+}
+
+# Encontrar la resolución con el coeficiente de silueta más alto (ignorando NA)
+best_resolution_index <- which.max(silhouette_scores)
+best_resolution <- resolutions[best_resolution_index]
+
+# Imprimir o graficar los resultados
+plot(resolutions, silhouette_scores, type='b', xlab='Resolution', ylab='Average Silhouette Width')
+abline(v = best_resolution, col = "red", lwd = 2)
+
+
+
+# Detectar comunidades con el algoritmo de Louvain
+communities <- cluster_louvain(graph, resolution = 0.1)
+# Visualizar el grafo con las comunidades
+plot(communities, graph, vertex.size=5, vertex.label=NA)
+
 
 # Extract info and add it to your spatial data
 community_membership <- communities$membership
 community_factor <- as.factor(community_membership)
 meta$community <- community_factor
-M8 <- AddMetaData(M8, meta)
+a <- AddMetaData(a, meta)
+
+
 
 # Plot spatial
-FeatureOverlay(M8, features = c("community"), 
+FeatureOverlay(a, features = c("community"), 
                sampleids = 1:6, ncols = 2, 
                pt.size = 1.3)
 
-
+M9 <- a
 # Change level names
 # k=15, res=0.2
 M8
 levels(M8@meta.data$community) <- c("S8_M1", "S8_M2")
 # k=15, res=0.5
 M2
-levels(M2@meta.data$community) <- c("S2_M1", "S2_M2", "S2_M3", "S2_M4")
+levels(M2@meta.data$community) <- c("S2_M1", "S2_M2", "S2_M3", "S2_M4", "S2_M5")
 # k=15, res=0.2
 M1
-levels(M1@meta.data$community)[levels(M1@meta.data$community) == "1"] <- "S1_M1"
+levels(M1@meta.data$community) <- c("S1_M1", "S1_M2")
 # k=15, res=0.5
 M9
 levels(M9@meta.data$community) <- c("S9_M1", "S9_M2", "S9_M3")
