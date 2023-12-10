@@ -5,6 +5,7 @@
 regress_out <- function(a, variable_column_name) {
   # Extract counts
   matrix <- as.data.frame(a@assays[["RNA"]]@counts)
+  matrix <- ScaleData(matrix)
   matrix_t <- t(matrix)
   matrix_t <- as.data.frame(matrix_t)
   matrix_t["variable_value"] <- a@meta.data[[variable_column_name]]
