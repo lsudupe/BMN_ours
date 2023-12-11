@@ -12,6 +12,7 @@ library(ggplot2)
 library(STutility)
 library(ComplexHeatmap)
 color <- rev(brewer.pal(11,"Spectral"))
+source("./regress_out_function.R")
 
 ## Data
 M1 <- readRDS("./objects/sp/st_s1_module.rds")
@@ -33,26 +34,22 @@ immunoglobulin_genes <- grep("^Igh", rownames(se.merged), value = TRUE)
 # Remove these genes from the matrix
 se.merged <- se.merged[!rownames(se.merged) %in% immunoglobulin_genes, ]
 
-metaData <- se.merged@meta.data
-metaData <- data.frame(row.names = rownames(metaData),
-                       sampleID = metaData$name,
-                       modules = metaData$community)
-
+## Regress out, al final con mi funcion
 st <- SCTransform(se.merged, assay = "RNA", new.assay.name = "SCT_novars", variable.features.n = 18000)
 st <- SCTransform(se.merged, assay = "RNA", new.assay.name = "SCT_novars_sample", vars.to.regress = "name")
-#st <- SCTransform(se.merged, assay = "RNA", new.assay.name = "SCT_novars_pc", vars.to.regress = "name")
+#ESTE
+st <- regress_out(se.merged, "name")
 
-# Step1: aggregate counts by community
+## Aggregate counts by community en este caso con el regress por name
 Seurat::Idents(object = st) <- st@meta.data[["community"]]
-cts <- AggregateExpression(se.merged, 
+cts <- AggregateExpression(st, 
                            group.by = c("community"),
-                           assays = 'RNA',
+                           assays = 'regress',
                            #assays = 'SCT_novars_sample',
                            slot = "count",
                            return.seurat = FALSE)
 
-aggregated_counts <- cts$RNA
-#aggregated_counts <- cts$SCT_novars_sample
+aggregated_counts <- cts$regress
 head(aggregated_counts)
 row_totals <- rowSums(aggregated_counts)
 filtered_data <- aggregated_counts[row_totals >= 10, ]
@@ -61,26 +58,26 @@ quantile_99 <- quantile(filtered_data, probs = 0.99)
 #filtered_data <- filtered_data[row_totals <= 500, ]
 head(filtered_data)
 
-final_mat <- log1p(filtered_data)
+##for regress out
+final_mat <-aggregated_counts
 
-library_sizes <- colSums(filtered_data)
+## Normalize by library
+library_sizes <- colSums(final_mat)
 scaling_factor <- mean(library_sizes)
-normalized_matrix <- apply(filtered_data, 2, library_sizes, FUN="/") * scaling_factor
-
-filtered_data <- NormalizeData(filtered_data)
+normalized_matrix <- apply(final_mat, 2, library_sizes, FUN="/") * scaling_factor
 
 final_mat <- normalized_matrix
 head(final_mat)
 
 ## top var genes
-### standar error
+### Estandar error
 se <- function(x) sd(x)/sqrt(length(x))
 t_final_mat <- Matrix::t(final_mat)
 se_mat <- apply(t_final_mat, 2, se)
 se_mat <- se_mat[order(se_mat, decreasing = T)]
 se_mat_top100 <- names(sort(se_mat, decreasing = TRUE))[1:100]
 
-## pca
+## PCA
 pca<- prcomp(t(final_mat),center = TRUE, scale. = TRUE) 
 # check the order of the samples are the same.
 all.equal(rownames(pca$x), colnames(final_mat))
@@ -97,8 +94,17 @@ ggplot(PC1_and_PC2, aes(x=PC1, y=PC2)) +
   geom_point(aes(color = rownames(PC1_and_PC2))) +
   theme_bw(base_size = 14) 
 
-## heatmap
+top <- names(sort(se_mat, decreasing = TRUE))[1:100]
 
+## Ordenar por los genes
+final_mat_se <- final_mat[top, ] #pseudobulk ordered most var genes
+dim(final_mat_se)
+
+final_mat_se <- NormalizeData(final_mat_se)
+final_mat_se <- ScaleData(final_mat_se)
+
+
+# Draw the heatmap
 module_colors <- c(S1_M1 = "#1f77b4",  # blue
                    S1_M2 = "#e377c2",  # pink
                    S2_M1 = "#ff7f0e",  # orange
@@ -115,32 +121,24 @@ module_colors <- c(S1_M1 = "#1f77b4",  # blue
 # Use the module_colors named vector directly
 top_annotation <- HeatmapAnnotation(modules = module_colors)
 
-top <- names(sort(se_mat, decreasing = TRUE))[1:100]
-
-final_mat_se <- final_mat[top, ] #pseudobulk ordered most var genes
-dim(final_mat_se)
-
-
-#final_mat_se <- NormalizeData(final_mat_se)
-final_mat_se <- ScaleData(final_mat_se)
-
-# Draw the heatmap
 suppressMessages(
   Heatmap(final_mat_se, show_column_names = TRUE, 
           row_names_gp = gpar(fontsize=6), cluster_columns = FALSE,
           top_annotation = top_annotation)
 )
 
+## Chequear genes
 #noRegressGenes <- top
 nameRegressGenes <- se_mat_top100
-pcRegreesGenes <- se_mat_top100
+#pcRegreesGenes <- se_mat_top100
 
-top5 <- top[1:20]
+novsname <- intersect(nameRegressGenes, noRegressGenes)
+top5 <- top[1:50]
 top5
 
-x <- "Lilra5"
 
-
+## Plots
+x <- "Ly6d"
 m1 <- FeatureOverlay(M1, features = c(x),pt.size = 1.3, col=color)
 m2 <- FeatureOverlay(M2, features = c(x),pt.size = 1.3, col=color)
 m3 <- FeatureOverlay(M8, features = c(x),pt.size = 1.3, col=color)
@@ -149,7 +147,9 @@ m4 <- FeatureOverlay(M9, features = c(x),pt.size = 1.3, col=color)
 grid.arrange(m1, m2, m3, m4, ncol = 2)
 
 
-VlnPlot(st, features = x, group.by = "community", assay = "SCT")
+se.merged <- NormalizeData(st)
+se.merged <- ScaleData(st)
+VlnPlot(se.merged, features = x, group.by = "community", assay = "SCT")
 
 
 
