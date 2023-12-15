@@ -14,7 +14,7 @@ library(STutility)
 library(ComplexHeatmap)
 library(DESeq2)
 color <- rev(brewer.pal(11,"Spectral"))
-source("./regress_out_function.R")
+#source("./regress_out_function.R")
 
 ## Data
 M1 <- readRDS("./objects/sp/st_s1_module.rds")
@@ -51,11 +51,13 @@ head(aggregated_counts)
 batch<- c("S1", "S1", "S2", "S2","S2","S2","S2" ,"S8","S8","S8","S9","S9")
 modules <- c("M1", "M1","M2","M2","M2","M2","M2","M8","M8","M9","M9","M9")
 corrected_matrix <- ComBat_seq(counts=aggregated_counts, batch = batch, group = NULL)
+
 head(corrected_matrix)
+corrected_matrix <- aggregated_counts
 
 colData_df <- DataFrame(modules)
 dds_matrix <- DESeqDataSetFromMatrix(countData = corrected_matrix, colData = colData_df, design = ~modules)
-dds_matrix <- DESeq(ddsCor_matrix)
+dds_matrix <- DESeq(dds_matrix)
 
 ## Extract normalize counts
 final_mat <- counts(dds_matrix, normalized = T)
@@ -66,10 +68,20 @@ se <- function(x) sd(x)/sqrt(length(x))
 t_final_mat <- Matrix::t(final_mat)
 se_mat <- apply(t_final_mat, 2, se)
 se_mat <- se_mat[order(se_mat, decreasing = T)]
-se_mat_top100 <- names(sort(se_mat, decreasing = TRUE))[1:100]
+hist(se_mat, main="Histogram of se_mat", xlab="standard error values")
+log_se_mat <- log1p(se_mat) # log1p is used to avoid log(0) which is undefined
+hist(log_se_mat, main="Log-transformed Histogram of se_mat", xlab="Log-transformed  standard error values")
+
+## select top
+# Calculate the 99th quantile on the log-transformed data
+quantile_99 <- quantile(log_se_mat, probs = 0.99)
+threshold_value <- quantile_99[1]
+# To get the threshold value on the original scale of se_mat
+original_threshold_value <- exp(threshold_value) - 1
+selected_genes <- se_mat[se_mat > original_threshold_value]
 
 ## Ordenar por los genes
-top <- names(sort(se_mat, decreasing = TRUE))[1:100]
+top <- names(sort(selected_genes, decreasing = TRUE))#[1:100]
 final_mat_se <- final_mat[top, ] #pseudobulk ordered most var genes
 dim(final_mat_se)
 
@@ -79,7 +91,7 @@ ordered_cols <- c("S1_M1", "S1_M2", "S2_M1", "S2_M2", "S2_M3", "S2_M4", "S2_M5",
                   "S8_M1", "S8_M2", "S9_M1", "S9_M2", "S9_M3")
 matrix_ordered <- matrix[, ordered_cols]
 
-pheatmap(matrix_ordered, scale = "row", fontsize = 15)
+pheatmap(matrix_ordered, scale = "row", fontsize = 4)
 
 ## pca
 pca<- prcomp(t(matrix),center = FALSE, scale. = FALSE) 
@@ -99,6 +111,11 @@ ggplot(PC1_and_PC2, aes(x=PC1, y=PC2)) +
 top5 <- top[1:100]
 top5
 
+top_batcheffect_name <- top
+top_NObatcheffect_name <- top
+
+genesComun <- intersect(top_batcheffect_name, top_NObatcheffect_name)
+
 x <- "Mzb1"
 m1 <- FeatureOverlay(M1, features = c(x),pt.size = 1.3, col=color)
 m2 <- FeatureOverlay(M2, features = c(x),pt.size = 1.3, col=color)
@@ -107,8 +124,8 @@ m4 <- FeatureOverlay(M9, features = c(x),pt.size = 1.3, col=color)
 
 grid.arrange(m1, m2, m3, m4, ncol = 2)
 
-"Xbp1" %in% top5
-"Mzb1" %in% top5
+"Xbp1" %in% top_NObatcheffect_name
+"Mzb1" %in% top_NObatcheffect_name
 
 VlnPlot(se.merged, features = x, group.by = "community", assay = "SCT")
 
@@ -130,6 +147,9 @@ ST.FeaturePlot(M2, features = "community", split.labels = T, pt.size = 1.5) & th
 
 
 FeatureOverlay(M9, features = "community")
+
+
+
 
 
 
