@@ -13,6 +13,9 @@ library(ggplot2)
 library(STutility)
 library(ComplexHeatmap)
 library(DESeq2)
+library(enrichplot)
+library(clusterProfiler)
+library(org.Mm.eg.db)
 color <- rev(brewer.pal(11,"Spectral"))
 #source("./regress_out_function.R")
 
@@ -50,7 +53,7 @@ head(aggregated_counts)
 ## regress out sample with Combat
 batch<- c("S1", "S1", "S2", "S2","S2","S2","S2" ,"S8","S8","S8","S9","S9")
 modules <- c("M1", "M1","M2","M2","M2","M2","M2","M8","M8","M9","M9","M9")
-corrected_matrix <- ComBat_seq(counts=aggregated_counts, batch = batch, group = NULL)
+#corrected_matrix <- ComBat_seq(counts=aggregated_counts, batch = batch, group = NULL)
 
 head(corrected_matrix)
 corrected_matrix <- aggregated_counts
@@ -70,11 +73,13 @@ se_mat <- apply(t_final_mat, 2, se)
 se_mat <- se_mat[order(se_mat, decreasing = T)]
 hist(se_mat, main="Histogram of se_mat", xlab="standard error values")
 log_se_mat <- log1p(se_mat) # log1p is used to avoid log(0) which is undefined
-hist(log_se_mat, main="Log-transformed Histogram of se_mat", xlab="Log-transformed  standard error values")
+
 
 ## select top
 # Calculate the 99th quantile on the log-transformed data
 quantile_99 <- quantile(log_se_mat, probs = 0.99)
+hist(log_se_mat, main="Log-transformed Histogram of se_mat", xlab="Log-transformed  standard error values")
+abline(v=quantile_99, col="red", lwd=2, lty=2)
 threshold_value <- quantile_99[1]
 # To get the threshold value on the original scale of se_mat
 original_threshold_value <- exp(threshold_value) - 1
@@ -148,6 +153,31 @@ ST.FeaturePlot(M2, features = "community", split.labels = T, pt.size = 1.5) & th
 
 FeatureOverlay(M9, features = "community")
 
+## ORA
+sGenes <- names(selected_genes)
+entrez_ids <- bitr(sGenes, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Mm.eg.db)
+head(entrez_ids)
+
+ego <- enrichGO(gene          = entrez_ids$ENTREZID,
+                OrgDb         = org.Mm.eg.db,
+                ont           = "CC",  # Cellular Component
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.01,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+head(ego)
+goplot(ego)
+
+barplot(ego, showCategory=20) 
+mutate(ego, qscore = -log(p.adjust, base=10)) %>% 
+  barplot(x="qscore")
+
+dp <- dotplot(ego, showCategory=30) + ggtitle("dotplot for ORA")
+dp <- dp + 
+  theme(axis.text.x = element_text(size = 10),  # Adjust x-axis text size
+        axis.text.y = element_text(size = 8),  # Adjust y-axis text size
+        plot.title = element_text(size = 10)) 
+print(dp)
 
 
 
