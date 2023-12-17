@@ -34,6 +34,23 @@ se.merged <- MergeSTData(
   merge.data = TRUE
 )
 
+# new names
+se.merged@meta.data[["community"]] <- as.factor(se.merged@meta.data[["community"]])
+meta <- se.merged@meta.data
+current_levels <- levels(meta$community)
+new_levels_map <- setNames(
+  c("Pg1", "Pg2", "Pg3", "Pg4", "Pg5", "Pg6", "Pg7", "Pg8", "Pg9", "Pg10", "Pg11", "Pg12"),
+  current_levels
+)
+meta$community <- factor(meta$community, levels = current_levels, labels = new_levels_map[current_levels])
+
+se.merged <- AddMetaData(se.merged,meta)  
+
+#spatial plot
+FeatureOverlay(se.merged, features = c("community"), 
+               sampleids = 1:4, ncols = 2, 
+               pt.size = 1.3)
+
 ## quitar inmunos
 #immunoglobulin_genes <- grep("^Igh", rownames(se.merged), value = TRUE)
 # Remove these genes from the matrix
@@ -92,8 +109,7 @@ dim(final_mat_se)
 
 ## ana heatmap 
 matrix <- final_mat[top, ]
-ordered_cols <- c("S1_M1", "S1_M2", "S2_M1", "S2_M2", "S2_M3", "S2_M4", "S2_M5", 
-                  "S8_M1", "S8_M2", "S9_M1", "S9_M2", "S9_M3")
+ordered_cols <- c("Pg1", "Pg2", "Pg3", "Pg4", "Pg5", "Pg6", "Pg7", "Pg8", "Pg9", "Pg10", "Pg11", "Pg12")
 matrix_ordered <- matrix[, ordered_cols]
 
 pheatmap(matrix_ordered, scale = "row", fontsize = 4)
@@ -112,7 +128,7 @@ ggplot(PC1_and_PC2, aes(x=PC1, y=PC2)) +
   geom_point(aes(color = rownames(PC1_and_PC2))) +
   theme_bw(base_size = 14) 
  
-## plots spatial y violin
+## PLOTS SPATIAL Y VIOLIN
 top5 <- top[1:100]
 top5
 
@@ -134,24 +150,36 @@ grid.arrange(m1, m2, m3, m4, ncol = 2)
 
 VlnPlot(se.merged, features = x, group.by = "community", assay = "SCT")
 
-FeatureOverlay(se.merged, features = c("community"), 
-               sampleids = 1:4, ncols = 2, 
-               pt.size = 1.3)
 
-FeatureOverlay(se.merged, features = "community")
+## community spatial plot
+# change names
+M1@meta.data[["community"]] <- factor(M1@meta.data[["community"]],
+                                      levels = c("S1_M1", "S1_M2"),
+                                      labels = c("Pg1", "Pg2"))
+M2@meta.data[["community"]] <- factor(M2@meta.data[["community"]],
+                                      levels = c("S2_M1", "S2_M2", "S2_M3", "S2_M4", "S2_M5"),
+                                      labels = c("Pg3", "Pg4", "Pg5", "Pg6","Pg7"))
+M8@meta.data[["community"]] <- factor(M8@meta.data[["community"]],
+                                      levels = c("S8_M1", "S8_M2"),
+                                      labels = c("Pg8", "Pg9"))
+M9@meta.data[["community"]] <- factor(M9@meta.data[["community"]],
+                                      levels = c("S9_M1", "S9_M2", "S9_M3"),
+                                      labels = c("Pg10", "Pg11", "Pg12"))
 
+num_communities <- length(unique(all_communities))
+unique_colors <- colorRampPalette(brewer.pal(min(num_communities, 12), "Set1"))(num_communities)
+color_mapping <- setNames(unique_colors, unique(all_communities))
 
-p1 <- ST.FeaturePlot(se.merged, features = "community", indices = 1,  pt.size = 2) & theme(plot.title = element_blank(), strip.text = element_blank())
-p2 <- ST.FeaturePlot(se.merged, features = "community", indices = 2, split.labels = T, pt.size = 2) & theme(plot.title = element_blank(), strip.text = element_blank())
-p3 <- ST.FeaturePlot(se.merged, features = "community", indices = 3, split.labels = T, pt.size = 2) & theme(plot.title = element_blank(), strip.text = element_blank())
-p4 <- ST.FeaturePlot(se.merged, features = "community", indices = 4, split.labels = T, pt.size = 2) & theme(plot.title = element_blank(), strip.text = element_blank())
-cowplot::plot_grid(p1, p2, p3, p4, ncol = 4)
+p1 <- FeatureOverlay(M1, features = "community", pt.size = 1.3,cols = color_mapping)
+p2 <- FeatureOverlay(M2, features = "community",pt.size = 1.3,cols = color_mapping)
+p3 <- FeatureOverlay(M8, features = "community", pt.size = 1.3,cols = color_mapping)
+p4 <- FeatureOverlay(M9, features = "community",pt.size = 1.3,cols = color_mapping)
+cowplot::plot_grid(p1, p2, p3, p4, ncol = 2)
 
-ST.FeaturePlot(M1, features = "community", split.labels = T, pt.size = 1.5) & theme(plot.title = element_blank(), strip.text = element_blank())
-ST.FeaturePlot(M2, features = "community", split.labels = T, pt.size = 1.5) & theme(plot.title = element_blank(), strip.text = element_blank())
-
-
-FeatureOverlay(M9, features = "community")
+pdf("./results/distribution/pg_groups_spatial.pdf", width = 12, height = 8)
+print(cowplot::plot_grid(p1, p2, p3, p4, ncol = 2))
+dev.off()
+FeatureOverlay(M9, features = "community", pt.size = 1.3,cols = color_mapping)
 
 ## ORA
 sGenes <- names(selected_genes)
@@ -179,7 +207,48 @@ dp <- dp +
         plot.title = element_text(size = 10)) 
 print(dp)
 
+##save data
+library(openxlsx)
+# Convertir la lista en un data frame
+genes_df <- data.frame(Gene = names(selected_genes), Expression = selected_genes)
+# Guardar el data frame en un archivo de Excel
+write.xlsx(genes_df, file = "./194_genes.xlsx")
 
+##chequear 38 genes
+genes38 <- c("Tnfrsf17", "Plpp5", "Sdc1", "Fcrl5", "Slamf7", 
+            "Cd38", "Cd79B", "Cd79A", "Ms4A1", "Tnfrsf13B", 
+            "Kcnn3", "CadM1", "Slc1A4", "Cav1", "Lsr", "Gpr160", 
+            "Tnfrsf13C", "EdnrB", "P2Rx5", "Perp", "Cd22", "Fcer2",
+            "Fcrl2", "Gprc5D", "Itga8", "Il5Ra", "Lsamp", "Adam28", 
+            "Cd24", "Fcrl1", "Lax1", "Cd19", "Hvcn1", "Cd40", "Parm1", "Ccr10", "Dpep1", "Dcc")
 
+genes38 %in% selected_genes
 
+## pathways y genes a excell
+# Asumiendo que ego es tu objeto y ya tiene los resultados
+# Extrae los top 50 pathways
+top_pathways <- ego@result[["ID"]][1:50]
+top_pathway_descriptions <- ego@result[["Description"]][1:50]
+
+# Preparar un data frame para almacenar los resultados
+pathway_genes_df <- data.frame(PathwayID = character(), Description = character(), Genes = character(), stringsAsFactors = FALSE)
+
+# Iterar sobre cada pathway y extraer los genes asociados
+for (i in 1:length(top_pathways)) {
+  pathway_id <- top_pathways[i]
+  genes_in_pathway <- ego@geneSets[[pathway_id]]
+  # Filtrar para asegurar que el conjunto de genes no esté vacío
+  if (length(genes_in_pathway) > 0) {
+    gene_symbols <- ego@gene2Symbol[genes_in_pathway]
+    # Filtrar cualquier NA
+    gene_symbols <- gene_symbols[!is.na(gene_symbols)]
+    # Solo añadir a la lista si hay símbolos de genes disponibles
+    if (length(gene_symbols) > 0) {
+      pathway_genes_df <- rbind(pathway_genes_df, data.frame(PathwayID = pathway_id, Description = top_pathway_descriptions[i], Genes = paste(gene_symbols, collapse = ", ")))
+    }
+  }
+}
+
+# Escribir el data frame en un archivo Excel
+write.xlsx(pathway_genes_df, file = "Top50_Pathways_and_Genes.xlsx")
 
