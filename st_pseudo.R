@@ -16,6 +16,7 @@ library(DESeq2)
 library(enrichplot)
 library(clusterProfiler)
 library(org.Mm.eg.db)
+library(colorBlindness)
 color <- rev(brewer.pal(11,"Spectral"))
 #source("./regress_out_function.R")
 
@@ -166,9 +167,10 @@ M9@meta.data[["community"]] <- factor(M9@meta.data[["community"]],
                                       levels = c("S9_M1", "S9_M2", "S9_M3"),
                                       labels = c("Pg10", "Pg11", "Pg12"))
 
+all_communities <- c("Pg1", "Pg2", "Pg3", "Pg4", "Pg5", "Pg6", "Pg7", "Pg8", "Pg9", "Pg10", "Pg11", "Pg12")
 num_communities <- length(unique(all_communities))
-unique_colors <- colorRampPalette(brewer.pal(min(num_communities, 12), "Set1"))(num_communities)
-color_mapping <- setNames(unique_colors, unique(all_communities))
+paletteMartinColors <- colorBlindness::paletteMartin
+color_mapping <- setNames(paletteMartinColors, unique(all_communities))
 
 p1 <- FeatureOverlay(M1, features = "community", pt.size = 1.3,cols = color_mapping)
 p2 <- FeatureOverlay(M2, features = "community",pt.size = 1.3,cols = color_mapping)
@@ -179,7 +181,8 @@ cowplot::plot_grid(p1, p2, p3, p4, ncol = 2)
 pdf("./results/distribution/pg_groups_spatial.pdf", width = 12, height = 8)
 print(cowplot::plot_grid(p1, p2, p3, p4, ncol = 2))
 dev.off()
-FeatureOverlay(M9, features = "community", pt.size = 1.3,cols = color_mapping)
+
+FeatureOverlay(M9, features = "new_groups", pt.size = 1.3,cols = color_mapping)
 
 ## ORA
 sGenes <- names(selected_genes)
@@ -222,7 +225,25 @@ genes38 <- c("Tnfrsf17", "Plpp5", "Sdc1", "Fcrl5", "Slamf7",
             "Fcrl2", "Gprc5D", "Itga8", "Il5Ra", "Lsamp", "Adam28", 
             "Cd24", "Fcrl1", "Lax1", "Cd19", "Hvcn1", "Cd40", "Parm1", "Ccr10", "Dpep1", "Dcc")
 
-genes38 %in% selected_genes
+genes38_orto <- c("Tnfrsf17", "Plpp5","Plpp4", "Sdc1", "Fcrl5", "Slamf7", 
+             "Cd38", "Cd79b", "Cd79a", "Ms4a1", "Tnfrsf13b", 
+             "Kcnn3","Kcnn1", "Kcnn2", "Cadm1", "Slc1a4", "Cav1", "Lsr", "Gpr160", 
+             "Tnfrsf13c", "Ednrb", "P2rx5", "Perp", "Cd22", "Fcer2a",
+             "Fcrl1","Fcrl5","Fcrl6", "Gprc5d", "Itga8","Itga2b","Itga5","Itgav", "Il5ra", "Lsamp", "Adam28", 
+             "Cd24a", "Fcrl1", "Lax1", "Cd19", "Hvcn1", "Cd40", "Parm1", "Ccr10", "Dpep1", "Dcc", "Neo1")
+
+
+count(genes38_orto %in% names(selected_genes))
+
+"Ighm" %in% selected_genes
+"Ighm" %in% names(selected_genes)
+"Cd24" %in% names(selected_genes)
+
+
+
+
+
+
 
 ## pathways y genes a excell
 # Asumiendo que ego es tu objeto y ya tiene los resultados
