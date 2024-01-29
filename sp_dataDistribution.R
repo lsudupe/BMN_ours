@@ -164,8 +164,8 @@ df_filtered_q3 <- df_filtered %>%
   left_join(df_quantiles, by = "name") %>%
   mutate(new_groups = case_when(
     new_groups == "rest" ~ "rest",
-    PC_new_UCell < Q1 ~ "Low",
-    PC_new_UCell < Q2 ~ "Surronding",
+    PC_new_UCell < Q1 ~ "Remote",
+    PC_new_UCell < Q2 ~ "Border",
     TRUE ~ "Hot_spot"
   )) %>%
   select(-c(Q1, Q2, Q3))  # Elimina las columnas de cuantiles
@@ -177,11 +177,15 @@ df_filtered_q3 <- df_filtered_q3 %>% select(-row_name)
 # Asumiendo que st es un objeto Seurat y df_filtered_q3 es el metadato a agregar
 st_q3 <- AddMetaData(st, df_filtered_q3)
 
+##plot areas colorblind
+#library(colorBlindness)
+#selectedColors <- c(rest="#E5B17E", Remote="#C3E57E", Border="#7EC3E5", Hot_spot="#CC5151",notknown="white")
+
 p <-FeatureOverlay(st_q3, features = c("new_groups"),  ncols = 2, sampleids = 1:6,
-               pt.size =0.6, cols = c(rest = "#003366",   # Azul oscuro
-                                       Low = "#C0C0C0",    # Gris claro
-                                       Surronding = "#800000", # Rojo vino
-                                       Hot_spot = "#008000")) # Verde esmeralda
+               pt.size =0.6, cols = c(rest = "#E5B17E",   # Azul oscuro
+                                      Remote = "#C3E57E",    # Gris claro
+                                      Border = "#7EC3E5", # Rojo vino
+                                       Hot_spot = "#CC5151")) # Verde esmeralda
 
 saveRDS(st_q3, "./objects/sp/st_q3_all.rds")
 
