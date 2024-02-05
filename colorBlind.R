@@ -116,8 +116,8 @@ names(samples) <- c("M1","M2","M8","M9")
 
 samples <- list(M1 = M1, M2 = M2, M8 = M8, M9 = M9)
 
-gen <- c("Xbp1", "Mzb1", "Cd74", "Hsp90b1", "S100a9", "S100a8", "B2m", "Tmsb4x", "Sec11c", "Tpt1",
-              "Cybba", "Fth1", "Cd52")
+genes <- c("Xbp1", "Mzb1", "Cd74", "Hsp90b1", "S100a9", "S100a8", "B2m", "Tmsb4x", "Sec11c", "Tpt1",
+              "Cybb", "Fth1", "Cd52")
 
 
 # Function to get max expression of a gene from a Seurat object
