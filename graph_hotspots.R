@@ -10,6 +10,7 @@ library(igraph)
 library(deldir)
 library(dbscan)
 library(cluster)
+library(colorBlindness)
 
 
 ## Data
@@ -132,3 +133,73 @@ saveRDS(M2,"./objects/sp/st_s2_module.rds")
 saveRDS(M8,"./objects/sp/st_s8_module.rds")
 saveRDS(M9, "./objects/sp/st_s9_module.rds")
 
+
+
+###colorblindness plots
+M1 <- graph
+communities_M1 <- communities
+# Visualizar el grafo con las comunidades
+plot(communities_M1, M1, vertex.size=5, vertex.label=NA)
+
+
+color_mapping <- c(Pg1="#000000", Pg2="#004949", Pg3="#009292", Pg4="#ff6db6", Pg5="#ffb6db",
+                   Pg6="#490092", Pg7="#006ddb", Pg8="#b66dff", Pg9="#6db6ff", Pg10="#b6dbff",
+                   Pg11="#920000", Pg12="#924900", Pg13="#db6d00", Pg14="#24ff24", Pg15="#ffff6d")
+
+
+#M1 <- graph
+#communities_M1 <- communities
+pdf("./results/graphs/communities_M1.pdf")
+plot(communities_M1, M1, vertex.size=5, mark.col= c("#000000", "#006ddb"), vertex.label=NA, asp=1, 
+     vertex.color = c("#000000", "#006ddb"))
+dev.off()
+
+#M2 <- graph
+#communities_M2 <- communities
+pdf("./results/graphs/communities_M2.pdf")
+plot(communities_M2, M2, vertex.size=5, mark.col= c("#009292", "#ff6db6", "#ffb6db",
+                                                    "#490092", "#006ddb"), vertex.label=NA, asp=1,
+     vertex.color = c("#009292", "#ff6db6", "#ffb6db",
+                      "#490092", "#006ddb"))
+dev.off()
+
+#M8 <- graph
+#communities_M8 <- communities
+pdf("./results/graphs/communities_M8.pdf")
+plot(communities_M8, M8, vertex.size=5, mark.col= c("#b66dff","#6db6ff"), vertex.label=NA, asp=1,
+     vertex.color = c("#b66dff","#6db6ff"))
+dev.off()
+
+#M9 <- graph
+#communities_M9 <- communities
+pdf("./results/graphs/communities_M9.pdf")
+plot(communities_M9, M9, vertex.size=5, mark.col= c("#b6dbff","#920000","#924900"), vertex.label=NA, asp=1,
+     vertex.color = c("#b6dbff","#920000","#924900"))
+dev.off()
+
+#opacidad
+
+color_transparente <- adjustcolor(c("#000000", "#006ddb"), alpha.f = 0.5)
+pdf("./results/graphs/communities_M1_opaco.pdf")
+plot(communities_M1, M1, vertex.size=5, mark.col= color_transparente, vertex.label=NA, asp=1, 
+     vertex.color = NA)
+dev.off()
+
+color_transparente <- adjustcolor(c("#009292", "#ff6db6", "#ffb6db",
+                                    "#490092", "#006ddb"), alpha.f = 0.5)
+pdf("./results/graphs/communities_M2_opaco.pdf")
+plot(communities_M2, M2, vertex.size=5, mark.col= color_transparente, vertex.label=NA, asp=1,
+     vertex.color = NA)
+dev.off()
+
+color_transparente <- adjustcolor(c("#b66dff","#6db6ff"), alpha.f = 0.5)
+pdf("./results/graphs/communities_M8_opaco.pdf")
+plot(communities_M8, M8, vertex.size=5, mark.col= color_transparente, vertex.label=NA, asp=1,
+     vertex.color = NA)
+dev.off()
+
+color_transparente <- adjustcolor(c("#b6dbff","#920000","#924900"), alpha.f = 0.5)
+pdf("./results/graphs/communities_M9_opaco.pdf")
+plot(communities_M9, M9, vertex.size=5, mark.col= color_transparente, vertex.label=NA, asp=1,
+     vertex.color = NA)
+dev.off()
