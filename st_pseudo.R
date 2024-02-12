@@ -121,13 +121,27 @@ PC1_and_PC2<- data.frame(PC1=pca$x[,1], PC2= pca$x[,2])
 PC1_and_PC2$sample <- c("M1","M1", "M2", "M2","M2","M2","M2", "M8","M8","M9","M9","M9")
 head(PC1_and_PC2)
 
+pdf("./results/pca_sample.pdf")
 ggplot(PC1_and_PC2, aes(x=PC1, y=PC2)) + 
   geom_point(aes(color = sample)) +
-  theme_bw(base_size = 14) 
+  theme_bw(base_size = 14)
+dev.off()
 
-ggplot(PC1_and_PC2, aes(x=PC1, y=PC2)) + 
-  geom_point(aes(color = rownames(PC1_and_PC2))) +
-  theme_bw(base_size = 14) 
+color_mapping <- c(Pg1="#000000", Pg2="#004949", Pg3="#009292", Pg4="#ff6db6", Pg5="#ffb6db",
+                   Pg6="#490092", Pg7="#006ddb", Pg8="#b66dff", Pg9="#6db6ff", Pg10="#b6dbff",
+                   Pg11="#920000", Pg12="#924900")
+
+rownames = factor(c("Pg1", "Pg2", "Pg3", "Pg4", "Pg5", "Pg6", "Pg7", "Pg8", "Pg9", "Pg10", "Pg11", "Pg12"),
+                  levels = c("Pg1", "Pg2", "Pg3", "Pg4", "Pg5", "Pg6", "Pg7", "Pg8", "Pg9", "Pg10", "Pg11", "Pg12"))
+
+# Plot
+pdf("./results/pca_pg.pdf")
+ggplot(PC1_and_PC2, aes(x=PC1, y=PC2, color = rownames)) + 
+  geom_point(size = 3) +
+  scale_color_manual(values = color_mapping) +
+  theme_bw(base_size = 14) +
+  labs(color = 'Sample')
+dev.off()
  
 ## PLOTS SPATIAL Y VIOLIN
 top5 <- top[1:100]
@@ -166,6 +180,12 @@ M8@meta.data[["community"]] <- factor(M8@meta.data[["community"]],
 M9@meta.data[["community"]] <- factor(M9@meta.data[["community"]],
                                       levels = c("S9_M1", "S9_M2", "S9_M3"),
                                       labels = c("Pg10", "Pg11", "Pg12"))
+
+# Save data
+saveRDS(M1,"./objects/sp/st_s1_community.rds")
+saveRDS(M2,"./objects/sp/st_s2_community.rds")
+saveRDS(M8,"./objects/sp/st_s8_community.rds")
+saveRDS(M9, "./objects/sp/st_s9_community.rds")
 
 all_communities <- c("Pg1", "Pg2", "Pg3", "Pg4", "Pg5", "Pg6", "Pg7", "Pg8", "Pg9", "Pg10", "Pg11", "Pg12")
 num_communities <- length(unique(all_communities))
