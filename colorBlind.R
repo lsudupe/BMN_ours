@@ -131,16 +131,21 @@ M9 <- readRDS("./objects/sp/st_s9_community.rds")
 ##communities
 samples <- c(M1,M2,M8,M9)
 names(samples) <- c("M1","M2","M8","M9")
-
 samples <- list(M1 = M1, M2 = M2, M8 = M8, M9 = M9)
+
+combined_samples <- Reduce(function(x, y) merge(x, y), samples)
+combined_samples@meta.data$community <- factor(combined_samples@meta.data$community, 
+                                               levels = c("Pg1", "Pg2", "Pg3", "Pg4", "Pg5", "Pg6", "Pg7", "Pg8", "Pg9", "Pg10", "Pg11", "Pg12"))
+
+
+
 color_mapping <- c(Pg1="#000000", Pg2="#004949", Pg3="#009292", Pg4="#ff6db6", Pg5="#ffb6db",
                    Pg6="#490092", Pg7="#006ddb", Pg8="#b66dff", Pg9="#6db6ff", Pg10="#b6dbff",
                    Pg11="#920000", Pg12="#924900")
 
-
 genes <- c("Xbp1", "Mzb1", "Cd74", "Hsp90b1", "S100a9", "S100a8", "B2m", "Tmsb4x", "Sec11c", "Tpt1",
-              "Cybb", "Fth1", "Cd52")
-genes <- c("Ighg2b", "Ighg3", "Cyba", "Ly6k", "S100a6")
+              "Cybb", "Fth1", "Cd52", "Ighg2b", "Ighg3", "Cyba", "Ly6k", "S100a6")
+
 
 
 # Function to get max expression of a gene from a Seurat object
@@ -229,17 +234,15 @@ for (gene in genes) {
 }
 
 ##ALL TOGHETER
-# Assuming that 'samples' is a list of Seurat objects
-# Add a 'sample' identifier to each Seurat object
 samples <- lapply(names(samples), function(x) {
   samples[[x]][["sample"]] <- x
   return(samples[[x]])
 })
 
-combined_samples@meta.data$community <- factor(combined_samples@meta.data$community, 
-                                               levels = c("Pg1", "Pg2", "Pg3", "Pg4", "Pg5", "Pg6", "Pg7", "Pg8", "Pg9", "Pg10", "Pg11", "Pg12"))
-# Combine all samples into one Seurat object
-combined_samples <- Reduce(function(x, y) merge(x, y), samples)
+color_mapping <- c(Pg1="#000000", Pg2="#004949", Pg3="#009292", Pg4="#ff6db6", Pg5="#ffb6db",
+                   Pg6="#490092", Pg7="#006ddb", Pg8="#b66dff", Pg9="#6db6ff", Pg10="#b6dbff",
+                   Pg11="#920000", Pg12="#924900")
+
 
 # Create violin plots for each gene, separated by 'community'
 for (gene in genes) {
@@ -256,3 +259,7 @@ for (gene in genes) {
     warning(paste("Gene", gene, "not found in the dataset. Skipping."))
   }
 }
+
+
+
+
